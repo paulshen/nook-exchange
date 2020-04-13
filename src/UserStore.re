@@ -16,12 +16,43 @@ let api =
   });
 
 let useMe = () => api.useStore();
+let useItem = (~itemId, ~variation) => {
+  let selector =
+    React.useCallback2(
+      (state: state) => {
+        Option.flatMap(state, user =>
+          user.items
+          ->Array.getBy(item =>
+              item.itemId == itemId && item.variation == variation
+            )
+        )
+      },
+      (itemId, variation),
+    );
+  api.useStoreWithSelector(selector, ());
+};
+
+let postUpdatedUser = (~user) => {
+  {
+    Fetch.fetchWithInit(
+      Constants.apiUrl ++ "/me",
+      Fetch.RequestInit.make(
+        ~method_=Post,
+        ~body=Fetch.BodyInit.make(Js.Json.stringify(User.toAPI(user))),
+        ~headers=Fetch.HeadersInit.make({"Content-Type": "application/json"}),
+        ~credentials=Include,
+        ~mode=CORS,
+        (),
+      ),
+    );
+  }
+  |> ignore;
+};
 
 let setItem = (~item: User.item) => {
   let user = Option.getExn(api.getState());
   let updatedUser = {
     ...user,
-
     items:
       switch (
         user.items
@@ -39,21 +70,30 @@ let setItem = (~item: User.item) => {
       },
   };
   api.dispatch(UpdateUser(updatedUser));
-  {
-    Fetch.fetchWithInit(
-      Constants.apiUrl ++ "/me",
-      Fetch.RequestInit.make(
-        ~method_=Post,
-        ~body=
-          Fetch.BodyInit.make(Js.Json.stringify(User.toAPI(updatedUser))),
-        ~headers=Fetch.HeadersInit.make({"Content-Type": "application/json"}),
-        ~credentials=Include,
-        ~mode=CORS,
-        (),
-      ),
-    );
-  }
-  |> ignore;
+  postUpdatedUser(~user=updatedUser);
+};
+
+let removeItem = (~itemId, ~variation) => {
+  let user = Option.getExn(api.getState());
+  switch (
+    user.items
+    ->Array.getIndexBy(iter => {
+        iter.itemId == itemId && iter.variation == variation
+      })
+  ) {
+  | Some(index) =>
+    let updatedUser = {
+      ...user,
+      items:
+        Array.concatMany([|
+          user.items->Array.slice(~offset=0, ~len=index),
+          user.items->Array.sliceToEnd(index + 1),
+        |]),
+    };
+    api.dispatch(UpdateUser(updatedUser));
+    postUpdatedUser(~user=updatedUser);
+  | None => ()
+  };
 };
 
 let login = (~userId, ~password) => {

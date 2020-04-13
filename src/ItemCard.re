@@ -5,6 +5,7 @@ module Styles = {
       border(px(1), solid, hex("f0f0f0")),
       padding2(~v=px(32), ~h=px(32)),
     ]);
+  let buttonSelected = style([fontWeight(semiBold)]);
 };
 
 module Recipe = {
@@ -28,6 +29,8 @@ let make = (~item: Item.t) => {
     React.useState(() =>
       Belt.Option.map(item.variations, variations => variations[0])
     );
+  let userItem = UserStore.useItem(~itemId=item.id, ~variation);
+  let userItemStatus = Belt.Option.map(userItem, userItem => userItem.status);
   <div className=Styles.card>
     <div> {React.string(item.id)} </div>
     <div>
@@ -63,9 +66,31 @@ let make = (~item: Item.t) => {
       <button
         onClick={_ => {
           UserStore.setItem(~item={itemId: item.id, variation, status: Want})
-        }}>
-        {React.string("Add")}
+        }}
+        className={Cn.ifTrue(
+          Styles.buttonSelected,
+          userItemStatus == Some(Want),
+        )}>
+        {React.string("I want this")}
       </button>
+      <button
+        onClick={_ => {
+          UserStore.setItem(~item={itemId: item.id, variation, status: Have})
+        }}
+        className={Cn.ifTrue(
+          Styles.buttonSelected,
+          userItemStatus == Some(Have),
+        )}>
+        {React.string("I'll trade this")}
+      </button>
+      {switch (userItemStatus) {
+       | Some(_) =>
+         <button
+           onClick={_ => {UserStore.removeItem(~itemId=item.id, ~variation)}}>
+           {React.string("Remove")}
+         </button>
+       | None => React.null
+       }}
     </div>
   </div>;
 };

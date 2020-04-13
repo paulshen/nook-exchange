@@ -21,7 +21,8 @@
     "@glennsl/bs-json",
     "bs-fetch",
     "reason-promise",
-    "restorative"
+    "restorative",
+    "re-classnames"
   ],
   "warnings": {
     "error" : "+101"

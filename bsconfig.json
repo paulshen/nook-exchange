@@ -21,5 +21,6 @@
     "error" : "+101"
   },
   "namespace": false,
-  "refmt": 3
+  "refmt": 3,
+  "ppx-flags": ["bs-let/ppx"]
 }

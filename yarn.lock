@@ -4585,6 +4585,11 @@ resolve@^1.1.5, resolve@^1.12.0, resolve@^1.3.2, resolve@^1.4.0:
   dependencies:
     path-parse "^1.0.6"
 
+restorative@^0.3.2:
+  version "0.3.2"
+  resolved "https://registry.yarnpkg.com/restorative/-/restorative-0.3.2.tgz#5331a07bc77ec2fa0337ca18a57fdb1fc54b8860"
+  integrity sha512-kT6745RXgjfXMBU1R/ZyZvZ5IS9REWbcUp5/zQVgdqiqQAyyWoRyIovQXpd/X9eLONhiiVdvy7rast/IUZN7BA==
+
 restore-cursor@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/restore-cursor/-/restore-cursor-2.0.0.tgz#9f7ee287f82fd326d4fd162923d62129eee0dfaf"

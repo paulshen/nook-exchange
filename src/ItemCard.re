@@ -59,5 +59,13 @@ let make = (~item: Item.t) => {
     <div>
       {React.string(item.orderable ? "Orderable" : "Not Orderable")}
     </div>
+    <div>
+      <button
+        onClick={_ => {
+          UserStore.setItem(~item={itemId: item.id, variation, status: Want})
+        }}>
+        {React.string("Add")}
+      </button>
+    </div>
   </div>;
 };

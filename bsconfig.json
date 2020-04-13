@@ -20,7 +20,8 @@
     "bs-css-emotion",
     "@glennsl/bs-json",
     "bs-fetch",
-    "reason-promise"
+    "reason-promise",
+    "restorative"
   ],
   "warnings": {
     "error" : "+101"

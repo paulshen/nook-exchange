@@ -44,3 +44,12 @@ let fromAPI = (json: Js.Json.t) => {
          ),
   };
 };
+
+let toAPI = (user: t) => {
+  Json.Encode.(
+    object_([
+      ("userId", string(user.id)),
+      ("data", object_([("items", array(itemToJson, user.items))])),
+    ])
+  );
+};

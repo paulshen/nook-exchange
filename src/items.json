@@ -1,0 +1,37 @@
+[
+  {
+    "id": "acoustic-guitar",
+    "name": "Acoustic Guitar",
+    "customizable": true,
+    "sellPrice": {
+      "currency": "bells",
+      "value": 3210
+    },
+    "buyPrices": [
+      {
+        "currency": "bells",
+        "value": 12840
+      }
+    ],
+    "recipe": {
+      "softwood": 8,
+      "iron-nugget": 3
+    },
+    "category": "Furniture"
+  },
+  {
+    "id": "ancient-belted-robe",
+    "name": "Ancient Belted Robe",
+    "sellPrice": {
+      "currency": "bells",
+      "value": 910
+    },
+    "buyPrices": [
+      {
+        "currency": "bells",
+        "value": 3640
+      }
+    ],
+    "category": "Dresses"
+  }
+]

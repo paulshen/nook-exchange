@@ -17,7 +17,8 @@
     "reason-react",
     "bs-webapi",
     "bs-css",
-    "bs-css-emotion"
+    "bs-css-emotion",
+    "@glennsl/bs-json"
   ],
   "warnings": {
     "error" : "+101"

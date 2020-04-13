@@ -2,9 +2,7 @@
 let make = () => {
   <div>
     {Item.all
-     ->Belt.Array.map(item => {
-         <div key={item.id}> {React.string(item.name)} </div>
-       })
+     ->Belt.Array.map(item => {<ItemCard item key={item.id} />})
      ->React.array}
   </div>;
 };

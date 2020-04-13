@@ -2,7 +2,6 @@
   {
     "id": "acoustic-guitar",
     "name": "Acoustic Guitar",
-    "customizable": true,
     "sellPrice": {
       "currency": "bells",
       "value": 3210
@@ -33,5 +32,35 @@
       }
     ],
     "category": "Dresses"
+  },
+  {
+    "id": "after-school-jacket",
+    "name": "After-school Jacket",
+    "category": "Tops",
+    "sellPrice": {
+      "currency": "bells",
+      "value": 262
+    },
+    "buyPrices": [
+      {
+        "currency": "bells",
+        "value": 1050
+      }
+    ]
+  },
+  {
+    "id": "anchor-statue",
+    "name": "Anchor Statue",
+    "sellPrice": {
+      "currency": "bells",
+      "value": 1400
+    },
+    "buyPrices": [
+      {
+        "currency": "bells",
+        "value": 5600
+      }
+    ],
+    "category": "Furniture"
   }
 ]

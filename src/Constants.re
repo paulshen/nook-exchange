@@ -1,0 +1,1 @@
+let apiUrl = "https://paulshen-animalcrossing.builtwithdark.com";

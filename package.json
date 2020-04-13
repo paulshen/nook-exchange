@@ -19,8 +19,10 @@
   "dependencies": {
     "@glennsl/bs-json": "^5.0.2",
     "bs-css-emotion": "^1.1.0",
+    "bs-fetch": "^0.5.2",
     "bs-let": "0.1.11",
     "bs-webapi": "^0.15.9",
+    "reason-promise": "^1.0.2",
     "reason-react": "^0.7.0"
   }
 }

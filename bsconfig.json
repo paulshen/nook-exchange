@@ -18,7 +18,9 @@
     "bs-webapi",
     "bs-css",
     "bs-css-emotion",
-    "@glennsl/bs-json"
+    "@glennsl/bs-json",
+    "bs-fetch",
+    "reason-promise"
   ],
   "warnings": {
     "error" : "+101"

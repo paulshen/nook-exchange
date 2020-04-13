@@ -32,3 +32,15 @@ type t = {
   id: string,
   items: array(item),
 };
+
+let fromAPI = (json: Js.Json.t) => {
+  Json.Decode.{
+    id: json |> field("userId", string),
+    items:
+      json
+      |> field("data", json =>
+           (json |> optional(field("items", array(itemFromJson))))
+           ->Belt.Option.getWithDefault([||])
+         ),
+  };
+};

@@ -1345,6 +1345,11 @@ bs-css@12.1.0:
   resolved "https://registry.yarnpkg.com/bs-css/-/bs-css-12.1.0.tgz#8bea8970d31cd133bb81e2aeb78b187a807d003c"
   integrity sha512-cKxVoPe1PtVTYAUYp81lleRwawd/OhdgDINx8V1/AOUuHkan6g23Jh6b+WACJXrOn4vVJmSgVdBfMqaeHMoi8g==
 
+bs-fetch@^0.5.2:
+  version "0.5.2"
+  resolved "https://registry.yarnpkg.com/bs-fetch/-/bs-fetch-0.5.2.tgz#a9f4582ddb1414d3467b900305c738813481988c"
+  integrity sha512-CYweTJcgLeLOqzR3vNsB+NmyEFhWThnPNdZmmF28nkFmo0CQEf+20eSHZJDO6EuAhhoRqJ0qp2VgxtH6zBB5xA==
+
 bs-let@0.1.11:
   version "0.1.11"
   resolved "https://registry.yarnpkg.com/bs-let/-/bs-let-0.1.11.tgz#159d0194c890be29d47d54db6f015c881e3269db"
@@ -4415,6 +4420,11 @@ readdirp@^2.2.1:
     graceful-fs "^4.1.11"
     micromatch "^3.1.10"
     readable-stream "^2.0.2"
+
+reason-promise@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/reason-promise/-/reason-promise-1.0.2.tgz#22b9bb4097ce511190182b948aef11427d5b8b86"
+  integrity sha512-j8DWV+71wNEKQmyW6zBOowIZq1Qec5CDWyLI37BvgOmAZgRFGFQ1MaJnbhqDe3JsYmaGyqdNMmpCJLl9EDbDAg==
 
 reason-react@^0.7.0:
   version "0.7.0"

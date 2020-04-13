@@ -24,9 +24,34 @@ module Recipe = {
 
 [@react.component]
 let make = (~item: Item.t) => {
+  let (variation, setVariation) =
+    React.useState(() =>
+      Belt.Option.map(item.variations, variations => variations[0])
+    );
   <div className=Styles.card>
     <div> {React.string(item.id)} </div>
-    <div> {React.string(item.name)} </div>
+    <div>
+      {React.string(item.name)}
+      {switch (variation) {
+       | Some(variation) => React.string(" " ++ variation)
+       | None => React.null
+       }}
+    </div>
+    {switch (item.variations) {
+     | Some(variations) =>
+       <div>
+         {variations
+          ->Belt.Array.map(variation =>
+              <div
+                onClick={_ => {setVariation(_ => Some(variation))}}
+                key=variation>
+                {React.string(variation)}
+              </div>
+            )
+          ->React.array}
+       </div>
+     | None => React.null
+     }}
     {switch (item.recipe) {
      | Some(recipe) => <Recipe recipe />
      | None => React.null

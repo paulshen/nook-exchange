@@ -1,67 +1,28 @@
 [
   {
-    "id": "acoustic-guitar",
     "name": "Acoustic Guitar",
-    "sellPrice": {
-      "currency": "bells",
-      "value": 3210
-    },
-    "buyPrices": [
-      {
-        "currency": "bells",
-        "value": 12840
-      }
-    ],
     "recipe": {
       "softwood": 8,
       "iron-nugget": 3
     },
-    "category": "Furniture"
+    "category": "furniture"
   },
   {
-    "id": "ancient-belted-robe",
     "name": "Ancient Belted Robe",
-    "sellPrice": {
-      "currency": "bells",
-      "value": 910
-    },
-    "buyPrices": [
-      {
-        "currency": "bells",
-        "value": 3640
-      }
-    ],
     "orderable": true,
-    "category": "Dresses"
+    "category": "dresses"
   },
   {
-    "id": "after-school-jacket",
     "name": "After-school Jacket",
-    "category": "Tops",
-    "sellPrice": {
-      "currency": "bells",
-      "value": 262
-    },
-    "buyPrices": [
-      {
-        "currency": "bells",
-        "value": 1050
-      }
-    ]
+    "category": "tops"
   },
   {
-    "id": "anchor-statue",
     "name": "Anchor Statue",
-    "sellPrice": {
-      "currency": "bells",
-      "value": 1400
-    },
-    "buyPrices": [
-      {
-        "currency": "bells",
-        "value": 5600
-      }
-    ],
-    "category": "Furniture"
+    "category": "furniture"
+  },
+  {
+    "name": "Ventilation Fan",
+    "variations": ["White", "Pink", "Blue", "Green"],
+    "category": "furniture"
   }
 ]

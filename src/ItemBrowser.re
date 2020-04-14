@@ -1,3 +1,8 @@
+module Styles = {
+  open Css;
+  let cards = style([display(flexBox), flexWrap(wrap)]);
+};
+
 type filters = {
   orderable: option(bool),
   hasRecipe: option(bool),
@@ -27,10 +32,13 @@ let doesItemMatchFilters = (~item: Item.t, ~filters: filters) => {
   );
 };
 
+let numResultsPerPage = 20;
+
 [@react.component]
 let make = () => {
   let (filters, setFilters) =
     React.useState(() => {orderable: None, hasRecipe: None, category: None});
+  let (pageOffset, setPageOffset) = React.useState(() => 0);
   let filteredItems =
     React.useMemo1(
       () =>
@@ -39,6 +47,8 @@ let make = () => {
         ),
       [|filters|],
     );
+
+  let numResults = filteredItems->Belt.Array.length;
 
   <div>
     <div>
@@ -96,9 +106,25 @@ let make = () => {
         <option value="true"> {React.string("Has recipe")} </option>
         <option value="false"> {React.string("No recipe")} </option>
       </select>
+      <div>
+        {React.string(
+           "Page "
+           ++ string_of_int(pageOffset)
+           ++ " of "
+           ++ string_of_int(numResults / numResultsPerPage),
+         )}
+      </div>
     </div>
-    {filteredItems
-     ->Belt.Array.map(item => {<ItemCard item key={item.id} />})
-     ->React.array}
+    <div className=Styles.cards>
+      {filteredItems
+       ->Belt.Array.slice(
+           ~offset=pageOffset * numResultsPerPage,
+           ~len=numResultsPerPage,
+         )
+       ->Belt.Array.mapWithIndexU((. i, item) => {
+           <ItemCard item key={item.id ++ string_of_int(i)} />
+         })
+       ->React.array}
+    </div>
   </div>;
 };

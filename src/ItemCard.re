@@ -40,6 +40,18 @@ let make = (~item: Item.t) => {
        | None => React.null
        }}
     </div>
+    <img
+      src={
+        "https://imgur.com/"
+        ++ (
+          switch (variation) {
+          | Some(variation) => variation
+          | None => item.image
+          }
+        )
+        ++ ".png"
+      }
+    />
     {switch (item.variations) {
      | Some(variations) =>
        <div>

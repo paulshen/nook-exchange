@@ -4,9 +4,11 @@ type recipe = array(recipeItem);
 type t = {
   id: string,
   name: string,
+  image: string,
   variations: option(array(string)),
   recipe: option(recipe),
   orderable: bool,
+  customizable: bool,
   category: string,
 };
 
@@ -23,7 +25,10 @@ let jsonToItem = (json: Js.Json.t) => {
     id:
       name |> Js.String.toLowerCase |> Js.String.replaceByRe(spaceRegex, "-"),
     name,
-    variations: json |> optional(field("variations", array(string))),
+    image:
+      (json |> optional(field("image", string)))
+      ->Belt.Option.getWithDefault(""),
+    variations: json |> optional(field("variants", array(string))),
     recipe:
       json
       |> optional(
@@ -33,7 +38,10 @@ let jsonToItem = (json: Js.Json.t) => {
            }),
          ),
     orderable:
-      (json |> optional(field("orderable", bool)))
+      (json |> optional(field("reorder", bool)))
+      ->Belt.Option.getWithDefault(false),
+    customizable:
+      (json |> optional(field("customize", bool)))
       ->Belt.Option.getWithDefault(false),
     category: json |> field("category", string),
   };

@@ -8,3 +8,5 @@ npm-debug.log
 *.bs.js
 dist/
 .cache/
+
+src/items.json

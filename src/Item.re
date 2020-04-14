@@ -12,6 +12,36 @@ type t = {
   category: string,
 };
 
+let categories = [|
+  "Housewares",
+  "Miscellaneous",
+  "Wall-mounted",
+  "Wallpaper",
+  "Floors",
+  "Rugs",
+  "Photos",
+  "Posters",
+  "Fencing",
+  "Tools",
+  "Tops",
+  "Bottoms",
+  "Dresses",
+  "Headwear",
+  "Accessories",
+  "Socks",
+  "Shoes",
+  "Bags",
+  "Umbrellas",
+  "Songs",
+  "Recipes",
+  "Bugs - North",
+  "Fish - North",
+  "Fossils",
+  "Construction",
+  "Nook Miles",
+  "Other",
+|];
+
 [@bs.module] external itemsJson: Js.Json.t = "./items.json";
 
 exception UnexpectedType(string);

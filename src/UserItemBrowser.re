@@ -119,15 +119,17 @@ module Section = {
         {if (numResults > 0) {
            <div>
              {React.string(
-                "Page "
-                ++ string_of_int(pageOffset + 1)
-                ++ " of "
+                "Showing "
+                ++ string_of_int(pageOffset * numResultsPerPage + 1)
+                ++ "-"
                 ++ string_of_int(
-                     Js.Math.ceil(
-                       float_of_int(numResults)
-                       /. float_of_int(numResultsPerPage),
+                     Js.Math.min_int(
+                       (pageOffset + 1) * numResultsPerPage,
+                       numResults,
                      ),
-                   ),
+                   )
+                ++ " of "
+                ++ string_of_int(numResults),
               )}
            </div>;
          } else {

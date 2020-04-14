@@ -80,5 +80,27 @@ let make = (~filters, ~onChange) => {
       <option value="true"> {React.string("Has recipe")} </option>
       <option value="false"> {React.string("No recipe")} </option>
     </select>
+    <select
+      value={Belt.Option.getWithDefault(filters.category, "")}
+      onChange={e => {
+        let value = ReactEvent.Form.target(e)##value;
+        onChange({
+          ...filters,
+          category:
+            switch (value) {
+            | "none" => None
+            | category => Some(category)
+            },
+        });
+      }}>
+      <option value="none"> {React.string("---")} </option>
+      {Item.categories
+       ->Belt.Array.mapWithIndexU((. i, category) =>
+           <option value=category key={string_of_int(i)}>
+             {React.string(category)}
+           </option>
+         )
+       ->React.array}
+    </select>
   </div>;
 };

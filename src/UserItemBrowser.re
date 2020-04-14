@@ -66,6 +66,11 @@ module UserItemCard = {
          | Some(recipe) => <ItemCard.RecipeIcon recipe />
          | None => React.null
          }}
+        {if (item.orderable) {
+           <ItemCard.OrderableIcon />;
+         } else {
+           React.null;
+         }}
       </div>
       {editable
          ? <>

@@ -75,7 +75,7 @@ module Styles = {
       hover([backgroundColor(hex("00000010"))]),
     ]);
   let variationImageSelected = style([backgroundColor(hex("3aa56320"))]);
-  let metaIcons = style([position(absolute), top(px(8)), left(px(8))]);
+  let metaIcons = style([position(absolute), top(px(8)), left(px(6))]);
   let bottomBar = style([alignSelf(flexStart), fontSize(px(12))]);
   let bottomBarStatus = style([paddingTop(px(8))]);
   let statusButtons = style([]);
@@ -96,13 +96,16 @@ module Styles = {
     ]);
 };
 
-[@bs.module] external recipeIcon: string = "./assets/recipe_icon.png";
-
 module RecipeIcon = {
   module Styles = {
     open Css;
     let recipeIcon =
-      style([display(block), width(px(24)), height(px(24))]);
+      style([
+        display(block),
+        width(px(24)),
+        height(px(24)),
+        marginRight(px(8)),
+      ]);
     let recipeLayer =
       style([
         backgroundColor(hex("404040f8")),
@@ -126,6 +129,8 @@ module RecipeIcon = {
       </div>;
     };
   };
+
+  [@bs.module] external recipeIcon: string = "./assets/recipe_icon.png";
 
   [@react.component]
   let make = (~recipe: Item.recipe) => {
@@ -158,6 +163,30 @@ module RecipeIcon = {
            />
          : React.null}
     </>;
+  };
+};
+
+module OrderableIcon = {
+  module Styles = {
+    open Css;
+    let orderableIcon =
+      style([
+        display(block),
+        width(px(24)),
+        height(px(24)),
+        marginRight(px(8)),
+      ]);
+  };
+
+  [@bs.module] external orderableIcon: string = "./assets/shop_icon.png";
+
+  [@react.component]
+  let make = () => {
+    <img
+      src=orderableIcon
+      title="Orderable from Catalog"
+      className=Styles.orderableIcon
+    />;
   };
 };
 
@@ -269,6 +298,11 @@ let make = (~item: Item.t, ~showLogin) => {
         {switch (item.recipe) {
          | Some(recipe) => <RecipeIcon recipe />
          | None => React.null
+         }}
+        {if (item.orderable) {
+           <OrderableIcon />;
+         } else {
+           React.null;
          }}
       </div>
     </div>

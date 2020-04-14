@@ -195,7 +195,9 @@ module Section = {
 [@react.component]
 let make = (~userItems: array(((string, int), User.item)), ~editable) => {
   let (wants, willTrades) =
-    userItems->Array.partitionU((. (_, item)) => item.status == Want);
+    userItems->Array.partitionU((. (_, item: User.item)) =>
+      item.status == Want
+    );
   <div>
     {if (wants->Array.length > 0) {
        <Section status=Want userItems=wants editable />;

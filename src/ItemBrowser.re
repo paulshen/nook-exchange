@@ -34,7 +34,7 @@ let make = (~showLogin) => {
   let (filters, setFilters) =
     React.useState(() =>
       (
-        {text: "", orderable: None, hasRecipe: None, category: None}: ItemFilters.t
+        {text: "", orderable: None, hasRecipe: None, category: None, sort: ABC}: ItemFilters.t
       )
     );
   let (pageOffset, setPageOffset) = React.useState(() => 0);
@@ -43,7 +43,8 @@ let make = (~showLogin) => {
       () =>
         Item.all->Belt.Array.keep(item =>
           ItemFilters.doesItemMatchFilters(~item, ~filters)
-        ),
+        )
+        |> Js.Array.sortInPlaceWith(ItemFilters.getSort(~filters)),
       [|filters|],
     );
   let numResults = filteredItems->Belt.Array.length;

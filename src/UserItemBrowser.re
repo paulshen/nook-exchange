@@ -113,19 +113,30 @@ module Section = {
     let (filters, setFilters) =
       React.useState(() =>
         (
-          {text: "", orderable: None, hasRecipe: None, category: None}: ItemFilters.t
+          {
+            text: "",
+            orderable: None,
+            hasRecipe: None,
+            category: None,
+            sort: ABC,
+          }: ItemFilters.t
         )
       );
     let (pageOffset, setPageOffset) = React.useState(() => 0);
     let filteredItems =
       React.useMemo2(
-        () =>
+        () => {
+          let sortFn = ItemFilters.getSort(~filters);
           userItems->Belt.Array.keep((((itemId, _), _)) =>
             ItemFilters.doesItemMatchFilters(
               ~item=Item.getItem(~itemId),
               ~filters,
             )
-          ),
+          )
+          |> Js.Array.sortInPlaceWith((((aId, _), _), ((bId, _), _)) =>
+               sortFn(Item.getItem(~itemId=aId), Item.getItem(~itemId=bId))
+             );
+        },
         (userItems, filters),
       );
     let numResults = filteredItems->Belt.Array.length;

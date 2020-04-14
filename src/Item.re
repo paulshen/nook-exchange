@@ -21,10 +21,6 @@ let categories = [|
   "Wallpaper",
   "Floors",
   "Rugs",
-  "Photos",
-  "Posters",
-  "Fencing",
-  "Tools",
   "Tops",
   "Bottoms",
   "Dresses",
@@ -34,6 +30,10 @@ let categories = [|
   "Shoes",
   "Bags",
   "Umbrellas",
+  "Photos",
+  "Posters",
+  "Fencing",
+  "Tools",
   "Songs",
   // "Recipes",
   // "Bugs - North",
@@ -51,10 +51,6 @@ let furnitureCategories = [|
   "Wallpaper",
   "Floors",
   "Rugs",
-  "Photos",
-  "Posters",
-  "Fencing",
-  "Tools",
 |];
 
 let clothingCategories = [|
@@ -68,6 +64,8 @@ let clothingCategories = [|
   "Bags",
   "Umbrellas",
 |];
+
+let otherCategories = [|"Photos", "Posters", "Fencing", "Tools", "Songs"|];
 
 [@bs.module] external itemsJson: Js.Json.t = "./items.json";
 

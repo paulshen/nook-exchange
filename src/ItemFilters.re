@@ -1,12 +1,13 @@
 module Styles = {
   open Css;
-  let root = style([display(flexBox), alignItems(center)]);
+  let root = style([display(flexBox), alignItems(center), flexWrap(wrap)]);
   let select =
     style([
       borderColor(hex("00000040")),
       fontSize(px(16)),
       height(px(32)),
       marginRight(px(16)),
+      marginBottom(px(8)),
     ]);
   let textInput =
     style([
@@ -32,11 +33,17 @@ module Styles = {
   let pagerArrowRight = style([marginLeft(px(8))]);
 };
 
+type sort =
+  | ABC
+  | SellPriceDesc
+  | SellPriceAsc;
+
 type t = {
   text: string,
   orderable: option(bool),
   hasRecipe: option(bool),
   category: option(string),
+  sort,
 };
 
 let doesItemMatchFilters = (~item: Item.t, ~filters: t) => {
@@ -68,10 +75,31 @@ let doesItemMatchFilters = (~item: Item.t, ~filters: t) => {
       Item.furnitureCategories |> Js.Array.includes(item.category)
     | Some("Clothing") =>
       Item.clothingCategories |> Js.Array.includes(item.category)
+    | Some("Other") =>
+      Item.otherCategories |> Js.Array.includes(item.category)
     | Some(category) => item.category == category
     | None => true
     }
   );
+};
+
+let getSort = (~filters: t) => {
+  switch (filters.sort) {
+  | ABC => (
+      (a: Item.t, b: Item.t) =>
+        int_of_float(Js.String.localeCompare(b.name, a.name))
+    )
+  | SellPriceDesc => (
+      (a: Item.t, b: Item.t) =>
+        Belt.Option.getWithDefault(b.sellPrice, 0)
+        - Belt.Option.getWithDefault(a.sellPrice, 0)
+    )
+  | SellPriceAsc => (
+      (a: Item.t, b: Item.t) =>
+        Belt.Option.getWithDefault(a.sellPrice, 0)
+        - Belt.Option.getWithDefault(b.sellPrice, 0)
+    )
+  };
 };
 
 module Pager = {
@@ -194,6 +222,15 @@ let make = (~filters, ~onChange) => {
                |],
                item,
              );
+           } else if (category == "Photos") {
+             Belt.Array.concat(
+               [|
+                 <option value="Other" key="other">
+                   {React.string("- Other")}
+                 </option>,
+               |],
+               item,
+             );
            } else {
              item;
            };
@@ -253,6 +290,32 @@ let make = (~filters, ~onChange) => {
       <option value="true"> {React.string("Has recipe")} </option>
       <option value="false"> {React.string("No recipe")} </option>
     </select>
+    <select
+      value={
+        switch (filters.sort) {
+        | ABC => "abc"
+        | SellPriceDesc => "sell-desc"
+        | SellPriceAsc => "sell-asc"
+        }
+      }
+      onChange={e => {
+        let value = ReactEvent.Form.target(e)##value;
+        onChange({
+          ...filters,
+          sort:
+            switch (value) {
+            | "abc" => ABC
+            | "sell-desc" => SellPriceDesc
+            | "sell-asc" => SellPriceAsc
+            | _ => ABC
+            },
+        });
+      }}
+      className=Styles.select>
+      <option value="abc"> {React.string("A - Z")} </option>
+      <option value="sell-desc"> {React.string("Sell Price Desc")} </option>
+      <option value="sell-asc"> {React.string("Sell Price Asc")} </option>
+    </select>
     <input
       type_="text"
       ref={ReactDOMRe.Ref.domRef(inputTextRef)}
@@ -292,6 +355,7 @@ let make = (~filters, ~onChange) => {
              orderable: None,
              hasRecipe: None,
              category: None,
+             sort: ABC,
            });
          }}
          className=Styles.clearFilters>

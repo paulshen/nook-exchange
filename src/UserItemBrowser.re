@@ -23,34 +23,37 @@ module UserItemCard = {
       </div>
       {editable
          ? <div>
-             <button
-               onClick={_ => {
-                 UserStore.setItem(
-                   ~itemId,
-                   ~variation,
-                   ~item={status: Want, note: ""},
-                 )
-               }}
-               className={Cn.ifTrue(
-                 ItemCard.Styles.buttonSelected,
-                 userItem.status == Want,
-               )}>
-               {React.string("I want this")}
-             </button>
-             <button
-               onClick={_ => {
-                 UserStore.setItem(
-                   ~itemId,
-                   ~variation,
-                   ~item={status: WillTrade, note: ""},
-                 )
-               }}
-               className={Cn.ifTrue(
-                 ItemCard.Styles.buttonSelected,
-                 userItem.status == WillTrade,
-               )}>
-               {React.string("I'll trade this")}
-             </button>
+             <div>
+               <button
+                 onClick={_ => {
+                   UserStore.setItem(
+                     ~itemId,
+                     ~variation,
+                     ~item={status: Want, note: userItem.note},
+                   )
+                 }}
+                 className={Cn.ifTrue(
+                   ItemCard.Styles.buttonSelected,
+                   userItem.status == Want,
+                 )}>
+                 {React.string("I want this")}
+               </button>
+               <button
+                 onClick={_ => {
+                   UserStore.setItem(
+                     ~itemId,
+                     ~variation,
+                     ~item={status: WillTrade, note: userItem.note},
+                   )
+                 }}
+                 className={Cn.ifTrue(
+                   ItemCard.Styles.buttonSelected,
+                   userItem.status == WillTrade,
+                 )}>
+                 {React.string("I'll trade this")}
+               </button>
+             </div>
+             <UserItemNote itemId={item.id} variation userItem />
              <button
                onClick={_ => {
                  UserStore.removeItem(~itemId=item.id, ~variation)
@@ -62,6 +65,11 @@ module UserItemCard = {
              {switch (userItem.status) {
               | Want => <div> {React.string("I want this!")} </div>
               | WillTrade => <div> {React.string("I'll trade this!")} </div>
+              }}
+             {if (userItem.note->Js.String.length > 0) {
+                <div> {React.string(userItem.note)} </div>;
+              } else {
+                React.null;
               }}
            </div>}
     </div>;

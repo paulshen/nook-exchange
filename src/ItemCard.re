@@ -1,3 +1,5 @@
+open Belt;
+
 module Styles = {
   open Css;
   let card =
@@ -16,7 +18,7 @@ module Recipe = {
   let make = (~recipe: Item.recipe) => {
     <div>
       {recipe
-       ->Belt.Array.map(((itemId, quantity)) =>
+       ->Array.map(((itemId, quantity)) =>
            <div key=itemId>
              {React.string(itemId ++ " x " ++ string_of_int(quantity))}
            </div>
@@ -30,10 +32,10 @@ module Recipe = {
 let make = (~item: Item.t) => {
   let (variation, setVariation) =
     React.useState(() =>
-      Belt.Option.map(item.variations, variations => variations[0])
+      Option.flatMap(item.variations, variations => variations[0])
     );
   let userItem = UserStore.useItem(~itemId=item.id, ~variation);
-  let userItemStatus = Belt.Option.map(userItem, userItem => userItem.status);
+
   <div className=Styles.card>
     <div>
       {React.string(item.name)}
@@ -58,7 +60,7 @@ let make = (~item: Item.t) => {
      | Some(variations) =>
        <div className=Styles.variations>
          {variations
-          ->Belt.Array.map(variation =>
+          ->Array.map(variation =>
               <div
                 onClick={_ => {setVariation(_ => Some(variation))}}
                 key=variation>
@@ -79,43 +81,44 @@ let make = (~item: Item.t) => {
     <div>
       {React.string(item.orderable ? "Orderable" : "Not Orderable")}
     </div>
-    <div>
-      <button
-        onClick={_ => {
-          UserStore.setItem(
-            ~itemId=item.id,
-            ~variation,
-            ~item={status: Want, note: ""},
-          )
-        }}
-        className={Cn.ifTrue(
-          Styles.buttonSelected,
-          userItemStatus == Some(Want),
-        )}>
-        {React.string("I want this")}
-      </button>
-      <button
-        onClick={_ => {
-          UserStore.setItem(
-            ~itemId=item.id,
-            ~variation,
-            ~item={status: WillTrade, note: ""},
-          )
-        }}
-        className={Cn.ifTrue(
-          Styles.buttonSelected,
-          userItemStatus == Some(WillTrade),
-        )}>
-        {React.string("I'll trade this")}
-      </button>
-      {switch (userItemStatus) {
-       | Some(_) =>
+    {switch (userItem) {
+     | Some(userItem) =>
+       <div>
+         <button
+           onClick={_ => {
+             UserStore.setItem(
+               ~itemId=item.id,
+               ~variation,
+               ~item={status: Want, note: userItem.note},
+             )
+           }}
+           className={Cn.ifTrue(
+             Styles.buttonSelected,
+             userItem.status == Want,
+           )}>
+           {React.string("I want this")}
+         </button>
+         <button
+           onClick={_ => {
+             UserStore.setItem(
+               ~itemId=item.id,
+               ~variation,
+               ~item={status: WillTrade, note: userItem.note},
+             )
+           }}
+           className={Cn.ifTrue(
+             Styles.buttonSelected,
+             userItem.status == WillTrade,
+           )}>
+           {React.string("I'll trade this")}
+         </button>
+         <UserItemNote itemId={item.id} variation userItem />
          <button
            onClick={_ => {UserStore.removeItem(~itemId=item.id, ~variation)}}>
            {React.string("Remove")}
          </button>
-       | None => React.null
-       }}
-    </div>
+       </div>
+     | None => React.null
+     }}
   </div>;
 };

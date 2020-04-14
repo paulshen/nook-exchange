@@ -68,6 +68,7 @@ module Styles = {
       borderRadius(px(4)),
       hover([backgroundColor(hex("00000010"))]),
     ]);
+  let variationImageSelected = style([backgroundColor(hex("3aa56320"))]);
   let bottomBar = style([alignSelf(flexStart), fontSize(px(12))]);
   let bottomBarStatus = style([paddingTop(px(8))]);
   let statusButtons = style([]);
@@ -183,13 +184,17 @@ let make = (~item: Item.t, ~showLogin) => {
        | Some(variations) =>
          <div className=Styles.variations>
            {variations
-            ->Array.map(variation =>
-                <div
-                  onClick={_ => {setVariation(_ => Some(variation))}}
-                  key=variation>
+            ->Array.map(v =>
+                <div onClick={_ => {setVariation(_ => Some(v))}} key=v>
                   <img
-                    src={"https://imgur.com/" ++ variation ++ ".png"}
-                    className=Styles.variationImage
+                    src={"https://imgur.com/" ++ v ++ ".png"}
+                    className={Cn.make([
+                      Styles.variationImage,
+                      Cn.ifTrue(
+                        Styles.variationImageSelected,
+                        Some(v) == variation,
+                      ),
+                    ])}
                   />
                 </div>
               )

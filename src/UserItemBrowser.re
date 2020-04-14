@@ -1,8 +1,36 @@
 module Styles = {
   open Css;
+  let root =
+    style([
+      width(px(368)),
+      margin3(~top=px(32), ~bottom=zero, ~h=auto),
+      media("(min-width: 600px)", [width(px(560))]),
+      media("(min-width: 940px)", [width(px(752))]),
+      media("(min-width: 1200px)", [width(px(944))]),
+      media("(min-width: 1460px)", [width(px(1136))]),
+      padding(px(32)),
+      backgroundColor(Colors.green),
+      borderRadius(px(16)),
+      backgroundColor(hex("ffbfb9a0")),
+    ]);
+  let rootAvailable = style([backgroundColor(hex("8FCDE0a0"))]);
   let sectionTitle = style([fontSize(px(24)), marginBottom(px(16))]);
-  let cards = style([paddingTop(px(16))]);
-  let card = style([]);
+  let cards = style([paddingTop(px(16)), marginRight(px(-16))]);
+  let card =
+    style([
+      backgroundColor(hex("fffffff0")),
+      borderRadius(px(8)),
+      display(flexBox),
+      flexDirection(column),
+      alignItems(center),
+      marginRight(px(16)),
+      marginBottom(px(16)),
+      padding3(~top=px(24), ~bottom=px(8), ~h=px(8)),
+      position(relative),
+      width(px(160)),
+      transition(~duration=200, "all"),
+    ]);
+  let name = style([fontSize(px(16)), marginBottom(px(4))]);
   let userNote =
     style([
       borderTop(px(1), solid, hex("f0f0f0")),
@@ -19,7 +47,7 @@ module UserItemCard = {
   [@react.component]
   let make = (~itemId, ~variation, ~userItem: User.item, ~editable) => {
     let item = Item.getItem(~itemId);
-    <div className={Cn.make([ItemCard.Styles.card, Styles.card])}>
+    <div className={Cn.make([Styles.card])}>
       <div className=ItemCard.Styles.body>
         <img
           src={
@@ -34,7 +62,7 @@ module UserItemCard = {
           }
           className=ItemCard.Styles.mainImage
         />
-        <div className=ItemCard.Styles.name> {React.string(item.name)} </div>
+        <div className=Styles.name> {React.string(item.name)} </div>
       </div>
       {editable
          ? <>
@@ -94,12 +122,16 @@ module Section = {
       );
     let numResults = filteredItems->Belt.Array.length;
 
-    <div className=ItemBrowser.Styles.root>
+    <div
+      className={Cn.make([
+        Styles.root,
+        Cn.ifTrue(Styles.rootAvailable, status == WillTrade),
+      ])}>
       <div className=Styles.sectionTitle>
         {React.string(
            switch (status) {
-           | Want => "Wishlist"
-           | WillTrade => "Available"
+           | Want => {j|🙏 Wishlist|j}
+           | WillTrade => {j|✅ Available|j}
            },
          )}
       </div>

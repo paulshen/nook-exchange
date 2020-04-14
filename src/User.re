@@ -1,7 +1,7 @@
 [@bs.deriving jsConverter]
 type itemStatus =
   | [@bs.as 1] Want
-  | Have;
+  | WillTrade;
 type item = {
   itemId: string,
   variation: option(string),

@@ -87,11 +87,13 @@ let make = (~item: Item.t) => {
       </button>
       <button
         onClick={_ => {
-          UserStore.setItem(~item={itemId: item.id, variation, status: Have})
+          UserStore.setItem(
+            ~item={itemId: item.id, variation, status: WillTrade},
+          )
         }}
         className={Cn.ifTrue(
           Styles.buttonSelected,
-          userItemStatus == Some(Have),
+          userItemStatus == Some(WillTrade),
         )}>
         {React.string("I'll trade this")}
       </button>

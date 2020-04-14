@@ -5,7 +5,8 @@
     "build": "bsb -make-world",
     "start": "bsb -make-world -w",
     "clean": "bsb -clean-world",
-    "client": "parcel src/index.html"
+    "client": "parcel src/index.html",
+    "parcel-build": "parcel build src/index.html"
   },
   "keywords": [
     "BuckleScript"

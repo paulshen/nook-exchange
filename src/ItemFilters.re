@@ -102,5 +102,19 @@ let make = (~filters, ~onChange) => {
          )
        ->React.array}
     </select>
+    {if (filters.hasRecipe != None
+         || filters.orderable != None
+         || filters.category != None) {
+       <a
+         href="#"
+         onClick={e => {
+           ReactEvent.Mouse.preventDefault(e);
+           onChange({orderable: None, hasRecipe: None, category: None});
+         }}>
+         {React.string("Clear filters")}
+       </a>;
+     } else {
+       React.null;
+     }}
   </div>;
 };

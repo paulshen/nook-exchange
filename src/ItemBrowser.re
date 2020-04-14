@@ -62,5 +62,14 @@ let make = () => {
          })
        ->React.array}
     </div>
+    {if (Js.Array.length(filteredItems) == 0) {
+       <div>
+         {React.string(
+            "There are no results. Try changing or clearing the filters!",
+          )}
+       </div>;
+     } else {
+       React.null;
+     }}
   </div>;
 };

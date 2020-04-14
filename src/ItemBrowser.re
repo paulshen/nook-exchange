@@ -14,13 +14,14 @@ module Styles = {
       display(flexBox),
       flexWrap(wrap),
       marginRight(px(-32)),
-      paddingTop(px(32)),
+      paddingTop(px(16)),
     ]);
   let filterBar =
     style([
       display(flexBox),
       justifyContent(spaceBetween),
       alignItems(center),
+      marginBottom(px(32)),
     ]);
   let bottomFilterBar = style([display(flexBox), justifyContent(flexEnd)]);
   let noResults = style([fontSize(px(20)), paddingTop(px(16))]);

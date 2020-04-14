@@ -2,7 +2,7 @@ module Styles = {
   open Css;
   let textarea =
     style([
-      backgroundColor(rgba(0, 0, 0, 0.05)),
+      backgroundColor(rgba(0, 0, 0, 0.03)),
       border(px(1), solid, transparent),
       borderRadius(px(4)),
       padding(px(8)),
@@ -10,13 +10,11 @@ module Styles = {
       outlineStyle(none),
       fontSize(px(14)),
       width(pct(100.)),
-      marginBottom(px(8)),
       transition(~duration=200, "all"),
       width(pct(100.)),
       focus([
-        backgroundColor(hex("ffffff")),
-        borderColor(rgba(0, 0, 0, 0.15)),
-        boxShadow(Shadow.box(~spread=px(4), rgba(0, 0, 0, 0.05))),
+        backgroundColor(Colors.white),
+        borderColor(rgba(0, 0, 0, 0.1)),
       ]),
     ]);
 };

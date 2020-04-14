@@ -1,6 +1,16 @@
 module Styles = {
   open Css;
   let sectionTitle = style([fontSize(px(24)), marginBottom(px(16))]);
+  let cards = style([paddingTop(px(16))]);
+  let card = style([]);
+  let userNote =
+    style([
+      borderTop(px(1), solid, hex("f0f0f0")),
+      unsafe("alignSelf", "stretch"),
+      marginTop(px(-8)),
+      padding3(~top=px(8), ~bottom=zero, ~h=px(4)),
+    ]);
+  let removeButton = style([top(px(8)), bottom(initial)]);
 };
 
 open Belt;
@@ -9,9 +19,8 @@ module UserItemCard = {
   [@react.component]
   let make = (~itemId, ~variation, ~userItem: User.item, ~editable) => {
     let item = Item.getItem(~itemId);
-    <div className=ItemCard.Styles.card>
+    <div className={Cn.make([ItemCard.Styles.card, Styles.card])}>
       <div className=ItemCard.Styles.body>
-        <div className=ItemCard.Styles.name> {React.string(item.name)} </div>
         <img
           src={
             "https://imgur.com/"
@@ -25,48 +34,32 @@ module UserItemCard = {
           }
           className=ItemCard.Styles.mainImage
         />
-        <div>
-          {React.string(item.orderable ? "Orderable" : "Not Orderable")}
-        </div>
+        <div className=ItemCard.Styles.name> {React.string(item.name)} </div>
       </div>
       {editable
          ? <>
              <UserItemNote itemId={item.id} variation userItem />
              <button
-               className=ItemCard.Styles.removeButton
+               className={Cn.make([
+                 ItemCard.Styles.removeButton,
+                 Styles.removeButton,
+               ])}
+               title="Remove"
                onClick={_ => {
                  UserStore.removeItem(~itemId=item.id, ~variation)
                }}>
                {React.string({j|❌|j})}
              </button>
-             <div className=ItemCard.Styles.statusButtons>
-               {ItemCard.renderStatusButton(
-                  ~itemId=item.id,
-                  ~variation,
-                  ~status=Want,
-                  ~userItem=Some(userItem),
-                  (),
-                )}
-               {ItemCard.renderStatusButton(
-                  ~itemId=item.id,
-                  ~variation,
-                  ~status=WillTrade,
-                  ~userItem=Some(userItem),
-                  (),
-                )}
-             </div>
            </>
-         : <div>
-             {switch (userItem.status) {
-              | Want => <div> {React.string("I want this!")} </div>
-              | WillTrade => <div> {React.string("I'll trade this!")} </div>
-              }}
-             {if (userItem.note->Js.String.length > 0) {
-                <div> {React.string(userItem.note)} </div>;
-              } else {
-                React.null;
-              }}
-           </div>}
+         : (
+           if (userItem.note->Js.String.length > 0) {
+             <div className=Styles.userNote>
+               {React.string(userItem.note)}
+             </div>;
+           } else {
+             React.null;
+           }
+         )}
     </div>;
   };
 };
@@ -110,22 +103,24 @@ module Section = {
            },
          )}
       </div>
-      <div className=ItemBrowser.Styles.filterBar>
-        <ItemFilters
-          filters
-          onChange={filters => {
-            setFilters(_ => filters);
-            setPageOffset(_ => 0);
-          }}
-        />
-        <ItemFilters.Pager
-          numResults
-          pageOffset
-          numResultsPerPage
-          setPageOffset
-        />
-      </div>
-      <div className=ItemBrowser.Styles.cards>
+      {userItems->Belt.Array.length > 8
+         ? <div className=ItemBrowser.Styles.filterBar>
+             <ItemFilters
+               filters
+               onChange={filters => {
+                 setFilters(_ => filters);
+                 setPageOffset(_ => 0);
+               }}
+             />
+             <ItemFilters.Pager
+               numResults
+               pageOffset
+               numResultsPerPage
+               setPageOffset
+             />
+           </div>
+         : React.null}
+      <div className={Cn.make([ItemBrowser.Styles.cards, Styles.cards])}>
         {filteredItems
          ->Belt.Array.slice(
              ~offset=pageOffset * numResultsPerPage,

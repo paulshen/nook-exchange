@@ -2,6 +2,23 @@ open Belt;
 
 module Styles = {
   open Css;
+  let statusButton =
+    style([
+      backgroundColor(transparent),
+      color(hex("3aa563c0")),
+      borderWidth(zero),
+      borderRadius(px(4)),
+      fontSize(px(12)),
+      marginRight(px(6)),
+      outlineStyle(none),
+      padding3(~top=px(5), ~bottom=px(3), ~h=px(4)),
+      transition(~duration=200, "all"),
+      cursor(pointer),
+      hover([
+        important(backgroundColor(Colors.green)),
+        important(color(Colors.white)),
+      ]),
+    ]);
   let card =
     style([
       backgroundColor(hex("fffffff0")),
@@ -14,13 +31,16 @@ module Styles = {
       padding3(~top=px(24), ~bottom=px(8), ~h=px(8)),
       position(relative),
       width(px(240)),
-      boxShadow(Shadow.box(~spread=px(8), rgba(128, 128, 128, 0.1))),
+      transition(~duration=200, "all"),
+      hover([
+        selector(
+          "& ." ++ statusButton,
+          [backgroundColor(hex("3aa56320")), color(Colors.green)],
+        ),
+        boxShadow(Shadow.box(~spread=px(6), hex("88c9a180"))),
+      ]),
     ]);
-  let cardSelected =
-    style([
-      backgroundColor(hex("ffffff")),
-      boxShadow(Shadow.box(~spread=px(8), rgba(128, 128, 128, 0.4))),
-    ]);
+  let cardSelected = style([backgroundColor(hex("ffffff"))]);
   let body =
     style([
       flexGrow(1.),
@@ -29,13 +49,13 @@ module Styles = {
       alignItems(center),
       marginBottom(px(16)),
     ]);
-  let name = style([fontSize(px(22)), marginBottom(px(8))]);
+  let name = style([fontSize(px(20)), marginBottom(px(8))]);
   let mainImage =
     style([
       display(block),
       height(px(128)),
       width(px(128)),
-      marginBottom(px(16)),
+      marginBottom(px(8)),
     ]);
   let variations =
     style([display(flexBox), flexWrap(wrap), justifyContent(center)]);
@@ -48,34 +68,22 @@ module Styles = {
       borderRadius(px(4)),
       hover([backgroundColor(hex("00000010"))]),
     ]);
-  let statusButtons = style([alignSelf(flexStart)]);
-  let statusButton =
-    style([
-      backgroundColor(hex("f1e26f80")),
-      borderWidth(zero),
-      borderRadius(px(4)),
-      fontSize(px(12)),
-      marginRight(px(6)),
-      outlineStyle(none),
-      padding3(~top=px(3), ~bottom=px(2), ~h=px(6)),
-      transition(~duration=200, "all"),
-      cursor(pointer),
-      hover([backgroundColor(hex("f1e26f"))]),
-    ]);
+  let bottomBar = style([alignSelf(flexStart), fontSize(px(12))]);
+  let bottomBarStatus = style([paddingTop(px(8))]);
+  let statusButtons = style([]);
   let statusButtonSelected =
-    style([
-      backgroundColor(hex("f1e26f")),
-      boxShadow(Shadow.box(~spread=px(2), hex("bbac92"))),
-    ]);
+    style([backgroundColor(Colors.green), color(Colors.white)]);
   let removeButton =
     style([
       position(absolute),
-      bottom(px(8)),
-      right(px(8)),
+      bottom(px(6)),
+      right(px(2)),
       backgroundColor(transparent),
       borderWidth(zero),
       fontSize(px(12)),
-      opacity(0.3),
+      opacity(0.5),
+      transition(~duration=200, "all"),
+      cursor(pointer),
       hover([opacity(1.)]),
     ]);
 };
@@ -127,11 +135,17 @@ let renderStatusButton =
     className={Cn.make([
       Styles.statusButton,
       Cn.ifTrue(Styles.statusButtonSelected, userItemStatus == Some(status)),
-    ])}>
+    ])}
+    title={
+      switch (status) {
+      | Want => "Add to Wishlist"
+      | WillTrade => "Add to Available list"
+      }
+    }>
     {React.string(
        switch (status) {
-       | Want => {j|🙏 Wishlist|j}
-       | WillTrade => {j|✅ Available|j}
+       | Want => {j|+ Wishlist|j}
+       | WillTrade => {j|+ Available|j}
        },
      )}
   </button>;
@@ -192,31 +206,42 @@ let make = (~item: Item.t, ~showLogin) => {
      | Some(userItem) =>
        <>
          <UserItemNote itemId={item.id} variation userItem />
+         <div className={Cn.make([Styles.bottomBar, Styles.bottomBarStatus])}>
+           {React.string(
+              {
+                switch (userItem.status) {
+                | Want => {j|🙏 In your wishlist|j}
+                | WillTrade => {j|✅ In your available list|j}
+                };
+              },
+            )}
+         </div>
          <button
            className=Styles.removeButton
+           title="Remove"
            onClick={_ => {UserStore.removeItem(~itemId=item.id, ~variation)}}>
            {React.string({j|❌|j})}
          </button>
        </>
-     | None => React.null
+     | None =>
+       <div className={Cn.make([Styles.bottomBar, Styles.statusButtons])}>
+         {renderStatusButton(
+            ~itemId=item.id,
+            ~variation,
+            ~status=Want,
+            ~userItem,
+            ~showLogin,
+            (),
+          )}
+         {renderStatusButton(
+            ~itemId=item.id,
+            ~variation,
+            ~status=WillTrade,
+            ~userItem,
+            ~showLogin,
+            (),
+          )}
+       </div>
      }}
-    <div className=Styles.statusButtons>
-      {renderStatusButton(
-         ~itemId=item.id,
-         ~variation,
-         ~status=Want,
-         ~userItem,
-         ~showLogin,
-         (),
-       )}
-      {renderStatusButton(
-         ~itemId=item.id,
-         ~variation,
-         ~status=WillTrade,
-         ~userItem,
-         ~showLogin,
-         (),
-       )}
-    </div>
   </div>;
 };

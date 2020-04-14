@@ -1,3 +1,16 @@
+module Styles = {
+  open Css;
+  let emptyProfile =
+    style([
+      maxWidth(px(768)),
+      margin3(~top=zero, ~bottom=px(128), ~h=auto),
+      textAlign(center),
+    ]);
+  let username =
+    style([fontSize(px(36)), textAlign(center), marginBottom(px(32))]);
+  let bodyText = style([fontSize(px(18))]);
+};
+
 module ViewingPage = {
   [@react.component]
   let make = (~userId) => {
@@ -21,7 +34,7 @@ module ViewingPage = {
       [|userId|],
     );
     <div>
-      <div> {React.string(userId)} </div>
+      <div className=Styles.username> {React.string(userId)} </div>
       {switch (user) {
        | Some(user) =>
          if (user.items->Js.Dict.keys->Js.Array.length > 0) {

@@ -1,7 +1,6 @@
 module Styles = {
   open Css;
-  let root =
-    style([display(flexBox), alignItems(center), marginBottom(px(16))]);
+  let root = style([display(flexBox), alignItems(center)]);
   let select =
     style([
       borderColor(hex("00000040")),
@@ -21,7 +20,14 @@ module Styles = {
     ]);
   let clearFilters = style([fontSize(px(16))]);
   let pager = style([fontSize(px(16))]);
-  let pagerArrow = style([fontSize(px(24)), textDecoration(none)]);
+  let pagerArrow =
+    style([
+      fontSize(px(24)),
+      textDecoration(none),
+      opacity(0.8),
+      transition(~duration=200, "all"),
+      hover([opacity(1.)]),
+    ]);
   let pagerArrowLeft = style([marginRight(px(8))]);
   let pagerArrowRight = style([marginLeft(px(8))]);
 };

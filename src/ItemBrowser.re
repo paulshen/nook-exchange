@@ -3,117 +3,51 @@ module Styles = {
   let cards = style([display(flexBox), flexWrap(wrap)]);
 };
 
-type filters = {
-  orderable: option(bool),
-  hasRecipe: option(bool),
-  category: option(string),
-};
-
-let doesItemMatchFilters = (~item: Item.t, ~filters: filters) => {
-  (
-    switch (filters.orderable) {
-    | Some(true) => item.orderable
-    | Some(false) => !item.orderable
-    | None => true
-    }
-  )
-  && (
-    switch (filters.hasRecipe) {
-    | Some(true) => Belt.Option.isSome(item.recipe)
-    | Some(false) => Belt.Option.isNone(item.recipe)
-    | None => true
-    }
-  )
-  && (
-    switch (filters.category) {
-    | Some(category) => item.category == category
-    | None => true
-    }
-  );
-};
-
 let numResultsPerPage = 20;
 
 [@react.component]
 let make = () => {
   let (filters, setFilters) =
-    React.useState(() => {orderable: None, hasRecipe: None, category: None});
+    React.useState(() =>
+      ({orderable: None, hasRecipe: None, category: None}: ItemFilters.t)
+    );
   let (pageOffset, setPageOffset) = React.useState(() => 0);
   let filteredItems =
     React.useMemo1(
       () =>
         Item.all->Belt.Array.keep(item =>
-          doesItemMatchFilters(~item, ~filters)
+          ItemFilters.doesItemMatchFilters(~item, ~filters)
         ),
       [|filters|],
     );
-
   let numResults = filteredItems->Belt.Array.length;
 
   <div>
     <div>
-      <select
-        value={
-          switch (filters.orderable) {
-          | Some(true) => "true"
-          | Some(false) => "false"
-          | None => "none"
-          }
-        }
-        onChange={e => {
-          let value = ReactEvent.Form.target(e)##value;
-          setFilters(filters =>
-            {
-              ...filters,
-              orderable:
-                switch (value) {
-                | "true" => Some(true)
-                | "false" => Some(false)
-                | "none" => None
-                | _ => None
-                },
-            }
-          );
-        }}>
-        <option value="none"> {React.string("---")} </option>
-        <option value="true"> {React.string("Orderable")} </option>
-        <option value="false"> {React.string("Not-orderable")} </option>
-      </select>
-      <select
-        value={
-          switch (filters.hasRecipe) {
-          | Some(true) => "true"
-          | Some(false) => "false"
-          | None => "none"
-          }
-        }
-        onChange={e => {
-          let value = ReactEvent.Form.target(e)##value;
-          setFilters(filters =>
-            {
-              ...filters,
-              hasRecipe:
-                switch (value) {
-                | "true" => Some(true)
-                | "false" => Some(false)
-                | "none" => None
-                | _ => None
-                },
-            }
-          );
-        }}>
-        <option value="none"> {React.string("---")} </option>
-        <option value="true"> {React.string("Has recipe")} </option>
-        <option value="false"> {React.string("No recipe")} </option>
-      </select>
-      <div>
-        {React.string(
-           "Page "
-           ++ string_of_int(pageOffset)
-           ++ " of "
-           ++ string_of_int(numResults / numResultsPerPage),
-         )}
-      </div>
+      <ItemFilters
+        filters
+        onChange={filters => {
+          setFilters(_ => filters);
+          setPageOffset(_ => 0);
+        }}
+      />
+      {if (numResults > 0) {
+         <div>
+           {React.string(
+              "Page "
+              ++ string_of_int(pageOffset + 1)
+              ++ " of "
+              ++ string_of_int(
+                   Js.Math.ceil(
+                     float_of_int(numResults)
+                     /. float_of_int(numResultsPerPage),
+                   ),
+                 ),
+            )}
+         </div>;
+       } else {
+         React.null;
+       }}
     </div>
     <div className=Styles.cards>
       {filteredItems

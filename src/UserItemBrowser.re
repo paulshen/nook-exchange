@@ -5,7 +5,6 @@ module UserItemCard = {
   let make = (~userItem: User.item, ~editable) => {
     let item = Item.getItem(~itemId=userItem.itemId);
     <div className=ItemCard.Styles.card>
-      <div> {React.string(item.id)} </div>
       <div> {React.string(item.name)} </div>
       <img
         src={
@@ -77,8 +76,29 @@ module UserItemCard = {
 };
 
 module Section = {
+  let numResultsPerPage = 12;
+
   [@react.component]
-  let make = (~status: User.itemStatus, ~userItems, ~editable) => {
+  let make =
+      (~status: User.itemStatus, ~userItems: array(User.item), ~editable) => {
+    let (filters, setFilters) =
+      React.useState(() =>
+        ({orderable: None, hasRecipe: None, category: None}: ItemFilters.t)
+      );
+    let (pageOffset, setPageOffset) = React.useState(() => 0);
+    let filteredItems =
+      React.useMemo2(
+        () =>
+          userItems->Belt.Array.keep(userItem =>
+            ItemFilters.doesItemMatchFilters(
+              ~item=Item.getItem(~itemId=userItem.itemId),
+              ~filters,
+            )
+          ),
+        (userItems, filters),
+      );
+    let numResults = filteredItems->Belt.Array.length;
+
     <div>
       <div>
         {React.string(
@@ -88,13 +108,46 @@ module Section = {
            },
          )}
       </div>
+      <div>
+        <ItemFilters
+          filters
+          onChange={filters => {
+            setFilters(_ => filters);
+            setPageOffset(_ => 0);
+          }}
+        />
+        {if (numResults > 0) {
+           <div>
+             {React.string(
+                "Page "
+                ++ string_of_int(pageOffset + 1)
+                ++ " of "
+                ++ string_of_int(
+                     Js.Math.ceil(
+                       float_of_int(numResults)
+                       /. float_of_int(numResultsPerPage),
+                     ),
+                   ),
+              )}
+           </div>;
+         } else {
+           React.null;
+         }}
+      </div>
       <div className=ItemBrowser.Styles.cards>
-        {userItems
-         ->Array.mapU((. item) => {
+        {filteredItems
+         ->Belt.Array.slice(
+             ~offset=pageOffset * numResultsPerPage,
+             ~len=numResultsPerPage,
+           )
+         ->Belt.Array.mapU((. userItem) => {
              <UserItemCard
-               userItem=item
+               userItem
                editable
-               key={item.itemId ++ Option.getWithDefault(item.variation, "")}
+               key={
+                 userItem.itemId
+                 ++ Option.getWithDefault(userItem.variation, "")
+               }
              />
            })
          ->React.array}

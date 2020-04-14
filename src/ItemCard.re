@@ -5,6 +5,9 @@ module Styles = {
       border(px(1), solid, hex("f0f0f0")),
       padding2(~v=px(32), ~h=px(32)),
     ]);
+  let variations = style([display(flexBox)]);
+  let variationImage =
+    style([display(block), width(px(48)), height(px(48))]);
   let buttonSelected = style([fontWeight(semiBold)]);
 };
 
@@ -32,7 +35,6 @@ let make = (~item: Item.t) => {
   let userItem = UserStore.useItem(~itemId=item.id, ~variation);
   let userItemStatus = Belt.Option.map(userItem, userItem => userItem.status);
   <div className=Styles.card>
-    <div> {React.string(item.id)} </div>
     <div>
       {React.string(item.name)}
       {switch (variation) {
@@ -54,13 +56,16 @@ let make = (~item: Item.t) => {
     />
     {switch (item.variations) {
      | Some(variations) =>
-       <div>
+       <div className=Styles.variations>
          {variations
           ->Belt.Array.map(variation =>
               <div
                 onClick={_ => {setVariation(_ => Some(variation))}}
                 key=variation>
-                {React.string(variation)}
+                <img
+                  src={"https://imgur.com/" ++ variation ++ ".png"}
+                  className=Styles.variationImage
+                />
               </div>
             )
           ->React.array}

@@ -5,7 +5,9 @@ type t = {
   id: string,
   name: string,
   image: string,
-  variations: option(array(string)),
+  numVariations: option(int),
+  sellPrice: option(int),
+  buyPrice: option(int),
   recipe: option(recipe),
   orderable: bool,
   customizable: bool,
@@ -33,13 +35,13 @@ let categories = [|
   "Bags",
   "Umbrellas",
   "Songs",
-  "Recipes",
-  "Bugs - North",
-  "Fish - North",
-  "Fossils",
-  "Construction",
-  "Nook Miles",
-  "Other",
+  // "Recipes",
+  // "Bugs - North",
+  // "Fish - North",
+  // "Fossils",
+  // "Construction",
+  // "Nook Miles",
+  // "Other",
 |];
 
 [@bs.module] external itemsJson: Js.Json.t = "./items.json";
@@ -51,24 +53,30 @@ let spaceRegex = [%bs.re "/\\s/g"];
 let jsonToItem = (json: Js.Json.t) => {
   open Json.Decode;
   let name = json |> field("name", string);
+  let id =
+    name |> Js.String.toLowerCase |> Js.String.replaceByRe(spaceRegex, "-");
   {
-    id:
-      name |> Js.String.toLowerCase |> Js.String.replaceByRe(spaceRegex, "-"),
+    id,
     name,
-    image:
-      (json |> optional(field("image", string)))
-      ->Belt.Option.getWithDefault(""),
-    variations: json |> optional(field("variants", array(string))),
+    image: id,
+    numVariations: json |> optional(field("num_variants", int)),
+    sellPrice: json |> optional(field("sell", int)),
+    buyPrice: json |> optional(field("buy", int)),
     recipe:
       json
       |> optional(
-           field("recipe", json => {
-             let recipeDict = json |> dict(int);
-             Js.Dict.entries(recipeDict);
-           }),
+           field(
+             "recipe",
+             array(json =>
+               (
+                 json |> field("itemName", string),
+                 json |> field("count", int),
+               )
+             ),
+           ),
          ),
     orderable:
-      (json |> optional(field("reorder", bool)))
+      (json |> optional(field("catalog", bool)))
       ->Belt.Option.getWithDefault(false),
     customizable:
       (json |> optional(field("customize", bool)))

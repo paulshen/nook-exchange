@@ -154,12 +154,10 @@ let renderStatusButton =
 
 [@react.component]
 let make = (~item: Item.t, ~showLogin) => {
-  let (variation, setVariation) =
-    React.useState(() =>
-      Option.flatMap(item.variations, variations => variations[0])
-    );
+  let (variation, setVariation) = React.useState(() => 0);
   let userItem = UserStore.useItem(~itemId=item.id, ~variation);
 
+  Js.log(item);
   <div
     className={Cn.make([
       Styles.card,
@@ -169,36 +167,46 @@ let make = (~item: Item.t, ~showLogin) => {
       <div className=Styles.name> {React.string(item.name)} </div>
       <img
         src={
-          "https://imgur.com/"
-          ++ (
-            switch (variation) {
-            | Some(variation) => variation
-            | None => item.image
-            }
-          )
+          "/images/"
+          ++ item.image
+          ++ "__"
+          ++ string_of_int(variation)
           ++ ".png"
         }
         className=Styles.mainImage
       />
-      {switch (item.variations) {
-       | Some(variations) =>
+      {switch (item.numVariations) {
+       | Some(numVariations) =>
          <div className=Styles.variations>
-           {variations
-            ->Array.map(v =>
-                <div onClick={_ => {setVariation(_ => Some(v))}} key=v>
-                  <img
-                    src={"https://imgur.com/" ++ v ++ ".png"}
-                    className={Cn.make([
-                      Styles.variationImage,
-                      Cn.ifTrue(
-                        Styles.variationImageSelected,
-                        Some(v) == variation,
-                      ),
-                    ])}
-                  />
-                </div>
-              )
-            ->React.array}
+           {let children = [||];
+            Js.log(numVariations);
+            for (v in 0 to numVariations - 1) {
+              children
+              |> Js.Array.push(
+                   <div
+                     onClick={_ => {setVariation(_ => v)}}
+                     key={string_of_int(v)}>
+                     <img
+                       src={
+                         "/images/"
+                         ++ item.image
+                         ++ "__"
+                         ++ string_of_int(v)
+                         ++ ".png"
+                       }
+                       className={Cn.make([
+                         Styles.variationImage,
+                         Cn.ifTrue(
+                           Styles.variationImageSelected,
+                           v == variation,
+                         ),
+                       ])}
+                     />
+                   </div>,
+                 )
+              |> ignore;
+            };
+            children->React.array}
          </div>
        | None => React.null
        }}

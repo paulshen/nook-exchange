@@ -31,7 +31,7 @@ let useItem = (~itemId, ~variation) => {
 
 let isLoggedIn = () => api.getState() != None;
 
-let setItem = (~itemId: string, ~variation: option(string), ~item: User.item) => {
+let setItem = (~itemId: string, ~variation: int, ~item: User.item) => {
   let user = Option.getExn(api.getState());
   let updatedUser = {
     ...user,
@@ -48,7 +48,7 @@ let setItem = (~itemId: string, ~variation: option(string), ~item: User.item) =>
       ++ "/@me/items/"
       ++ itemId
       ++ "/"
-      ++ Option.getWithDefault(variation, "0"),
+      ++ string_of_int(variation),
       Fetch.RequestInit.make(
         ~method_=Post,
         ~body=Fetch.BodyInit.make(Js.Json.stringify(User.itemToJson(item))),
@@ -81,7 +81,7 @@ let removeItem = (~itemId, ~variation) => {
         ++ "/@me/items/"
         ++ itemId
         ++ "/"
-        ++ Option.getWithDefault(variation, "0"),
+        ++ string_of_int(variation),
         Fetch.RequestInit.make(
           ~method_=Delete,
           ~credentials=Include,

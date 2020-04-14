@@ -89,7 +89,8 @@ module Styles = {
       padding(px(16)),
       margin2(~v=px(16), ~h=zero),
     ]);
-  let errorMessage = style([marginTop(px(-10)), color(Colors.red)]);
+  let errorMessage =
+    style([marginTop(px(-10)), marginBottom(px(16)), color(Colors.red)]);
 };
 
 type registerStatus =
@@ -187,11 +188,11 @@ let make = (~onClose) => {
            : registerStatus == Some(Success)
                ? <div>
                    <div className=Styles.registerTitle>
-                     {React.string("Your account is created")}
+                     {React.string("Your account is created!")}
                    </div>
                    <div className=Styles.blurb>
                      {React.string(
-                        "Add items to profile and share it with others!",
+                        "Add items to profile and share it with others.",
                       )}
                    </div>
                    <div className=Styles.url>

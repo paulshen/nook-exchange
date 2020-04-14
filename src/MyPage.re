@@ -31,7 +31,7 @@ let make = (~user: User.t) =>
          <div className=Styles.emptyProfile>
            <div className=Styles.bodyText>
              <div> {React.string("Your profile is empty!")} </div>
-             <div> {React.string("Add your first item below")} </div>
+             <div> {React.string("Add your first item below.")} </div>
            </div>
          </div>
          <ItemBrowser showLogin={() => ()} />

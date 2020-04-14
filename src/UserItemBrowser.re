@@ -51,13 +51,10 @@ module UserItemCard = {
       <div className=ItemCard.Styles.body>
         <img
           src={
-            "https://imgur.com/"
-            ++ (
-              switch (variation) {
-              | Some(variation) => variation
-              | None => item.image
-              }
-            )
+            "/images/"
+            ++ item.image
+            ++ "__"
+            ++ string_of_int(variation)
             ++ ".png"
           }
           className=ItemCard.Styles.mainImage
@@ -99,7 +96,7 @@ module Section = {
   let make =
       (
         ~status: User.itemStatus,
-        ~userItems: array(((string, option(string)), User.item)),
+        ~userItems: array(((string, int), User.item)),
         ~editable,
       ) => {
     let (filters, setFilters) =
@@ -164,7 +161,7 @@ module Section = {
                variation
                userItem
                editable
-               key={itemId ++ Option.getWithDefault(variation, "")}
+               key={itemId ++ string_of_int(variation)}
              />
            })
          ->React.array}
@@ -174,8 +171,7 @@ module Section = {
 };
 
 [@react.component]
-let make =
-    (~userItems: array(((string, option(string)), User.item)), ~editable) => {
+let make = (~userItems: array(((string, int), User.item)), ~editable) => {
   let (wants, willTrades) =
     userItems->Array.partitionU((. (_, item)) => item.status == Want);
   <div>

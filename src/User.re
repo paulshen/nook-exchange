@@ -24,20 +24,13 @@ let itemFromJson = json => {
   };
 };
 
-let getItemKey = (~itemId: string, ~variation: option(string)) => {
-  itemId ++ "//" ++ Belt.Option.getWithDefault(variation, "0");
+let getItemKey = (~itemId: string, ~variation: int) => {
+  itemId ++ "//" ++ string_of_int(variation);
 };
 
 let fromItemKey = (~key: string) => {
   let [|itemId, variation|] = key |> Js.String.split("//");
-  (
-    itemId,
-    if (variation == "0") {
-      None;
-    } else {
-      Some(variation);
-    },
-  );
+  (itemId, int_of_string(variation));
 };
 
 type t = {

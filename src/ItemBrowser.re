@@ -6,7 +6,7 @@ module Styles = {
 let numResultsPerPage = 20;
 
 [@react.component]
-let make = () => {
+let make = (~showLogin) => {
   let (filters, setFilters) =
     React.useState(() =>
       ({orderable: None, hasRecipe: None, category: None}: ItemFilters.t)
@@ -58,7 +58,7 @@ let make = () => {
            ~len=numResultsPerPage,
          )
        ->Belt.Array.mapWithIndexU((. i, item) => {
-           <ItemCard item key={item.id ++ string_of_int(i)} />
+           <ItemCard item showLogin key={item.id ++ string_of_int(i)} />
          })
        ->React.array}
     </div>

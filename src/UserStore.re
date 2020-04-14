@@ -29,6 +29,8 @@ let useItem = (~itemId, ~variation) => {
   api.useStoreWithSelector(selector, ());
 };
 
+let isLoggedIn = () => api.getState() != None;
+
 let setItem = (~itemId: string, ~variation: option(string), ~item: User.item) => {
   let user = Option.getExn(api.getState());
   let updatedUser = {

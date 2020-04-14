@@ -6,7 +6,7 @@ let make = () => {
     <HeaderBar onLogin={_ => setShowLogin(_ => true)} />
     {switch (url.path) {
      | ["u", userId] => <UserPage userId />
-     | _ => <ItemBrowser />
+     | _ => <ItemBrowser showLogin={() => setShowLogin(_ => true)} />
      }}
     {showLogin
        ? <LoginOverlay onClose={() => setShowLogin(_ => false)} /> : React.null}

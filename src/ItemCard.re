@@ -5,9 +5,15 @@ module Styles = {
   let card =
     style([
       border(px(1), solid, hex("f0f0f0")),
+      display(flexBox),
+      flexDirection(column),
+      alignItems(center),
       padding2(~v=px(32), ~h=px(32)),
+      width(px(224)),
     ]);
-  let variations = style([display(flexBox)]);
+  let mainImage = style([height(px(128)), width(px(128))]);
+  let variations =
+    style([display(flexBox), flexWrap(wrap), justifyContent(center)]);
   let variationImage =
     style([display(block), width(px(48)), height(px(48))]);
   let buttonSelected = style([fontWeight(semiBold)]);
@@ -29,12 +35,41 @@ module Recipe = {
 };
 
 [@react.component]
-let make = (~item: Item.t) => {
+let make = (~item: Item.t, ~showLogin) => {
   let (variation, setVariation) =
     React.useState(() =>
       Option.flatMap(item.variations, variations => variations[0])
     );
   let userItem = UserStore.useItem(~itemId=item.id, ~variation);
+  let userItemStatus = Option.map(userItem, userItem => userItem.status);
+
+  let renderStatusButton = (status, label) => {
+    <button
+      onClick={_ =>
+        if (UserStore.isLoggedIn()) {
+          UserStore.setItem(
+            ~itemId=item.id,
+            ~variation,
+            ~item={
+              status,
+              note:
+                switch (userItem) {
+                | Some(userItem) => userItem.note
+                | None => ""
+                },
+            },
+          );
+        } else {
+          showLogin();
+        }
+      }
+      className={Cn.ifTrue(
+        Styles.buttonSelected,
+        userItemStatus == Some(status),
+      )}>
+      {React.string(label)}
+    </button>;
+  };
 
   <div className=Styles.card>
     <div>
@@ -55,6 +90,7 @@ let make = (~item: Item.t) => {
         )
         ++ ".png"
       }
+      className=Styles.mainImage
     />
     {switch (item.variations) {
      | Some(variations) =>
@@ -81,44 +117,22 @@ let make = (~item: Item.t) => {
     <div>
       {React.string(item.orderable ? "Orderable" : "Not Orderable")}
     </div>
-    {switch (userItem) {
-     | Some(userItem) =>
-       <div>
-         <button
-           onClick={_ => {
-             UserStore.setItem(
-               ~itemId=item.id,
-               ~variation,
-               ~item={status: Want, note: userItem.note},
-             )
-           }}
-           className={Cn.ifTrue(
-             Styles.buttonSelected,
-             userItem.status == Want,
-           )}>
-           {React.string("I want this")}
-         </button>
-         <button
-           onClick={_ => {
-             UserStore.setItem(
-               ~itemId=item.id,
-               ~variation,
-               ~item={status: WillTrade, note: userItem.note},
-             )
-           }}
-           className={Cn.ifTrue(
-             Styles.buttonSelected,
-             userItem.status == WillTrade,
-           )}>
-           {React.string("I'll trade this")}
-         </button>
-         <UserItemNote itemId={item.id} variation userItem />
-         <button
-           onClick={_ => {UserStore.removeItem(~itemId=item.id, ~variation)}}>
-           {React.string("Remove")}
-         </button>
-       </div>
-     | None => React.null
-     }}
+    <div>
+      {renderStatusButton(Want, "I want this")}
+      {renderStatusButton(WillTrade, "I'll trade this")}
+      {switch (userItem) {
+       | Some(userItem) =>
+         <>
+           <UserItemNote itemId={item.id} variation userItem />
+           <button
+             onClick={_ => {
+               UserStore.removeItem(~itemId=item.id, ~variation)
+             }}>
+             {React.string("Remove")}
+           </button>
+         </>
+       | None => React.null
+       }}
+    </div>
   </div>;
 };

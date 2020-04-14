@@ -24,7 +24,11 @@ module ViewingPage = {
       <div> {React.string(userId)} </div>
       {switch (user) {
        | Some(user) =>
-         <UserItemBrowser userItems={user.items} editable=false />
+         if (user.items->Array.length > 0) {
+           <UserItemBrowser userItems={user.items} editable=false />;
+         } else {
+           <div> {React.string("This profile is empty!")} </div>;
+         }
        | None => React.null
        }}
     </div>;

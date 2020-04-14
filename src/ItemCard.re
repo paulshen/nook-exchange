@@ -40,7 +40,14 @@ module Styles = {
   let variations =
     style([display(flexBox), flexWrap(wrap), justifyContent(center)]);
   let variationImage =
-    style([display(block), width(px(32)), height(px(32))]);
+    style([
+      display(block),
+      cursor(pointer),
+      width(px(32)),
+      height(px(32)),
+      borderRadius(px(4)),
+      hover([backgroundColor(hex("00000010"))]),
+    ]);
   let statusButtons = style([alignSelf(flexStart)]);
   let statusButton =
     style([

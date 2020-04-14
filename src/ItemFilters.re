@@ -1,6 +1,25 @@
 module Styles = {
   open Css;
-  let select = style([fontSize(px(16)), marginRight(px(16))]);
+  let root =
+    style([display(flexBox), alignItems(center), marginBottom(px(16))]);
+  let select =
+    style([
+      borderColor(hex("00000040")),
+      fontSize(px(16)),
+      height(px(32)),
+      marginRight(px(16)),
+    ]);
+  let textInput =
+    style([
+      backgroundColor(hex("fffffff0")),
+      fontSize(px(16)),
+      marginRight(px(16)),
+      padding2(~v=zero, ~h=px(12)),
+      borderRadius(px(4)),
+      borderWidth(zero),
+      height(px(32)),
+    ]);
+  let clearFilters = style([fontSize(px(16))]);
   let pager = style([fontSize(px(16))]);
   let pagerArrow = style([fontSize(px(24)), textDecoration(none)]);
   let pagerArrowLeft = style([marginRight(px(8))]);
@@ -8,6 +27,7 @@ module Styles = {
 };
 
 type t = {
+  text: string,
   orderable: option(bool),
   hasRecipe: option(bool),
   category: option(string),
@@ -15,6 +35,14 @@ type t = {
 
 let doesItemMatchFilters = (~item: Item.t, ~filters: t) => {
   (
+    switch (filters.text) {
+    | "" => true
+    | text =>
+      Js.String.toLowerCase(item.name)
+      |> Js.String.indexOf(Js.String.toLowerCase(text)) != (-1)
+    }
+  )
+  && (
     switch (filters.orderable) {
     | Some(true) => item.orderable
     | Some(false) => !item.orderable
@@ -85,9 +113,37 @@ module Pager = {
     };
 };
 
+external unsafeAsHtmlInputElement: 'a => Webapi.Dom.HtmlInputElement.t =
+  "%identity";
+
 [@react.component]
 let make = (~filters, ~onChange) => {
-  <div>
+  let inputTextRef = React.useRef(Js.Nullable.null);
+  let updateTextTimeoutRef = React.useRef(None);
+  React.useEffect1(
+    () => {
+      if (filters.text == "") {
+        Webapi.Dom.(
+          Utils.getElementForDomRef(inputTextRef)
+          ->unsafeAsHtmlInputElement
+          ->HtmlInputElement.setValue("")
+        );
+      };
+      Some(
+        () => {
+          switch (React.Ref.current(updateTextTimeoutRef)) {
+          | Some(updateTextTimeout) =>
+            Js.Global.clearTimeout(updateTextTimeout)
+          | None => ()
+          };
+          React.Ref.setCurrent(updateTextTimeoutRef, None);
+        },
+      );
+    },
+    [|filters|],
+  );
+
+  <div className=Styles.root>
     <select
       value={Belt.Option.getWithDefault(filters.category, "")}
       onChange={e => {
@@ -163,15 +219,48 @@ let make = (~filters, ~onChange) => {
       <option value="true"> {React.string("Has recipe")} </option>
       <option value="false"> {React.string("No recipe")} </option>
     </select>
-    {if (filters.hasRecipe != None
+    <input
+      type_="text"
+      ref={ReactDOMRe.Ref.domRef(inputTextRef)}
+      placeholder="Search by text.."
+      onChange={e => {
+        let value = ReactEvent.Form.target(e)##value;
+        switch (React.Ref.current(updateTextTimeoutRef)) {
+        | Some(updateTextTimeout) =>
+          Js.Global.clearTimeout(updateTextTimeout)
+        | None => ()
+        };
+        React.Ref.setCurrent(
+          updateTextTimeoutRef,
+          Some(
+            Js.Global.setTimeout(
+              () => {
+                React.Ref.setCurrent(updateTextTimeoutRef, None);
+                onChange({...filters, text: value});
+              },
+              300,
+            ),
+          ),
+        );
+      }}
+      className=Styles.textInput
+    />
+    {if (filters.text != ""
+         || filters.hasRecipe != None
          || filters.orderable != None
          || filters.category != None) {
        <a
          href="#"
          onClick={e => {
            ReactEvent.Mouse.preventDefault(e);
-           onChange({orderable: None, hasRecipe: None, category: None});
-         }}>
+           onChange({
+             text: "",
+             orderable: None,
+             hasRecipe: None,
+             category: None,
+           });
+         }}
+         className=Styles.clearFilters>
          {React.string("Clear filters")}
        </a>;
      } else {

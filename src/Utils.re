@@ -24,3 +24,7 @@ external convertToAny: Js.Dict.t('a) => any = "%identity";
 
 let deleteJsDictKey = (dict, key) =>
   _internalDeleteJsDictKey(convertToAny(dict), key);
+
+let getElementForDomRef = domRef => {
+  domRef->React.Ref.current->Js.Nullable.toOption->Belt.Option.getExn;
+};

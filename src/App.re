@@ -1,6 +1,6 @@
 module Styles = {
   open Css;
-  let root = style([paddingBottom(px(128))]);
+  let root = style([paddingBottom(px(64))]);
 };
 
 [@react.component]

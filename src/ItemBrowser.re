@@ -32,7 +32,9 @@ let numResultsPerPage = 20;
 let make = (~showLogin) => {
   let (filters, setFilters) =
     React.useState(() =>
-      ({orderable: None, hasRecipe: None, category: None}: ItemFilters.t)
+      (
+        {text: "", orderable: None, hasRecipe: None, category: None}: ItemFilters.t
+      )
     );
   let (pageOffset, setPageOffset) = React.useState(() => 0);
   let filteredItems =

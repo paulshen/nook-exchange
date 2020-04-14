@@ -92,10 +92,6 @@ module Styles = {
   let errorMessage = style([marginTop(px(-10)), color(Colors.red)]);
 };
 
-let getElementForDomRef = domRef => {
-  domRef->React.Ref.current->Js.Nullable.toOption->Belt.Option.getExn;
-};
-
 type registerStatus =
   | Success
   | Error(string);
@@ -138,7 +134,7 @@ let make = (~onClose) => {
   React.useEffect0(() => {
     open Webapi.Dom;
     let usernameInput =
-      getElementForDomRef(usernameRef)->Element.unsafeAsHtmlElement;
+      Utils.getElementForDomRef(usernameRef)->Element.unsafeAsHtmlElement;
     HtmlElement.focus(usernameInput);
     None;
   });

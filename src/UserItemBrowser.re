@@ -1,3 +1,8 @@
+module Styles = {
+  open Css;
+  let sectionTitle = style([fontSize(px(24)), marginBottom(px(16))]);
+};
+
 open Belt;
 
 module UserItemCard = {
@@ -95,15 +100,15 @@ module Section = {
     let numResults = filteredItems->Belt.Array.length;
 
     <div className=ItemBrowser.Styles.root>
-      <div>
+      <div className=Styles.sectionTitle>
         {React.string(
            switch (status) {
-           | Want => "Want"
-           | WillTrade => "Will Trade"
+           | Want => "Wishlist"
+           | WillTrade => "Available"
            },
          )}
       </div>
-      <div>
+      <div className=ItemBrowser.Styles.filterBar>
         <ItemFilters
           filters
           onChange={filters => {
@@ -111,25 +116,12 @@ module Section = {
             setPageOffset(_ => 0);
           }}
         />
-        {if (numResults > 0) {
-           <div>
-             {React.string(
-                "Showing "
-                ++ string_of_int(pageOffset * numResultsPerPage + 1)
-                ++ "-"
-                ++ string_of_int(
-                     Js.Math.min_int(
-                       (pageOffset + 1) * numResultsPerPage,
-                       numResults,
-                     ),
-                   )
-                ++ " of "
-                ++ string_of_int(numResults),
-              )}
-           </div>;
-         } else {
-           React.null;
-         }}
+        <ItemFilters.Pager
+          numResults
+          pageOffset
+          numResultsPerPage
+          setPageOffset
+        />
       </div>
       <div className=ItemBrowser.Styles.cards>
         {filteredItems

@@ -8,6 +8,7 @@ module Styles = {
     ]);
   let title = style([fontSize(px(16))]);
   let navRight = style([display(flexBox)]);
+  let logoutLink = style([marginLeft(px(16))]);
 };
 
 [@react.component]
@@ -29,7 +30,7 @@ let make = (~onLogin) => {
              </Link>
              {React.string(" (" ++ user.id ++ ")")}
            </div>
-           <div>
+           <div className=Styles.logoutLink>
              <a
                href="#"
                onClick={e => {

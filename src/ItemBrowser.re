@@ -3,7 +3,7 @@ module Styles = {
   let root =
     style([
       width(px(256)),
-      margin2(~v=zero, ~h=auto),
+      margin3(~top=px(32), ~bottom=zero, ~h=auto),
       media("(min-width: 600px)", [width(px(544))]),
       media("(min-width: 940px)", [width(px(832))]),
       media("(min-width: 1200px)", [width(px(1120))]),
@@ -15,8 +15,15 @@ module Styles = {
       flexWrap(wrap),
       marginRight(px(-32)),
       paddingTop(px(32)),
-      paddingBottom(px(32)),
     ]);
+  let filterBar =
+    style([
+      display(flexBox),
+      justifyContent(spaceBetween),
+      alignItems(center),
+    ]);
+  let bottomFilterBar = style([display(flexBox), justifyContent(flexEnd)]);
+  let noResults = style([fontSize(px(20)), paddingTop(px(16))]);
 };
 
 let numResultsPerPage = 20;
@@ -39,7 +46,7 @@ let make = (~showLogin) => {
   let numResults = filteredItems->Belt.Array.length;
 
   <div className=Styles.root>
-    <div>
+    <div className=Styles.filterBar>
       <ItemFilters
         filters
         onChange={filters => {
@@ -47,25 +54,12 @@ let make = (~showLogin) => {
           setPageOffset(_ => 0);
         }}
       />
-      {if (numResults > 0) {
-         <div>
-           {React.string(
-              "Showing "
-              ++ string_of_int(pageOffset * numResultsPerPage + 1)
-              ++ "-"
-              ++ string_of_int(
-                   Js.Math.min_int(
-                     (pageOffset + 1) * numResultsPerPage,
-                     numResults,
-                   ),
-                 )
-              ++ " of "
-              ++ string_of_int(numResults),
-            )}
-         </div>;
-       } else {
-         React.null;
-       }}
+      <ItemFilters.Pager
+        numResults
+        pageOffset
+        numResultsPerPage
+        setPageOffset
+      />
     </div>
     <div className=Styles.cards>
       {filteredItems
@@ -78,8 +72,16 @@ let make = (~showLogin) => {
          })
        ->React.array}
     </div>
+    <div className=Styles.bottomFilterBar>
+      <ItemFilters.Pager
+        numResults
+        pageOffset
+        numResultsPerPage
+        setPageOffset
+      />
+    </div>
     {if (Js.Array.length(filteredItems) == 0) {
-       <div>
+       <div className=Styles.noResults>
          {React.string(
             "There are no results. Try changing or clearing the filters!",
           )}

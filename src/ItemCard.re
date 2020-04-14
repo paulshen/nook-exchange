@@ -40,7 +40,7 @@ module Styles = {
   let variations =
     style([display(flexBox), flexWrap(wrap), justifyContent(center)]);
   let variationImage =
-    style([display(block), width(px(48)), height(px(48))]);
+    style([display(block), width(px(32)), height(px(32))]);
   let statusButtons = style([alignSelf(flexStart)]);
   let statusButton =
     style([
@@ -123,7 +123,7 @@ let renderStatusButton =
     ])}>
     {React.string(
        switch (status) {
-       | Want => {j|🙏 Want|j}
+       | Want => {j|🙏 Wishlist|j}
        | WillTrade => {j|✅ Available|j}
        },
      )}
@@ -180,9 +180,6 @@ let make = (~item: Item.t, ~showLogin) => {
        | Some(recipe) => <Recipe recipe />
        | None => React.null
        }}
-      <div>
-        {React.string(item.orderable ? "Orderable" : "Not Orderable")}
-      </div>
     </div>
     {switch (userItem) {
      | Some(userItem) =>

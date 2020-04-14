@@ -1,6 +1,6 @@
 module Styles = {
   open Css;
-  let root = style([display(flexBox), alignItems(center), flexWrap(wrap)]);
+  let root = style([display(flexBox), flexWrap(wrap)]);
   let select =
     style([
       borderColor(hex("00000040")),
@@ -19,7 +19,13 @@ module Styles = {
       borderWidth(zero),
       height(px(32)),
     ]);
-  let clearFilters = style([fontSize(px(16))]);
+  let clearFilters =
+    style([
+      alignSelf(flexStart),
+      fontSize(px(16)),
+      position(relative),
+      top(px(4)),
+    ]);
   let pager = style([fontSize(px(16))]);
   let pagerArrow =
     style([
@@ -154,6 +160,102 @@ module Pager = {
 external unsafeAsHtmlInputElement: 'a => Webapi.Dom.HtmlInputElement.t =
   "%identity";
 
+module CategoryButtons = {
+  module CategoryStyles = {
+    open Css;
+    let root = style([marginBottom(px(16))]);
+    let button = style([marginRight(px(8)), marginBottom(px(8))]);
+    let buttonNotSelected = style([opacity(0.5), hover([opacity(1.)])]);
+    let select =
+      style([height(px(37)), opacity(0.5), hover([opacity(1.)])]);
+    let selectSelected = style([height(px(37)), opacity(1.)]);
+  };
+
+  [@react.component]
+  let make = (~filters: t, ~onChange) => {
+    let renderButton = (category, label) => {
+      let isSelected = filters.category == Some(category);
+      <Button
+        onClick={_ => {
+          onChange({
+            ...filters,
+            category: isSelected ? None : Some(category),
+          })
+        }}
+        className={Cn.make([
+          CategoryStyles.button,
+          Cn.ifTrue(CategoryStyles.buttonNotSelected, !isSelected),
+        ])}
+        key=category>
+        {React.string(label)}
+      </Button>;
+    };
+
+    <div className=CategoryStyles.root>
+      <Button
+        onClick={_ => {onChange({...filters, category: None})}}
+        className={Cn.make([
+          CategoryStyles.button,
+          Cn.ifTrue(
+            CategoryStyles.buttonNotSelected,
+            filters.category != None,
+          ),
+        ])}>
+        {React.string("Everything!")}
+      </Button>
+      {renderButton("Furniture", "All Furniture")}
+      {Item.furnitureCategories
+       ->Belt.Array.mapU((. category) => renderButton(category, category))
+       ->React.array}
+      {renderButton("Clothing", "All Clothing")}
+      <select
+        value={
+          switch (filters.category) {
+          | Some(category) =>
+            Item.clothingCategories |> Js.Array.includes(category)
+              ? category : ""
+          | None => ""
+          }
+        }
+        onChange={e => {
+          let value = ReactEvent.Form.target(e)##value;
+          onChange({
+            ...filters,
+            category:
+              switch (value) {
+              | "" => None
+              | category => Some(category)
+              },
+          });
+        }}
+        className={Cn.make([
+          Styles.select,
+          CategoryStyles.select,
+          Cn.ifTrue(
+            CategoryStyles.selectSelected,
+            switch (filters.category) {
+            | Some(category) =>
+              Item.clothingCategories
+              |> Js.Array.includes(category)
+              || Item.otherCategories
+              |> Js.Array.includes(category)
+            | None => false
+            },
+          ),
+        ])}>
+        <option value=""> {React.string("-- Other Categories")} </option>
+        {Belt.Array.concat(Item.clothingCategories, Item.otherCategories)
+         ->Belt.Array.mapU((. category) =>
+             <option value=category key=category>
+               {React.string(category)}
+             </option>
+           )
+         ->React.array}
+      </select>
+    </div>;
+  };
+};
+
 [@react.component]
 let make = (~filters, ~onChange) => {
   let inputTextRef = React.useRef(Js.Nullable.null);
@@ -182,62 +284,6 @@ let make = (~filters, ~onChange) => {
   );
 
   <div className=Styles.root>
-    <select
-      value={Belt.Option.getWithDefault(filters.category, "")}
-      onChange={e => {
-        let value = ReactEvent.Form.target(e)##value;
-        onChange({
-          ...filters,
-          category:
-            switch (value) {
-            | "none" => None
-            | category => Some(category)
-            },
-        });
-      }}
-      className=Styles.select>
-      <option value="none"> {React.string("-- Category")} </option>
-      {Item.categories
-       ->Belt.Array.mapWithIndexU((. i, category) => {
-           let item = [|
-             <option value=category key={string_of_int(i)}>
-               {React.string(category)}
-             </option>,
-           |];
-           if (category == "Housewares") {
-             Belt.Array.concat(
-               [|
-                 <option value="Furniture" key="furniture">
-                   {React.string("- Furniture")}
-                 </option>,
-               |],
-               item,
-             );
-           } else if (category == "Tops") {
-             Belt.Array.concat(
-               [|
-                 <option value="Clothing" key="clothing">
-                   {React.string("- Clothing")}
-                 </option>,
-               |],
-               item,
-             );
-           } else if (category == "Photos") {
-             Belt.Array.concat(
-               [|
-                 <option value="Other" key="other">
-                   {React.string("- Other")}
-                 </option>,
-               |],
-               item,
-             );
-           } else {
-             item;
-           };
-         })
-       ->Belt.Array.concatMany
-       ->React.array}
-    </select>
     <select
       value={
         switch (filters.orderable) {
@@ -312,9 +358,9 @@ let make = (~filters, ~onChange) => {
         });
       }}
       className=Styles.select>
-      <option value="abc"> {React.string("A - Z")} </option>
       <option value="sell-desc"> {React.string("Sell Price Desc")} </option>
       <option value="sell-asc"> {React.string("Sell Price Asc")} </option>
+      <option value="abc"> {React.string("A - Z")} </option>
     </select>
     <input
       type_="text"
@@ -355,7 +401,7 @@ let make = (~filters, ~onChange) => {
              orderable: None,
              hasRecipe: None,
              category: None,
-             sort: ABC,
+             sort: SellPriceDesc,
            });
          }}
          className=Styles.clearFilters>

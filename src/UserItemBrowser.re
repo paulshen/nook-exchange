@@ -118,7 +118,7 @@ module Section = {
             orderable: None,
             hasRecipe: None,
             category: None,
-            sort: ABC,
+            sort: SellPriceDesc,
           }: ItemFilters.t
         )
       );

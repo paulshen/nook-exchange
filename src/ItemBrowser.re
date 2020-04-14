@@ -2,7 +2,7 @@ module Styles = {
   open Css;
   let root =
     style([
-      width(px(256)),
+      padding2(~v=zero, ~h=px(16)),
       margin3(~top=px(32), ~bottom=zero, ~h=auto),
       media("(min-width: 600px)", [width(px(544))]),
       media("(min-width: 940px)", [width(px(832))]),
@@ -10,31 +10,31 @@ module Styles = {
       media("(min-width: 1520px)", [width(px(1408))]),
     ]);
   let cards =
-    style([
-      display(flexBox),
-      flexWrap(wrap),
-      marginRight(px(-32)),
-      paddingTop(px(16)),
-    ]);
+    style([display(flexBox), flexWrap(wrap), marginRight(px(-32))]);
   let filterBar =
     style([
       display(flexBox),
       justifyContent(spaceBetween),
-      alignItems(center),
-      marginBottom(px(32)),
+      marginBottom(px(16)),
     ]);
   let bottomFilterBar = style([display(flexBox), justifyContent(flexEnd)]);
   let noResults = style([fontSize(px(20)), paddingTop(px(16))]);
 };
 
-let numResultsPerPage = 20;
+let numResultsPerPage = 24;
 
 [@react.component]
 let make = (~showLogin) => {
   let (filters, setFilters) =
     React.useState(() =>
       (
-        {text: "", orderable: None, hasRecipe: None, category: None, sort: ABC}: ItemFilters.t
+        {
+          text: "",
+          orderable: None,
+          hasRecipe: None,
+          category: None,
+          sort: SellPriceDesc,
+        }: ItemFilters.t
       )
     );
   let (pageOffset, setPageOffset) = React.useState(() => 0);
@@ -50,6 +50,13 @@ let make = (~showLogin) => {
   let numResults = filteredItems->Belt.Array.length;
 
   <div className=Styles.root>
+    <ItemFilters.CategoryButtons
+      filters
+      onChange={filters => {
+        setFilters(_ => filters);
+        setPageOffset(_ => 0);
+      }}
+    />
     <div className=Styles.filterBar>
       <ItemFilters
         filters

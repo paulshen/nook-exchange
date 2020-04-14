@@ -17,7 +17,7 @@ let make = (~onLogin) => {
   <div className=Styles.root>
     <div>
       <Link path="/" className=Styles.title>
-        {React.string("Tanukichi")}
+        {React.string("Nook Exchange")}
       </Link>
     </div>
     <div className=Styles.navRight>

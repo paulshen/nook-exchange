@@ -197,7 +197,7 @@ let make = (~onClose) => {
                    </div>
                    <div className=Styles.url>
                      <Link path={"/u/" ++ username}>
-                       {React.string("tanukichi.com/u/" ++ username)}
+                       {React.string("nook.exchange/u/" ++ username)}
                      </Link>
                    </div>
                    <div className=Styles.submitBar>
@@ -212,7 +212,7 @@ let make = (~onClose) => {
                      {React.string("Register an account!")}
                    </div>
                    <div className=Styles.urlPreview>
-                     {React.string("tanukichi.com/u/" ++ username)}
+                     {React.string("nook.exchange/u/" ++ username)}
                    </div>
                    <div>
                      <form onSubmit=onRegisterSubmit>

@@ -1,6 +1,22 @@
 module Styles = {
   open Css;
-  let cards = style([display(flexBox), flexWrap(wrap)]);
+  let root =
+    style([
+      width(px(256)),
+      margin2(~v=zero, ~h=auto),
+      media("(min-width: 600px)", [width(px(544))]),
+      media("(min-width: 940px)", [width(px(832))]),
+      media("(min-width: 1200px)", [width(px(1120))]),
+      media("(min-width: 1520px)", [width(px(1408))]),
+    ]);
+  let cards =
+    style([
+      display(flexBox),
+      flexWrap(wrap),
+      marginRight(px(-32)),
+      paddingTop(px(32)),
+      paddingBottom(px(32)),
+    ]);
 };
 
 let numResultsPerPage = 20;
@@ -22,7 +38,7 @@ let make = (~showLogin) => {
     );
   let numResults = filteredItems->Belt.Array.length;
 
-  <div>
+  <div className=Styles.root>
     <div>
       <ItemFilters
         filters

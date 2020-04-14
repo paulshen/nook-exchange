@@ -5,62 +5,52 @@ module UserItemCard = {
   let make = (~itemId, ~variation, ~userItem: User.item, ~editable) => {
     let item = Item.getItem(~itemId);
     <div className=ItemCard.Styles.card>
-      <div> {React.string(item.name)} </div>
-      <img
-        src={
-          "https://imgur.com/"
-          ++ (
-            switch (variation) {
-            | Some(variation) => variation
-            | None => item.image
-            }
-          )
-          ++ ".png"
-        }
-      />
-      <div>
-        {React.string(item.orderable ? "Orderable" : "Not Orderable")}
+      <div className=ItemCard.Styles.body>
+        <div className=ItemCard.Styles.name> {React.string(item.name)} </div>
+        <img
+          src={
+            "https://imgur.com/"
+            ++ (
+              switch (variation) {
+              | Some(variation) => variation
+              | None => item.image
+              }
+            )
+            ++ ".png"
+          }
+          className=ItemCard.Styles.mainImage
+        />
+        <div>
+          {React.string(item.orderable ? "Orderable" : "Not Orderable")}
+        </div>
       </div>
       {editable
-         ? <div>
-             <div>
-               <button
-                 onClick={_ => {
-                   UserStore.setItem(
-                     ~itemId,
-                     ~variation,
-                     ~item={status: Want, note: userItem.note},
-                   )
-                 }}
-                 className={Cn.ifTrue(
-                   ItemCard.Styles.buttonSelected,
-                   userItem.status == Want,
-                 )}>
-                 {React.string("I want this")}
-               </button>
-               <button
-                 onClick={_ => {
-                   UserStore.setItem(
-                     ~itemId,
-                     ~variation,
-                     ~item={status: WillTrade, note: userItem.note},
-                   )
-                 }}
-                 className={Cn.ifTrue(
-                   ItemCard.Styles.buttonSelected,
-                   userItem.status == WillTrade,
-                 )}>
-                 {React.string("I'll trade this")}
-               </button>
-             </div>
+         ? <>
              <UserItemNote itemId={item.id} variation userItem />
              <button
+               className=ItemCard.Styles.removeButton
                onClick={_ => {
                  UserStore.removeItem(~itemId=item.id, ~variation)
                }}>
-               {React.string("Remove")}
+               {React.string({j|❌|j})}
              </button>
-           </div>
+             <div className=ItemCard.Styles.statusButtons>
+               {ItemCard.renderStatusButton(
+                  ~itemId=item.id,
+                  ~variation,
+                  ~status=Want,
+                  ~userItem=Some(userItem),
+                  (),
+                )}
+               {ItemCard.renderStatusButton(
+                  ~itemId=item.id,
+                  ~variation,
+                  ~status=WillTrade,
+                  ~userItem=Some(userItem),
+                  (),
+                )}
+             </div>
+           </>
          : <div>
              {switch (userItem.status) {
               | Want => <div> {React.string("I want this!")} </div>
@@ -104,7 +94,7 @@ module Section = {
       );
     let numResults = filteredItems->Belt.Array.length;
 
-    <div>
+    <div className=ItemBrowser.Styles.root>
       <div>
         {React.string(
            switch (status) {

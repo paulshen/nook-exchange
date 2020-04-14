@@ -1,17 +1,28 @@
 module Styles = {
   open Css;
-  let root = style([display(flexBox), justifyContent(spaceBetween)]);
+  let root =
+    style([
+      display(flexBox),
+      justifyContent(spaceBetween),
+      padding2(~v=px(16), ~h=px(16)),
+    ]);
+  let title = style([fontSize(px(16))]);
+  let navRight = style([display(flexBox)]);
 };
 
 [@react.component]
 let make = (~onLogin) => {
   let user = UserStore.useMe();
   <div className=Styles.root>
-    <div> <Link path="/"> {React.string("Tanukichi")} </Link> </div>
     <div>
+      <Link path="/" className=Styles.title>
+        {React.string("Tanukichi")}
+      </Link>
+    </div>
+    <div className=Styles.navRight>
       {switch (user) {
        | Some(user) =>
-         <div>
+         <>
            <div>
              <Link path={"/u/" ++ user.id}>
                {React.string("My Profile")}
@@ -28,7 +39,7 @@ let make = (~onLogin) => {
                {React.string("Logout")}
              </a>
            </div>
-         </div>
+         </>
        | None =>
          <a
            href="#"

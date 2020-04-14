@@ -82,7 +82,11 @@ let make = (~item: Item.t) => {
     <div>
       <button
         onClick={_ => {
-          UserStore.setItem(~item={itemId: item.id, variation, status: Want})
+          UserStore.setItem(
+            ~itemId=item.id,
+            ~variation,
+            ~item={status: Want, note: ""},
+          )
         }}
         className={Cn.ifTrue(
           Styles.buttonSelected,
@@ -93,7 +97,9 @@ let make = (~item: Item.t) => {
       <button
         onClick={_ => {
           UserStore.setItem(
-            ~item={itemId: item.id, variation, status: WillTrade},
+            ~itemId=item.id,
+            ~variation,
+            ~item={status: WillTrade, note: ""},
           )
         }}
         className={Cn.ifTrue(

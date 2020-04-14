@@ -2,15 +2,15 @@ open Belt;
 
 module UserItemCard = {
   [@react.component]
-  let make = (~userItem: User.item, ~editable) => {
-    let item = Item.getItem(~itemId=userItem.itemId);
+  let make = (~itemId, ~variation, ~userItem: User.item, ~editable) => {
+    let item = Item.getItem(~itemId);
     <div className=ItemCard.Styles.card>
       <div> {React.string(item.name)} </div>
       <img
         src={
           "https://imgur.com/"
           ++ (
-            switch (userItem.variation) {
+            switch (variation) {
             | Some(variation) => variation
             | None => item.image
             }
@@ -26,11 +26,9 @@ module UserItemCard = {
              <button
                onClick={_ => {
                  UserStore.setItem(
-                   ~item={
-                     itemId: item.id,
-                     variation: userItem.variation,
-                     status: Want,
-                   },
+                   ~itemId,
+                   ~variation,
+                   ~item={status: Want, note: ""},
                  )
                }}
                className={Cn.ifTrue(
@@ -42,11 +40,9 @@ module UserItemCard = {
              <button
                onClick={_ => {
                  UserStore.setItem(
-                   ~item={
-                     itemId: item.id,
-                     variation: userItem.variation,
-                     status: WillTrade,
-                   },
+                   ~itemId,
+                   ~variation,
+                   ~item={status: WillTrade, note: ""},
                  )
                }}
                className={Cn.ifTrue(
@@ -57,10 +53,7 @@ module UserItemCard = {
              </button>
              <button
                onClick={_ => {
-                 UserStore.removeItem(
-                   ~itemId=item.id,
-                   ~variation=userItem.variation,
-                 )
+                 UserStore.removeItem(~itemId=item.id, ~variation)
                }}>
                {React.string("Remove")}
              </button>
@@ -80,7 +73,11 @@ module Section = {
 
   [@react.component]
   let make =
-      (~status: User.itemStatus, ~userItems: array(User.item), ~editable) => {
+      (
+        ~status: User.itemStatus,
+        ~userItems: array(((string, option(string)), User.item)),
+        ~editable,
+      ) => {
     let (filters, setFilters) =
       React.useState(() =>
         ({orderable: None, hasRecipe: None, category: None}: ItemFilters.t)
@@ -89,9 +86,9 @@ module Section = {
     let filteredItems =
       React.useMemo2(
         () =>
-          userItems->Belt.Array.keep(userItem =>
+          userItems->Belt.Array.keep((((itemId, _), _)) =>
             ItemFilters.doesItemMatchFilters(
-              ~item=Item.getItem(~itemId=userItem.itemId),
+              ~item=Item.getItem(~itemId),
               ~filters,
             )
           ),
@@ -142,14 +139,13 @@ module Section = {
              ~offset=pageOffset * numResultsPerPage,
              ~len=numResultsPerPage,
            )
-         ->Belt.Array.mapU((. userItem) => {
+         ->Belt.Array.mapU((. ((itemId, variation), userItem)) => {
              <UserItemCard
+               itemId
+               variation
                userItem
                editable
-               key={
-                 userItem.itemId
-                 ++ Option.getWithDefault(userItem.variation, "")
-               }
+               key={itemId ++ Option.getWithDefault(variation, "")}
              />
            })
          ->React.array}
@@ -159,9 +155,10 @@ module Section = {
 };
 
 [@react.component]
-let make = (~userItems: array(User.item), ~editable) => {
+let make =
+    (~userItems: array(((string, option(string)), User.item)), ~editable) => {
   let (wants, willTrades) =
-    userItems->Array.partitionU((. item) => item.status == Want);
+    userItems->Array.partitionU((. (_, item)) => item.status == Want);
   <div>
     {if (wants->Array.length > 0) {
        <Section status=Want userItems=wants editable />;

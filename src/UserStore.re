@@ -21,10 +21,7 @@ let useItem = (~itemId, ~variation) => {
     React.useCallback2(
       (state: state) => {
         Option.flatMap(state, user =>
-          user.items
-          ->Array.getBy(item =>
-              item.itemId == itemId && item.variation == variation
-            )
+          user.items->Js.Dict.get(User.getItemKey(~itemId, ~variation))
         )
       },
       (itemId, variation),
@@ -32,13 +29,27 @@ let useItem = (~itemId, ~variation) => {
   api.useStoreWithSelector(selector, ());
 };
 
-let postUpdatedUser = (~user) => {
+let setItem = (~itemId: string, ~variation: option(string), ~item: User.item) => {
+  let user = Option.getExn(api.getState());
+  let updatedUser = {
+    ...user,
+    items: {
+      let clone = Utils.cloneJsDict(user.items);
+      clone->Js.Dict.set(User.getItemKey(~itemId, ~variation), item);
+      clone;
+    },
+  };
+  api.dispatch(UpdateUser(updatedUser));
   {
     Fetch.fetchWithInit(
-      Constants.apiUrl ++ "/me",
+      Constants.apiUrl
+      ++ "/@me/items/"
+      ++ itemId
+      ++ "/"
+      ++ Option.getWithDefault(variation, "0"),
       Fetch.RequestInit.make(
         ~method_=Post,
-        ~body=Fetch.BodyInit.make(Js.Json.stringify(User.toAPI(user))),
+        ~body=Fetch.BodyInit.make(Js.Json.stringify(User.itemToJson(item))),
         ~headers=Fetch.HeadersInit.make({"Content-Type": "application/json"}),
         ~credentials=Include,
         ~mode=CORS,
@@ -49,50 +60,35 @@ let postUpdatedUser = (~user) => {
   |> ignore;
 };
 
-let setItem = (~item: User.item) => {
-  let user = Option.getExn(api.getState());
-  let updatedUser = {
-    ...user,
-    items:
-      switch (
-        user.items
-        ->Array.getIndexBy(iter => {
-            iter.itemId == item.itemId && iter.variation == item.variation
-          })
-      ) {
-      | Some(index) =>
-        Array.concatMany([|
-          user.items->Array.slice(~offset=0, ~len=index),
-          [|item|],
-          user.items->Array.sliceToEnd(index + 1),
-        |])
-      | None => Array.concat(user.items, [|item|])
-      },
-  };
-  api.dispatch(UpdateUser(updatedUser));
-  postUpdatedUser(~user=updatedUser);
-};
-
 let removeItem = (~itemId, ~variation) => {
   let user = Option.getExn(api.getState());
-  switch (
-    user.items
-    ->Array.getIndexBy(iter => {
-        iter.itemId == itemId && iter.variation == variation
-      })
-  ) {
-  | Some(index) =>
+  let key = User.getItemKey(~itemId, ~variation);
+  if (user.items->Js.Dict.get(key)->Option.isSome) {
     let updatedUser = {
       ...user,
-      items:
-        Array.concatMany([|
-          user.items->Array.slice(~offset=0, ~len=index),
-          user.items->Array.sliceToEnd(index + 1),
-        |]),
+      items: {
+        let clone = Utils.cloneJsDict(user.items);
+        Utils.deleteJsDictKey(clone, key);
+        clone;
+      },
     };
     api.dispatch(UpdateUser(updatedUser));
-    postUpdatedUser(~user=updatedUser);
-  | None => ()
+    {
+      Fetch.fetchWithInit(
+        Constants.apiUrl
+        ++ "/@me/items/"
+        ++ itemId
+        ++ "/"
+        ++ Option.getWithDefault(variation, "0"),
+        Fetch.RequestInit.make(
+          ~method_=Delete,
+          ~credentials=Include,
+          ~mode=CORS,
+          (),
+        ),
+      );
+    }
+    |> ignore;
   };
 };
 
@@ -147,7 +143,7 @@ let init = () => {
   {
     let%Repromise.JsExn response =
       Fetch.fetchWithInit(
-        Constants.apiUrl ++ "/me",
+        Constants.apiUrl ++ "/@me",
         Fetch.RequestInit.make(
           ~method_=Get,
           ~credentials=Include,

@@ -15,5 +15,6 @@ let make = () => {
      }}
     {showLogin
        ? <LoginOverlay onClose={() => setShowLogin(_ => false)} /> : React.null}
+    <ReactAtmosphere.LayerContainer />
   </div>;
 };

@@ -38,7 +38,7 @@ module Styles = {
       marginTop(px(-8)),
       padding3(~top=px(8), ~bottom=zero, ~h=px(4)),
     ]);
-  let removeButton = style([top(px(8)), bottom(initial)]);
+  let removeButton = style([top(px(9)), bottom(initial)]);
 };
 
 open Belt;
@@ -60,6 +60,12 @@ module UserItemCard = {
           className=ItemCard.Styles.mainImage
         />
         <div className=Styles.name> {React.string(item.name)} </div>
+      </div>
+      <div className=ItemCard.Styles.metaIcons>
+        {switch (item.recipe) {
+         | Some(recipe) => <ItemCard.RecipeIcon recipe />
+         | None => React.null
+         }}
       </div>
       {editable
          ? <>

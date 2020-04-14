@@ -49,7 +49,13 @@ module Styles = {
       alignItems(center),
       marginBottom(px(16)),
     ]);
-  let name = style([fontSize(px(20)), marginBottom(px(8))]);
+  let name =
+    style([
+      fontSize(px(20)),
+      marginBottom(px(8)),
+      padding2(~v=zero, ~h=px(12)),
+      textAlign(center),
+    ]);
   let mainImage =
     style([
       display(block),
@@ -69,6 +75,7 @@ module Styles = {
       hover([backgroundColor(hex("00000010"))]),
     ]);
   let variationImageSelected = style([backgroundColor(hex("3aa56320"))]);
+  let metaIcons = style([position(absolute), top(px(8)), left(px(8))]);
   let bottomBar = style([alignSelf(flexStart), fontSize(px(12))]);
   let bottomBarStatus = style([paddingTop(px(8))]);
   let statusButtons = style([]);
@@ -89,18 +96,68 @@ module Styles = {
     ]);
 };
 
-module Recipe = {
+[@bs.module] external recipeIcon: string = "./assets/recipe_icon.png";
+
+module RecipeIcon = {
+  module Styles = {
+    open Css;
+    let recipeIcon =
+      style([display(block), width(px(24)), height(px(24))]);
+    let recipeLayer =
+      style([
+        backgroundColor(hex("404040f8")),
+        color(Colors.white),
+        borderRadius(px(8)),
+        padding2(~v=px(12), ~h=px(16)),
+      ]);
+  };
+
+  module RecipeLayer = {
+    [@react.component]
+    let make = (~recipe) => {
+      <div className=Styles.recipeLayer>
+        {recipe
+         ->Array.map(((itemId, quantity)) =>
+             <div key=itemId>
+               {React.string(itemId ++ " x " ++ string_of_int(quantity))}
+             </div>
+           )
+         ->React.array}
+      </div>;
+    };
+  };
+
   [@react.component]
   let make = (~recipe: Item.recipe) => {
-    <div>
-      {recipe
-       ->Array.map(((itemId, quantity)) =>
-           <div key=itemId>
-             {React.string(itemId ++ " x " ++ string_of_int(quantity))}
-           </div>
-         )
-       ->React.array}
-    </div>;
+    let (showRecipe, setShowRecipe) = React.useState(() => false);
+    let iconRef = React.useRef(Js.Nullable.null);
+    <>
+      <img
+        src=recipeIcon
+        className=Styles.recipeIcon
+        onMouseEnter={_ => setShowRecipe(_ => true)}
+        onMouseLeave={_ => setShowRecipe(_ => false)}
+        ref={ReactDOMRe.Ref.domRef(iconRef)}
+      />
+      {showRecipe
+         ? <ReactAtmosphere.PopperLayer
+             reference=iconRef
+             render={_ => <RecipeLayer recipe />}
+             options={
+               placement: Some("bottom-start"),
+               modifiers:
+                 Some([|
+                   {
+                     "name": "offset",
+                     "options": {
+                       "offset": [|0, 4|],
+                     },
+                   },
+                 |]),
+             }
+           />
+         : React.null}
+    </>;
   };
 };
 
@@ -157,7 +214,6 @@ let make = (~item: Item.t, ~showLogin) => {
   let (variation, setVariation) = React.useState(() => 0);
   let userItem = UserStore.useItem(~itemId=item.id, ~variation);
 
-  Js.log(item);
   <div
     className={Cn.make([
       Styles.card,
@@ -179,7 +235,6 @@ let make = (~item: Item.t, ~showLogin) => {
        | Some(numVariations) =>
          <div className=Styles.variations>
            {let children = [||];
-            Js.log(numVariations);
             for (v in 0 to numVariations - 1) {
               children
               |> Js.Array.push(
@@ -210,10 +265,12 @@ let make = (~item: Item.t, ~showLogin) => {
          </div>
        | None => React.null
        }}
-      {switch (item.recipe) {
-       | Some(recipe) => <Recipe recipe />
-       | None => React.null
-       }}
+      <div className=Styles.metaIcons>
+        {switch (item.recipe) {
+         | Some(recipe) => <RecipeIcon recipe />
+         | None => React.null
+         }}
+      </div>
     </div>
     {switch (userItem) {
      | Some(userItem) =>

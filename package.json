@@ -21,6 +21,7 @@
     "bs-css-emotion": "^1.1.0",
     "bs-fetch": "^0.5.2",
     "bs-let": "0.1.11",
+    "bs-react-atmosphere": "^0.0.2-alpha.1",
     "bs-webapi": "^0.15.9",
     "re-classnames": "^4.1.0",
     "reason-promise": "^1.0.2",

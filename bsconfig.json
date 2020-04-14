@@ -22,7 +22,8 @@
     "bs-fetch",
     "reason-promise",
     "restorative",
-    "re-classnames"
+    "re-classnames",
+    "bs-react-atmosphere"
   ],
   "warnings": {
     "error" : "+101"

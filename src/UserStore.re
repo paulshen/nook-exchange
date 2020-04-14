@@ -94,6 +94,41 @@ let removeItem = (~itemId, ~variation) => {
   };
 };
 
+let register = (~userId, ~password) => {
+  let%Repromise.JsExn response =
+    Fetch.fetchWithInit(
+      Constants.apiUrl ++ "/register",
+      Fetch.RequestInit.make(
+        ~method_=Post,
+        ~body=
+          Fetch.BodyInit.make(
+            Js.Json.stringify(
+              Js.Json.object_(
+                Js.Dict.fromArray([|
+                  ("userId", Js.Json.string(userId)),
+                  ("password", Js.Json.string(password)),
+                |]),
+              ),
+            ),
+          ),
+        ~headers=Fetch.HeadersInit.make({"Content-Type": "application/json"}),
+        ~credentials=Include,
+        ~mode=CORS,
+        (),
+      ),
+    );
+  switch (Fetch.Response.status(response)) {
+  | 200 =>
+    let%Repromise.JsExn json = Fetch.Response.json(response);
+    let user = User.fromAPI(json);
+    api.dispatch(Login(user));
+    Promise.resolved(Ok(user));
+  | _ =>
+    let%Repromise.JsExn text = Fetch.Response.text(response);
+    Promise.resolved(Error(text));
+  };
+};
+
 let login = (~userId, ~password) => {
   let%Repromise.JsExn response =
     Fetch.fetchWithInit(
@@ -126,6 +161,7 @@ let login = (~userId, ~password) => {
   | _ => Promise.resolved(Error())
   };
 };
+
 let logout = () => {
   api.dispatch(Logout);
   let%Repromise.JsExn response =

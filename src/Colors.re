@@ -1,4 +1,5 @@
 open Css;
 
-let green = hex("007d75");
+let green = hex("3aa563");
 let white = hex("ffffff");
+let red = hex("ED3730");

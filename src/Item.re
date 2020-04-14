@@ -44,6 +44,31 @@ let categories = [|
   // "Other",
 |];
 
+let furnitureCategories = [|
+  "Housewares",
+  "Miscellaneous",
+  "Wall-mounted",
+  "Wallpaper",
+  "Floors",
+  "Rugs",
+  "Photos",
+  "Posters",
+  "Fencing",
+  "Tools",
+|];
+
+let clothingCategories = [|
+  "Tops",
+  "Bottoms",
+  "Dresses",
+  "Headwear",
+  "Accessories",
+  "Socks",
+  "Shoes",
+  "Bags",
+  "Umbrellas",
+|];
+
 [@bs.module] external itemsJson: Js.Json.t = "./items.json";
 
 exception UnexpectedType(string);

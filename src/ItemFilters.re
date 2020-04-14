@@ -64,6 +64,10 @@ let doesItemMatchFilters = (~item: Item.t, ~filters: t) => {
   )
   && (
     switch (filters.category) {
+    | Some("Furniture") =>
+      Item.furnitureCategories |> Js.Array.includes(item.category)
+    | Some("Clothing") =>
+      Item.clothingCategories |> Js.Array.includes(item.category)
     | Some(category) => item.category == category
     | None => true
     }
@@ -166,11 +170,35 @@ let make = (~filters, ~onChange) => {
       className=Styles.select>
       <option value="none"> {React.string("-- Category")} </option>
       {Item.categories
-       ->Belt.Array.mapWithIndexU((. i, category) =>
-           <option value=category key={string_of_int(i)}>
-             {React.string(category)}
-           </option>
-         )
+       ->Belt.Array.mapWithIndexU((. i, category) => {
+           let item = [|
+             <option value=category key={string_of_int(i)}>
+               {React.string(category)}
+             </option>,
+           |];
+           if (category == "Housewares") {
+             Belt.Array.concat(
+               [|
+                 <option value="Furniture" key="furniture">
+                   {React.string("- Furniture")}
+                 </option>,
+               |],
+               item,
+             );
+           } else if (category == "Tops") {
+             Belt.Array.concat(
+               [|
+                 <option value="Clothing" key="clothing">
+                   {React.string("- Clothing")}
+                 </option>,
+               |],
+               item,
+             );
+           } else {
+             item;
+           };
+         })
+       ->Belt.Array.concatMany
        ->React.array}
     </select>
     <select

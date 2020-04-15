@@ -20,6 +20,10 @@ module ViewingPage = {
   [@react.component]
   let make = (~userId) => {
     let (user, setUser) = React.useState(() => None);
+    let isMountedRef = React.useRef(true);
+    React.useEffect0(() => {
+      Some(() => {React.Ref.setCurrent(isMountedRef, false)})
+    });
     React.useEffect1(
       () => {
         {
@@ -28,7 +32,9 @@ module ViewingPage = {
           switch (Fetch.Response.status(response)) {
           | 200 =>
             let%Repromise.JsExn json = Fetch.Response.json(response);
-            setUser(_ => Some(User.fromAPI(json)));
+            if (React.Ref.current(isMountedRef)) {
+              setUser(_ => Some(User.fromAPI(json)));
+            };
             Promise.resolved();
           | _ => Promise.resolved()
           };

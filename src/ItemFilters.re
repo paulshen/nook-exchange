@@ -11,7 +11,7 @@ module Styles = {
     ]);
   let textInput =
     style([
-      backgroundColor(hex("fffffff0")),
+      backgroundColor(Colors.white),
       fontSize(px(16)),
       marginRight(px(16)),
       padding2(~v=zero, ~h=px(12)),
@@ -284,6 +284,32 @@ let make = (~filters, ~onChange) => {
   );
 
   <div className=Styles.root>
+    <input
+      type_="text"
+      ref={ReactDOMRe.Ref.domRef(inputTextRef)}
+      placeholder="Search by text.."
+      onChange={e => {
+        let value = ReactEvent.Form.target(e)##value;
+        switch (React.Ref.current(updateTextTimeoutRef)) {
+        | Some(updateTextTimeout) =>
+          Js.Global.clearTimeout(updateTextTimeout)
+        | None => ()
+        };
+        React.Ref.setCurrent(
+          updateTextTimeoutRef,
+          Some(
+            Js.Global.setTimeout(
+              () => {
+                React.Ref.setCurrent(updateTextTimeoutRef, None);
+                onChange({...filters, text: value});
+              },
+              300,
+            ),
+          ),
+        );
+      }}
+      className=Styles.textInput
+    />
     <select
       value={
         switch (filters.orderable) {
@@ -364,32 +390,6 @@ let make = (~filters, ~onChange) => {
       <option value="sell-asc"> {React.string({j|Sell Price ↑|j})} </option>
       <option value="abc"> {React.string("A - Z")} </option>
     </select>
-    <input
-      type_="text"
-      ref={ReactDOMRe.Ref.domRef(inputTextRef)}
-      placeholder="Search by text.."
-      onChange={e => {
-        let value = ReactEvent.Form.target(e)##value;
-        switch (React.Ref.current(updateTextTimeoutRef)) {
-        | Some(updateTextTimeout) =>
-          Js.Global.clearTimeout(updateTextTimeout)
-        | None => ()
-        };
-        React.Ref.setCurrent(
-          updateTextTimeoutRef,
-          Some(
-            Js.Global.setTimeout(
-              () => {
-                React.Ref.setCurrent(updateTextTimeoutRef, None);
-                onChange({...filters, text: value});
-              },
-              300,
-            ),
-          ),
-        );
-      }}
-      className=Styles.textInput
-    />
     {if (filters.text != ""
          || filters.hasRecipe != None
          || filters.orderable != None

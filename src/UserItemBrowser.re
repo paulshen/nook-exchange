@@ -51,7 +51,8 @@ module UserItemCard = {
       <div className=ItemCard.Styles.body>
         <img
           src={
-            "/images/"
+            Constants.cdnUrl
+            ++ "/items/"
             ++ item.image
             ++ "__"
             ++ string_of_int(variation)

@@ -252,7 +252,8 @@ let make = (~item: Item.t, ~showLogin) => {
       <div className=Styles.name> {React.string(item.name)} </div>
       <img
         src={
-          "/images/"
+          Constants.cdnUrl
+          ++ "/items/"
           ++ item.image
           ++ "__"
           ++ string_of_int(variation)
@@ -272,7 +273,8 @@ let make = (~item: Item.t, ~showLogin) => {
                      key={string_of_int(v)}>
                      <img
                        src={
-                         "/images/"
+                         Constants.cdnUrl
+                         ++ "/items/"
                          ++ item.image
                          ++ "__"
                          ++ string_of_int(v)

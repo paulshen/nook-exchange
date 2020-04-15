@@ -36,20 +36,20 @@ let fromItemKey = (~key: string) => {
 type t = {
   id: string,
   items: Js.Dict.t(item),
+  profileText: string,
 };
 
 let fromAPI = (json: Js.Json.t) => {
   Json.Decode.{
     id: json |> field("userId", string),
     items: json |> field("items", dict(itemFromJson)),
+    profileText:
+      (
+        json
+        |> field("metadata", json =>
+             json |> optional(field("profileText", string))
+           )
+      )
+      ->Belt.Option.getWithDefault(""),
   };
-};
-
-let toAPI = (user: t) => {
-  Json.Encode.(
-    object_([
-      ("userId", string(user.id)),
-      ("items", dict(itemToJson, user.items)),
-    ])
-  );
 };

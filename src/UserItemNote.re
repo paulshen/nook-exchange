@@ -70,7 +70,7 @@ let make = (~itemId, ~variation, ~userItem: User.item) => {
               React.Ref.setCurrent(throttleNoteTimeoutRef, None);
               React.Ref.current(updateNoteRef, ());
             },
-            300,
+            500,
           ),
         ),
       );

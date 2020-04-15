@@ -107,6 +107,39 @@ let removeItem = (~itemId, ~variation) => {
   };
 };
 
+let updateProfileText = (~profileText) => {
+  let user = Option.getExn(api.getState());
+  let updatedUser = {...user, profileText};
+  api.dispatch(UpdateUser(updatedUser));
+  Analytics.Amplitude.logEventWithProperties(
+    ~eventName="Profile Text Updated",
+    ~eventProperties={"text": profileText},
+  );
+  {
+    Fetch.fetchWithInit(
+      Constants.apiUrl ++ "/@me/profileText",
+      Fetch.RequestInit.make(
+        ~method_=Post,
+        ~body=
+          Fetch.BodyInit.make(
+            Js.Json.stringify(
+              Js.Json.object_(
+                Js.Dict.fromArray([|
+                  ("text", Js.Json.string(profileText)),
+                |]),
+              ),
+            ),
+          ),
+        ~headers=Fetch.HeadersInit.make({"Content-Type": "application/json"}),
+        ~credentials=Include,
+        ~mode=CORS,
+        (),
+      ),
+    );
+  }
+  |> ignore;
+};
+
 let register = (~userId, ~password) => {
   let%Repromise.JsExn response =
     Fetch.fetchWithInit(

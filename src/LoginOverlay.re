@@ -116,9 +116,9 @@ let make = (~onClose) => {
       | Error(_) =>
         setRegisterStatus(_ =>
           Some(Error("Login failed. Please try again."))
-        )
+        );
+        setIsSubmitting(_ => false);
       };
-      setIsSubmitting(_ => false);
       Promise.resolved();
     }
     |> ignore;
@@ -194,7 +194,10 @@ let make = (~onClose) => {
                      }}>
                      {React.string("Need an account?")}
                    </a>
-                   <button type_="submit" disabled=isSubmitting className=Styles.submitButton>
+                   <button
+                     type_="submit"
+                     disabled=isSubmitting
+                     className=Styles.submitButton>
                      {React.string("Login")}
                    </button>
                  </div>
@@ -271,7 +274,9 @@ let make = (~onClose) => {
                          <button
                            type_="submit"
                            className=Styles.submitButton
-                           disabled={Js.String.length(password) < 4 || isSubmitting}>
+                           disabled={
+                             Js.String.length(password) < 4 || isSubmitting
+                           }>
                            {React.string("Register")}
                          </button>
                        </div>

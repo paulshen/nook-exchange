@@ -88,7 +88,10 @@ let make = (~showLogin) => {
         numResults
         pageOffset
         numResultsPerPage
-        setPageOffset
+        setPageOffset={f => {
+          setPageOffset(f);
+          Webapi.Dom.(window |> Window.scrollTo(0., 0.));
+        }}
       />
     </div>
     {if (Js.Array.length(filteredItems) == 0) {

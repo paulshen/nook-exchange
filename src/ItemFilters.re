@@ -24,7 +24,7 @@ module Styles = {
       alignSelf(flexStart),
       fontSize(px(16)),
       position(relative),
-      top(px(4)),
+      top(px(5)),
     ]);
   let pager = style([fontSize(px(16))]);
   let pagerArrow =

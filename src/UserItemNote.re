@@ -19,61 +19,58 @@ module Styles = {
         borderColor(rgba(0, 0, 0, 0.1)),
       ]),
     ]);
+  let updateBar =
+    style([
+      display(flexBox),
+      justifyContent(spaceBetween),
+      alignItems(center),
+    ]);
+  let cancelLink =
+    style([
+      opacity(0.8),
+      textDecoration(none),
+      marginLeft(px(8)),
+      hover([opacity(1.), textDecoration(underline)]),
+    ]);
 };
 
 [@react.component]
 let make = (~itemId, ~variation, ~userItem: User.item) => {
   let (userItemNote, setUserItemNote) = React.useState(() => userItem.note);
 
-  let updateNote = () =>
-    UserStore.setItem(
-      ~itemId,
-      ~variation,
-      ~item={status: userItem.status, note: userItemNote},
-    );
-  let updateNoteRef = React.useRef(updateNote);
-  React.useEffect(() => {
-    React.Ref.setCurrent(updateNoteRef, updateNote);
-    None;
-  });
-  let throttleNoteTimeoutRef = React.useRef(None);
-  React.useEffect0(() => {
-    Some(
-      () => {
-        switch (React.Ref.current(throttleNoteTimeoutRef)) {
-        | Some(throttleNoteTimeout) =>
-          Js.Global.clearTimeout(throttleNoteTimeout)
-        | None => ()
-        }
-      },
-    )
-  });
-
-  <textarea
-    value=userItemNote
-    placeholder="Add a note"
-    className=Styles.textarea
-    onChange={e => {
-      let value = ReactEvent.Form.target(e)##value;
-      setUserItemNote(_ => value);
-
-      switch (React.Ref.current(throttleNoteTimeoutRef)) {
-      | Some(throttleNoteTimeout) =>
-        Js.Global.clearTimeout(throttleNoteTimeout)
-      | None => ()
-      };
-      React.Ref.setCurrent(
-        throttleNoteTimeoutRef,
-        Some(
-          Js.Global.setTimeout(
-            () => {
-              React.Ref.setCurrent(throttleNoteTimeoutRef, None);
-              React.Ref.current(updateNoteRef, ());
-            },
-            500,
-          ),
-        ),
-      );
-    }}
-  />;
+  <div>
+    <textarea
+      value=userItemNote
+      placeholder="Add a note"
+      className=Styles.textarea
+      onChange={e => {
+        let value = ReactEvent.Form.target(e)##value;
+        setUserItemNote(_ => value);
+      }}
+    />
+    {userItem.note != userItemNote
+       ? <div className=Styles.updateBar>
+           <Button
+             small=true
+             onClick={_ => {
+               UserStore.setItem(
+                 ~itemId,
+                 ~variation,
+                 ~item={...userItem, note: userItemNote},
+               )
+             }}>
+             {React.string("Save")}
+           </Button>
+           <a
+             href="#"
+             onClick={e => {
+               setUserItemNote(_ => userItem.note);
+               ReactEvent.Mouse.preventDefault(e);
+             }}
+             className=Styles.cancelLink>
+             {React.string("Cancel")}
+           </a>
+         </div>
+       : React.null}
+  </div>;
 };

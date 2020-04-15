@@ -6,6 +6,10 @@ module Styles = {
       fontSize(px(16)),
       justifyContent(spaceBetween),
       padding3(~top=px(16), ~bottom=px(32), ~h=px(16)),
+      selector(
+        "& a",
+        [textDecoration(none), hover([textDecoration(underline)])],
+      ),
       media("(max-width: 600px)", [paddingBottom(zero)]),
     ]);
   let standardLink = style([media("(max-width: 600px)", [display(none)])]);

@@ -2,7 +2,7 @@ module Styles = {
   open Css;
   let button =
     style([
-      backgroundColor(Colors.green),
+      backgroundColor(hex("3aa563e0")),
       borderWidth(zero),
       borderRadius(px(4)),
       color(Colors.white),
@@ -10,14 +10,21 @@ module Styles = {
       padding2(~v=px(10), ~h=px(16)),
       fontSize(px(14)),
       transition(~duration=200, "all"),
+      hover([backgroundColor(Colors.green)]),
       disabled([opacity(0.5)]),
     ]);
+  let buttonSmall = style([padding2(~v=px(6), ~h=px(10))]);
 };
 
 [@react.component]
-let make = (~onClick=?, ~children, ~className=?, ()) => {
+let make = (~onClick=?, ~small=false, ~children, ~className=?, ()) => {
   <button
-    className={Cn.make([Styles.button, Cn.unpack(className)])} ?onClick>
+    className={Cn.make([
+      Styles.button,
+      Cn.ifTrue(Styles.buttonSmall, small),
+      Cn.unpack(className),
+    ])}
+    ?onClick>
     children
   </button>;
 };

@@ -104,20 +104,23 @@ let make = (~onClose) => {
   let (username, setUsername) = React.useState(() => "");
   let (password, setPassword) = React.useState(() => "");
 
+  let (registerStatus, setRegisterStatus) = React.useState(() => None);
   let onLoginSubmit = e => {
     ReactEvent.Form.preventDefault(e);
     {
       let%Repromise result = UserStore.login(~userId=username, ~password);
       switch (result) {
       | Ok(_) => onClose()
-      | Error(_) => ()
+      | Error(_) =>
+        setRegisterStatus(_ =>
+          Some(Error("Login failed. Please try again."))
+        )
       };
       Promise.resolved();
     }
     |> ignore;
   };
 
-  let (registerStatus, setRegisterStatus) = React.useState(() => None);
   let onRegisterSubmit = e => {
     ReactEvent.Form.preventDefault(e);
     {
@@ -170,6 +173,13 @@ let make = (~onClose) => {
                    }}
                    className=Styles.input
                  />
+                 {switch (registerStatus) {
+                  | Some(Error(error)) =>
+                    <div className=Styles.errorMessage>
+                      {React.string(error)}
+                    </div>
+                  | _ => React.null
+                  }}
                  <div className=Styles.submitBar>
                    <a
                      href="#"

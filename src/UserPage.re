@@ -7,7 +7,12 @@ module Styles = {
       textAlign(center),
     ]);
   let username =
-    style([fontSize(px(36)), textAlign(center), marginBottom(px(32))]);
+    style([
+      fontSize(px(36)),
+      textAlign(center),
+      marginTop(px(32)),
+      marginBottom(px(32)),
+    ]);
   let bodyText = style([fontSize(px(18))]);
 };
 
@@ -49,7 +54,11 @@ module ViewingPage = {
              editable=false
            />;
          } else {
-           <div> {React.string("This profile is empty!")} </div>;
+           <div className=Styles.emptyProfile>
+             <div className=Styles.bodyText>
+               {React.string("This profile is empty!")}
+             </div>
+           </div>;
          }
        | None => React.null
        }}

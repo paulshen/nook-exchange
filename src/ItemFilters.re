@@ -358,8 +358,10 @@ let make = (~filters, ~onChange) => {
         });
       }}
       className=Styles.select>
-      <option value="sell-desc"> {React.string("Sell Price Desc")} </option>
-      <option value="sell-asc"> {React.string("Sell Price Asc")} </option>
+      <option value="sell-desc">
+        {React.string({j|Sell Price ↓|j})}
+      </option>
+      <option value="sell-asc"> {React.string({j|Sell Price ↑|j})} </option>
       <option value="abc"> {React.string("A - Z")} </option>
     </select>
     <input

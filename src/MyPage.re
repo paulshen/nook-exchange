@@ -42,11 +42,12 @@ module ProfileTextarea = {
         backgroundColor(hex("f6f6f6")),
         border(px(1), solid, transparent),
         borderRadius(px(4)),
-        padding(px(8)),
+        padding(px(7)),
         height(px(64)),
         boxSizing(borderBox),
         outlineStyle(none),
         fontSize(px(14)),
+        lineHeight(px(18)),
         width(pct(100.)),
         transition(~duration=200, "all"),
         width(pct(100.)),
@@ -57,25 +58,90 @@ module ProfileTextarea = {
           borderColor(rgba(0, 0, 0, 0.1)),
         ]),
       ]);
+    let profileTextPreview =
+      style([
+        backgroundColor(hex("f6f6f6")),
+        borderRadius(px(4)),
+        padding4(~top=px(8), ~bottom=px(8), ~left=px(8), ~right=px(32)),
+        fontSize(px(14)),
+        lineHeight(px(18)),
+        marginBottom(px(6)),
+        cursor(pointer),
+        whiteSpace(`preLine),
+        transition(~duration=200, "all"),
+      ]);
     let updateBar = style([justifyContent(flexEnd)]);
+    let previewWrapper =
+      style([
+        position(relative),
+        hover([
+          selector(
+            "& ." ++ profileTextPreview,
+            [backgroundColor(hex("f0f0f0"))],
+          ),
+        ]),
+      ]);
+    let editLink =
+      style([
+        color(hex("a0a0a0")),
+        fontSize(px(12)),
+        opacity(0.8),
+        textDecoration(none),
+        position(absolute),
+        top(px(8)),
+        right(px(8)),
+        hover([opacity(1.), textDecoration(underline)]),
+      ]);
   };
 
   [@react.component]
   let make = (~user: User.t) => {
+    let (isEditing, setIsEditing) = React.useState(() => false);
     let (profileText, setProfileText) =
       React.useState(() => user.profileText);
 
+    let textareaRef = React.useRef(Js.Nullable.null);
+    React.useEffect1(
+      () => {
+        if (isEditing) {
+          open Webapi.Dom;
+          let textareaElement = Utils.getElementForDomRef(textareaRef);
+          textareaElement->Element.unsafeAsHtmlElement->HtmlElement.focus;
+        };
+        None;
+      },
+      [|isEditing|],
+    );
+
     <div className=Styles.root>
-      <textarea
-        value=profileText
-        placeholder="Add a welcome message and your Discord username!\nMaybe a note about your lists below?"
-        className=Styles.textarea
-        onChange={e => {
-          let value = ReactEvent.Form.target(e)##value;
-          setProfileText(_ => value);
-        }}
-      />
-      {user.profileText != profileText
+      {isEditing || user.profileText == ""
+         ? <textarea
+             value=profileText
+             placeholder="Add a welcome message and your Discord username!\nYou can use emoji :nmt: and :bell:"
+             className=Styles.textarea
+             onChange={e => {
+               let value = ReactEvent.Form.target(e)##value;
+               setProfileText(_ => value);
+             }}
+             ref={ReactDOMRe.Ref.domRef(textareaRef)}
+           />
+         : <div className=Styles.previewWrapper>
+             <div
+               onClick={_ => {setIsEditing(_ => true)}}
+               className=Styles.profileTextPreview>
+               {Emoji.parseText(user.profileText)}
+             </div>
+             <a
+               href="#"
+               onClick={e => {
+                 setIsEditing(_ => true);
+                 ReactEvent.Mouse.preventDefault(e);
+               }}
+               className=Styles.editLink>
+               {React.string("Edit")}
+             </a>
+           </div>}
+      {isEditing || profileText != user.profileText
          ? <div
              className={Cn.make([
                UserItemNote.Styles.updateBar,
@@ -83,13 +149,17 @@ module ProfileTextarea = {
              ])}>
              <Button
                small=true
-               onClick={_ => {UserStore.updateProfileText(~profileText)}}>
+               onClick={_ => {
+                 UserStore.updateProfileText(~profileText);
+                 setIsEditing(_ => false);
+               }}>
                {React.string("Save")}
              </Button>
              <a
                href="#"
                onClick={e => {
                  setProfileText(_ => user.profileText);
+                 setIsEditing(_ => false);
                  ReactEvent.Mouse.preventDefault(e);
                }}
                className=UserItemNote.Styles.cancelLink>

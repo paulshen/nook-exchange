@@ -65,7 +65,7 @@ module ViewingPage = {
             | "" => React.null
             | profileText =>
               <div className=Styles.userBody>
-                {React.string(profileText)}
+                {Emoji.parseText(profileText)}
               </div>
             }}
            {if (user.items->Js.Dict.keys->Js.Array.length > 0) {

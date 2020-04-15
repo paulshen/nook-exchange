@@ -51,6 +51,7 @@ module Styles = {
     style([
       borderTop(px(1), solid, hex("f0f0f0")),
       unsafe("alignSelf", "stretch"),
+      lineHeight(px(18)),
       marginTop(px(-8)),
       padding3(~top=px(8), ~bottom=zero, ~h=px(4)),
     ]);
@@ -140,7 +141,7 @@ module UserItemCard = {
          : (
            if (userItem.note->Js.String.length > 0) {
              <div className=Styles.userNote>
-               {React.string(userItem.note)}
+               {Emoji.parseText(userItem.note)}
              </div>;
            } else {
              React.null;

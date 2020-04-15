@@ -25,6 +25,7 @@
     "bs-let": "0.1.11",
     "bs-react-atmosphere": "^0.0.2-alpha.1",
     "bs-webapi": "^0.15.9",
+    "emoji-mart": "^3.0.0",
     "re-classnames": "^4.1.0",
     "reason-promise": "^1.0.2",
     "reason-react": "^0.7.0",

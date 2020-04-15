@@ -22,6 +22,7 @@ module Styles = {
   let rootCanCraft = style([backgroundColor(hex("f1e26fa0"))]);
   let sectionTitle =
     style([fontSize(px(24)), marginBottom(px(16)), textAlign(center)]);
+  let filterBar = style([marginTop(px(32)), marginBottom(zero)]);
   let cards =
     style([
       paddingTop(px(16)),
@@ -151,7 +152,7 @@ module UserItemCard = {
 };
 
 module Section = {
-  let numResultsPerPage = 99999;
+  let numResultsPerPage = 60;
 
   [@react.component]
   let make =
@@ -191,6 +192,7 @@ module Section = {
         (userItems, filters),
       );
     let numResults = filteredItems->Belt.Array.length;
+    let showFilters = numResults > numResultsPerPage;
 
     <div
       className={Cn.make([
@@ -230,8 +232,12 @@ module Section = {
        } else {
          React.null;
        }}
-      {userItems->Belt.Array.length > 99999
-         ? <div className=ItemBrowser.Styles.filterBar>
+      {showFilters
+         ? <div
+             className={Cn.make([
+               ItemBrowser.Styles.filterBar,
+               Styles.filterBar,
+             ])}>
              <ItemFilters
                filters
                onChange={filters => {
@@ -265,6 +271,16 @@ module Section = {
            })
          ->React.array}
       </div>
+      {showFilters
+         ? <div className=ItemBrowser.Styles.bottomFilterBar>
+             <ItemFilters.Pager
+               numResults
+               pageOffset
+               numResultsPerPage
+               setPageOffset
+             />
+           </div>
+         : React.null}
     </div>;
   };
 };

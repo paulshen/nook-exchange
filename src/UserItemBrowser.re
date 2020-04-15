@@ -25,6 +25,7 @@ module Styles = {
       marginRight(px(-16)),
       media("(max-width: 470px)", [paddingTop(zero)]),
     ]);
+  let metaIcons = style([opacity(0.), transition(~duration=200, "all")]);
   let card =
     style([
       backgroundColor(hex("fffffff0")),
@@ -39,6 +40,7 @@ module Styles = {
       width(px(160)),
       transition(~duration=200, "all"),
       media("(max-width: 430px)", [width(pct(100.))]),
+      hover([selector("& ." ++ metaIcons, [opacity(1.)])]),
     ]);
   let name =
     style([fontSize(px(16)), marginBottom(px(4)), textAlign(center)]);
@@ -73,7 +75,7 @@ module UserItemCard = {
         />
         <div className=Styles.name> {React.string(item.name)} </div>
       </div>
-      <div className=ItemCard.Styles.metaIcons>
+      <div className={Cn.make([ItemCard.Styles.metaIcons, Styles.metaIcons])}>
         {switch (item.recipe) {
          | Some(recipe) => <ItemCard.RecipeIcon recipe />
          | None => React.null

@@ -38,7 +38,6 @@ module Styles = {
           "& ." ++ statusButton,
           [backgroundColor(hex("3aa56320")), color(Colors.green)],
         ),
-        boxShadow(Shadow.box(~spread=px(6), hex("88c9a180"))),
       ]),
       media(
         "(max-width: 600px)",
@@ -102,29 +101,29 @@ module Styles = {
     ]);
 };
 
-module RecipeIcon = {
-  module Styles = {
-    open Css;
-    let recipeIcon =
-      style([
-        display(block),
-        width(px(24)),
-        height(px(24)),
-        marginRight(px(8)),
-      ]);
-    let recipeLayer =
-      style([
-        backgroundColor(hex("404040f8")),
-        color(Colors.white),
-        borderRadius(px(8)),
-        padding2(~v=px(12), ~h=px(16)),
-      ]);
-  };
+module MetaIconStyles = {
+  open Css;
+  let icon =
+    style([
+      display(block),
+      width(px(24)),
+      height(px(24)),
+      marginRight(px(8)),
+    ]);
+  let layer =
+    style([
+      backgroundColor(hex("404040f8")),
+      color(Colors.white),
+      borderRadius(px(8)),
+      padding2(~v=px(12), ~h=px(16)),
+    ]);
+};
 
+module RecipeIcon = {
   module RecipeLayer = {
     [@react.component]
     let make = (~recipe) => {
-      <div className=Styles.recipeLayer>
+      <div className=MetaIconStyles.layer>
         {recipe
          ->Array.map(((itemId, quantity)) =>
              <div key=itemId>
@@ -140,17 +139,17 @@ module RecipeIcon = {
 
   [@react.component]
   let make = (~recipe: Item.recipe) => {
-    let (showRecipe, setShowRecipe) = React.useState(() => false);
+    let (showLayer, setShowLayer) = React.useState(() => false);
     let iconRef = React.useRef(Js.Nullable.null);
     <>
       <img
         src=recipeIcon
-        className=Styles.recipeIcon
-        onMouseEnter={_ => setShowRecipe(_ => true)}
-        onMouseLeave={_ => setShowRecipe(_ => false)}
+        className=MetaIconStyles.icon
+        onMouseEnter={_ => setShowLayer(_ => true)}
+        onMouseLeave={_ => setShowLayer(_ => false)}
         ref={ReactDOMRe.Ref.domRef(iconRef)}
       />
-      {showRecipe
+      {showLayer
          ? <ReactAtmosphere.PopperLayer
              reference=iconRef
              render={_ => <RecipeLayer recipe />}
@@ -173,26 +172,49 @@ module RecipeIcon = {
 };
 
 module OrderableIcon = {
-  module Styles = {
-    open Css;
-    let orderableIcon =
-      style([
-        display(block),
-        width(px(24)),
-        height(px(24)),
-        marginRight(px(8)),
-      ]);
+  module OrderableLayer = {
+    [@react.component]
+    let make = () => {
+      <div className=MetaIconStyles.layer>
+        <div> {React.string("Orderable from catalog")} </div>
+        <div> {React.string("Touch tradeable")} </div>
+      </div>;
+    };
   };
 
   [@bs.module] external orderableIcon: string = "./assets/shop_icon.png";
 
   [@react.component]
   let make = () => {
-    <img
-      src=orderableIcon
-      title="Orderable from Catalog"
-      className=Styles.orderableIcon
-    />;
+    let (showLayer, setShowLayer) = React.useState(() => false);
+    let iconRef = React.useRef(Js.Nullable.null);
+    <>
+      <img
+        src=orderableIcon
+        className=MetaIconStyles.icon
+        onMouseEnter={_ => setShowLayer(_ => true)}
+        onMouseLeave={_ => setShowLayer(_ => false)}
+        ref={ReactDOMRe.Ref.domRef(iconRef)}
+      />
+      {showLayer
+         ? <ReactAtmosphere.PopperLayer
+             reference=iconRef
+             render={_ => <OrderableLayer />}
+             options={
+               placement: Some("bottom-start"),
+               modifiers:
+                 Some([|
+                   {
+                     "name": "offset",
+                     "options": {
+                       "offset": [|0, 4|],
+                     },
+                   },
+                 |]),
+             }
+           />
+         : React.null}
+    </>;
   };
 };
 

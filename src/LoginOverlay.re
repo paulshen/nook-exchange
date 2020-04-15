@@ -105,6 +105,11 @@ let make = (~onClose) => {
   let (password, setPassword) = React.useState(() => "");
   let (isSubmitting, setIsSubmitting) = React.useState(() => false);
 
+  React.useEffect0(() => {
+    Analytics.Amplitude.logEvent(~eventName="Registration Viewed");
+    None;
+  });
+
   let (registerStatus, setRegisterStatus) = React.useState(() => None);
   let onLoginSubmit = e => {
     ReactEvent.Form.preventDefault(e);
@@ -112,11 +117,14 @@ let make = (~onClose) => {
       setIsSubmitting(_ => true);
       let%Repromise result = UserStore.login(~userId=username, ~password);
       switch (result) {
-      | Ok(_) => onClose()
+      | Ok(_) =>
+        onClose();
+        Analytics.Amplitude.logEvent(~eventName="Login Succeeded");
       | Error(_) =>
         setRegisterStatus(_ =>
           Some(Error("Login failed. Please try again."))
         );
+        Analytics.Amplitude.logEvent(~eventName="Login Failed");
         setIsSubmitting(_ => false);
       };
       Promise.resolved();
@@ -130,8 +138,15 @@ let make = (~onClose) => {
       setIsSubmitting(_ => true);
       let%Repromise result = UserStore.register(~userId=username, ~password);
       switch (result) {
-      | Ok(_) => setRegisterStatus(_ => Some(Success))
-      | Error(error) => setRegisterStatus(_ => Some(Error(error)))
+      | Ok(_) =>
+        setRegisterStatus(_ => Some(Success));
+        Analytics.Amplitude.logEvent(~eventName="Registration Succeeded");
+      | Error(error) =>
+        setRegisterStatus(_ => Some(Error(error)));
+        Analytics.Amplitude.logEventWithProperties(
+          ~eventName="Registration Failed",
+          ~eventProperties={"error": error},
+        );
       };
       setIsSubmitting(_ => false);
       Promise.resolved();

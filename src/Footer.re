@@ -34,7 +34,7 @@ let make = () => {
           target="_blank">
           {React.string("Images")}
         </a>
-        {React.string(" | Thanks!")}
+        {React.string(" | Thanks for visiting!")}
       </div>
       <div className=Styles.disclaimer>
         {React.string(

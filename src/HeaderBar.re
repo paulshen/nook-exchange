@@ -14,16 +14,15 @@ module Styles = {
       display(none),
       media("(max-width: 600px)", [display(inline)]),
     ]);
-  let logo =
+  let logoLink =
     style([
-      width(px(200)),
-      height(px(60)),
       position(absolute),
       left(pct(50.)),
       marginLeft(px(-100)),
       top(px(8)),
       media("(max-width: 600px)", [display(none)]),
     ]);
+  let logo = style([width(px(200)), height(px(60))]);
   let navRight = style([display(flexBox)]);
   let logoutLink = style([marginLeft(px(16))]);
 };
@@ -34,7 +33,9 @@ module Styles = {
 let make = (~onLogin) => {
   let user = UserStore.useMe();
   <div className=Styles.root>
-    <img src=logo className=Styles.logo alt="Nook Exchange" />
+    <Link path="/" className=Styles.logoLink>
+      <img src=logo className=Styles.logo alt="Nook Exchange" />
+    </Link>
     <div>
       <Link path="/">
         <span className=Styles.standardLink>

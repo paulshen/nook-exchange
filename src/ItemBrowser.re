@@ -21,10 +21,20 @@ module Styles = {
   let noResults = style([fontSize(px(20)), paddingTop(px(32))]);
 };
 
-let numResultsPerPage = 24;
+let getNumResultsPerPage = () => {
+  open Webapi.Dom;
+  let windowWidth = window |> Window.innerWidth;
+  if (windowWidth >= 1520) {
+    30;
+  } else {
+    24;
+  };
+};
 
 [@react.component]
 let make = (~showLogin) => {
+  let (numResultsPerPage, _setNumResultsPerPage) =
+    React.useState(() => getNumResultsPerPage());
   let (filters, setFilters) =
     React.useState(() =>
       (

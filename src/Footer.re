@@ -7,7 +7,7 @@ module Styles = {
       fontSize(px(12)),
       alignItems(center),
       textAlign(center),
-      margin2(~v=px(64), ~h=zero),
+      margin3(~top=px(96), ~bottom=px(48), ~h=zero),
     ]);
   let contents = style([color(hex("808080")), maxWidth(px(512))]);
   let disclaimer = style([marginTop(px(8))]);

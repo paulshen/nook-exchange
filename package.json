@@ -6,7 +6,7 @@
     "start": "bsb -make-world -w",
     "clean": "bsb -clean-world",
     "client": "parcel src/index.html",
-    "parcel-build": "parcel build src/index.html"
+    "parcel-build": "parcel build src/index.html --no-source-maps"
   },
   "keywords": [
     "BuckleScript"

@@ -1,24 +1,21 @@
-# Basic Reason Template
+# Nook Exchange
 
-Hello! This project allows you to quickly get started with Reason and BuckleScript. If you wanted a more sophisticated version, try the `react` template (`bsb -theme react -init .`).
-
-# Build
+## Run
 
 ```bash
-# for yarn
-yarn build
-
-# for npm
-npm run build
-```
-
-# Build + Watch
-
-```bash
-# for yarn
+# Install dependencies
+yarn
+# Build BuckleScript
 yarn start
-
-# for npm
-npm run start
+# Build Parcel
+yarn client
 ```
 
+## Build
+
+```bash
+# Build Bucklescript
+yarn build
+# Build Parcel
+yarn parcel-build
+```

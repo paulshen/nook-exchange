@@ -18,7 +18,9 @@ module Styles = {
       ),
     ]);
   let rootForTrade = style([backgroundColor(hex("8FCDE0a0"))]);
-  let sectionTitle = style([fontSize(px(24)), marginBottom(px(16))]);
+  let rootCanCraft = style([backgroundColor(hex("f1e26fa0"))]);
+  let sectionTitle =
+    style([fontSize(px(24)), marginBottom(px(16)), textAlign(center)]);
   let cards =
     style([
       paddingTop(px(16)),
@@ -159,12 +161,14 @@ module Section = {
       className={Cn.make([
         Styles.root,
         Cn.ifTrue(Styles.rootForTrade, status == ForTrade),
+        Cn.ifTrue(Styles.rootCanCraft, status == CanCraft),
       ])}>
       <div className=Styles.sectionTitle>
         {React.string(
            switch (status) {
-           | Want => {j|🙏 Wishlist|j}
+           | Wishlist => {j|🙏 Wishlist|j}
            | ForTrade => {j|✅ For Trade|j}
+           | CanCraft => {j|🔨 Can Craft|j}
            },
          )}
       </div>
@@ -208,18 +212,31 @@ module Section = {
 
 [@react.component]
 let make = (~userItems: array(((string, int), User.item)), ~editable) => {
-  let (wants, forTrades) =
-    userItems->Array.partitionU((. (_, item: User.item)) =>
-      item.status == Want
+  let wishlist =
+    userItems->Array.keepU((. (_, item: User.item)) =>
+      item.status == Wishlist
+    );
+  let forTradeList =
+    userItems->Array.keepU((. (_, item: User.item)) =>
+      item.status == ForTrade
+    );
+  let canCraftList =
+    userItems->Array.keepU((. (_, item: User.item)) =>
+      item.status == CanCraft
     );
   <div>
-    {if (forTrades->Array.length > 0) {
-       <Section status=ForTrade userItems=forTrades editable />;
+    {if (forTradeList->Array.length > 0) {
+       <Section status=ForTrade userItems=forTradeList editable />;
      } else {
        React.null;
      }}
-    {if (wants->Array.length > 0) {
-       <Section status=Want userItems=wants editable />;
+    {if (canCraftList->Array.length > 0) {
+       <Section status=CanCraft userItems=canCraftList editable />;
+     } else {
+       React.null;
+     }}
+    {if (wishlist->Array.length > 0) {
+       <Section status=Wishlist userItems=wishlist editable />;
      } else {
        React.null;
      }}

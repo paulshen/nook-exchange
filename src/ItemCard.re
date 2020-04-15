@@ -9,11 +9,12 @@ module Styles = {
       borderWidth(zero),
       borderRadius(px(4)),
       fontSize(px(12)),
-      marginRight(px(6)),
+      marginRight(px(8)),
       outlineStyle(none),
       padding3(~top=px(5), ~bottom=px(3), ~h=px(4)),
       transition(~duration=200, "all"),
       cursor(pointer),
+      lastChild([marginRight(zero)]),
       hover([
         important(backgroundColor(Colors.green)),
         important(color(Colors.white)),
@@ -81,8 +82,8 @@ module Styles = {
     ]);
   let variationImageSelected = style([backgroundColor(hex("3aa56320"))]);
   let metaIcons = style([position(absolute), top(px(8)), left(px(6))]);
-  let bottomBar = style([alignSelf(flexStart), fontSize(px(12))]);
-  let bottomBarStatus = style([paddingTop(px(8))]);
+  let bottomBar = style([fontSize(px(12))]);
+  let bottomBarStatus = style([alignSelf(flexStart), paddingTop(px(8))]);
   let statusButtons = style([]);
   let statusButtonSelected =
     style([backgroundColor(Colors.green), color(Colors.white)]);
@@ -253,14 +254,16 @@ let renderStatusButton =
     ])}
     title={
       switch (status) {
-      | Want => "Add to Wishlist"
+      | Wishlist => "Add to Wishlist"
       | ForTrade => "Add to For Trade list"
+      | CanCraft => "Add to Can Craft list"
       }
     }>
     {React.string(
        switch (status) {
-       | Want => {j|+ Wishlist|j}
+       | Wishlist => {j|+ Wishlist|j}
        | ForTrade => {j|+ For Trade|j}
+       | CanCraft => {j|+ Can Craft|j}
        },
      )}
   </button>;
@@ -344,8 +347,9 @@ let make = (~item: Item.t, ~showLogin) => {
            {React.string(
               {
                 switch (userItem.status) {
-                | Want => {j|🙏 In your Wishlist|j}
+                | Wishlist => {j|🙏 In your Wishlist|j}
                 | ForTrade => {j|✅ In your For Trade list|j}
+                | CanCraft => {j|🔨 In your Can Craft list|j}
                 };
               },
             )}
@@ -362,7 +366,7 @@ let make = (~item: Item.t, ~showLogin) => {
          {renderStatusButton(
             ~itemId=item.id,
             ~variation,
-            ~status=Want,
+            ~status=Wishlist,
             ~userItem,
             ~showLogin,
             (),
@@ -371,6 +375,14 @@ let make = (~item: Item.t, ~showLogin) => {
             ~itemId=item.id,
             ~variation,
             ~status=ForTrade,
+            ~userItem,
+            ~showLogin,
+            (),
+          )}
+         {renderStatusButton(
+            ~itemId=item.id,
+            ~variation,
+            ~status=CanCraft,
             ~userItem,
             ~showLogin,
             (),

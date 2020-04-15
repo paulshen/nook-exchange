@@ -12,6 +12,7 @@ module Styles = {
       backgroundColor(Colors.green),
       borderRadius(px(16)),
       backgroundColor(hex("88c9a1a0")),
+      position(relative),
       media(
         "(max-width: 470px)",
         [width(auto), padding(px(16)), borderRadius(zero)],
@@ -54,13 +55,33 @@ module Styles = {
       padding3(~top=px(8), ~bottom=zero, ~h=px(4)),
     ]);
   let removeButton = style([top(px(9)), bottom(initial)]);
+  let showRecipesBox =
+    style([
+      position(absolute),
+      right(px(32)),
+      top(px(36)),
+      media("(max-width: 600px)", [position(static), textAlign(center)]),
+      media("(max-width: 470px)", [marginBottom(px(16))]),
+    ]);
+  let showRecipesLabel =
+    style([fontSize(px(16)), marginRight(px(8)), opacity(0.8)]);
+  let showRecipesCheckbox =
+    style([
+      fontSize(px(24)),
+      margin(zero),
+      position(relative),
+      top(px(-2)),
+    ]);
+  let recipe =
+    style([marginTop(px(6)), textAlign(center), fontSize(px(12))]);
 };
 
 open Belt;
 
 module UserItemCard = {
   [@react.component]
-  let make = (~itemId, ~variation, ~userItem: User.item, ~editable) => {
+  let make =
+      (~itemId, ~variation, ~userItem: User.item, ~editable, ~showRecipe) => {
     let item = Item.getItem(~itemId);
     <div className={Cn.make([Styles.card])}>
       <div className=ItemCard.Styles.body>
@@ -76,6 +97,19 @@ module UserItemCard = {
           className=ItemCard.Styles.mainImage
         />
         <div className=Styles.name> {React.string(item.name)} </div>
+        {switch (showRecipe, item.recipe) {
+         | (true, Some(recipe)) =>
+           <div className=Styles.recipe>
+             {recipe
+              ->Array.map(((itemId, quantity)) =>
+                  <div key=itemId>
+                    {React.string(itemId ++ " x " ++ string_of_int(quantity))}
+                  </div>
+                )
+              ->React.array}
+           </div>
+         | _ => React.null
+         }}
       </div>
       <div className={Cn.make([ItemCard.Styles.metaIcons, Styles.metaIcons])}>
         {switch (item.recipe) {
@@ -126,6 +160,7 @@ module Section = {
         ~userItems: array(((string, int), User.item)),
         ~editable,
       ) => {
+    let (showRecipes, setShowRecipes) = React.useState(() => false);
     let (filters, setFilters) =
       React.useState(() =>
         (
@@ -172,6 +207,29 @@ module Section = {
            },
          )}
       </div>
+      {if (status == CanCraft) {
+         <div className=Styles.showRecipesBox>
+           <label htmlFor="craftShowRecipe" className=Styles.showRecipesLabel>
+             {React.string("Show Recipes")}
+           </label>
+           <input
+             id="craftShowRecipe"
+             type_="checkbox"
+             checked=showRecipes
+             onChange={e => {
+               let checked = ReactEvent.Form.target(e)##checked;
+               Analytics.Amplitude.logEventWithProperties(
+                 ~eventName="Show Recipes Clicked",
+                 ~eventProperties={"checked": checked},
+               );
+               setShowRecipes(_ => checked);
+             }}
+             className=Styles.showRecipesCheckbox
+           />
+         </div>;
+       } else {
+         React.null;
+       }}
       {userItems->Belt.Array.length > 99999
          ? <div className=ItemBrowser.Styles.filterBar>
              <ItemFilters
@@ -201,6 +259,7 @@ module Section = {
                variation
                userItem
                editable
+               showRecipe=showRecipes
                key={itemId ++ string_of_int(variation)}
              />
            })

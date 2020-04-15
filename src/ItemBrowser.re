@@ -55,6 +55,23 @@ let make = (~showLogin) => {
       )
     );
   let (pageOffset, setPageOffset) = React.useState(() => 0);
+  let setFilters =
+    React.useCallback0(f => {
+      setFilters((filters: ItemFilters.t) => {
+        let updatedFilters: ItemFilters.t = f(filters);
+        Analytics.Amplitude.logEventWithProperties(
+          ~eventName="Filters Changed",
+          ~eventProperties={
+            "filter_text": updatedFilters.text,
+            "filter_orderable": updatedFilters.orderable,
+            "filter_hasRecipe": updatedFilters.hasRecipe,
+            "filter_category": updatedFilters.category,
+            "filter_sort": updatedFilters.sort,
+          },
+        );
+        updatedFilters;
+      })
+    });
   let filteredItems =
     React.useMemo1(
       () =>

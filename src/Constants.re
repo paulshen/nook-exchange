@@ -2,7 +2,9 @@
 external nodeEnv: option(string) = "NODE_ENV";
 
 let apiUrl = "https://paulshen-animalcrossing.builtwithdark.com";
-let gtagId = "UA-55966633-6";
 let cdnUrl =
   nodeEnv === Some("production")
     ? "https://d2hw75cwo7i27d.cloudfront.net" : "";
+
+let gtagId = "UA-55966633-6";
+let amplitudeApiKey = "d91231e0b8a96baf38ba67eb36d25a48";

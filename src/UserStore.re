@@ -42,6 +42,15 @@ let setItem = (~itemId: string, ~variation: int, ~item: User.item) => {
     },
   };
   api.dispatch(UpdateUser(updatedUser));
+  let userItemJson = User.itemToJson(item);
+  Analytics.Amplitude.logEventWithProperties(
+    ~eventName="Item Updated",
+    ~eventProperties={
+      "itemId": itemId,
+      "variation": variation,
+      "data": userItemJson,
+    },
+  );
   {
     Fetch.fetchWithInit(
       Constants.apiUrl
@@ -51,7 +60,7 @@ let setItem = (~itemId: string, ~variation: int, ~item: User.item) => {
       ++ string_of_int(variation),
       Fetch.RequestInit.make(
         ~method_=Post,
-        ~body=Fetch.BodyInit.make(Js.Json.stringify(User.itemToJson(item))),
+        ~body=Fetch.BodyInit.make(Js.Json.stringify(userItemJson)),
         ~headers=Fetch.HeadersInit.make({"Content-Type": "application/json"}),
         ~credentials=Include,
         ~mode=CORS,
@@ -75,6 +84,10 @@ let removeItem = (~itemId, ~variation) => {
       },
     };
     api.dispatch(UpdateUser(updatedUser));
+    Analytics.Amplitude.logEventWithProperties(
+      ~eventName="Item Removed",
+      ~eventProperties={"itemId": itemId, "variation": variation},
+    );
     {
       Fetch.fetchWithInit(
         Constants.apiUrl
@@ -122,6 +135,7 @@ let register = (~userId, ~password) => {
     let%Repromise.JsExn json = Fetch.Response.json(response);
     let user = User.fromAPI(json);
     api.dispatch(Login(user));
+    Analytics.Amplitude.setUserId(~userId=Some(user.id));
     Promise.resolved(Ok(user));
   | _ =>
     let%Repromise.JsExn text = Fetch.Response.text(response);
@@ -157,6 +171,7 @@ let login = (~userId, ~password) => {
     let%Repromise.JsExn json = Fetch.Response.json(response);
     let user = User.fromAPI(json);
     api.dispatch(Login(user));
+    Analytics.Amplitude.setUserId(~userId=Some(user.id));
     Promise.resolved(Ok(user));
   | _ => Promise.resolved(Error())
   };
@@ -164,6 +179,7 @@ let login = (~userId, ~password) => {
 
 let logout = () => {
   api.dispatch(Logout);
+  Analytics.Amplitude.setUserId(~userId=None);
   let%Repromise.JsExn response =
     Fetch.fetchWithInit(
       Constants.apiUrl ++ "/logout",
@@ -194,6 +210,7 @@ let init = () => {
       let%Repromise.JsExn json = Fetch.Response.json(response);
       let user = User.fromAPI(json);
       api.dispatch(Login(user));
+      Analytics.Amplitude.setUserId(~userId=Some(user.id));
       Promise.resolved();
     | _ => Promise.resolved()
     };

@@ -6,7 +6,7 @@ module Styles = {
 };
 
 [@bs.val] [@bs.scope "window"]
-external gtag: option((. string, string, {. "path_path": string}) => unit) =
+external gtag: option((. string, string, {. "page_path": string}) => unit) =
   "gtag";
 
 [@react.component]
@@ -16,15 +16,15 @@ let make = () => {
 
   React.useEffect1(
     () => {
+      let pagePath =
+        "/" ++ Js.Array.joinWith("/", Belt.List.toArray(url.path));
+      Analytics.Amplitude.logEventWithProperties(
+        ~eventName="Page Viewed",
+        ~eventProperties={"path": pagePath},
+      );
       switch (gtag) {
       | Some(gtag) =>
-        gtag(.
-          "config",
-          Constants.gtagId,
-          {
-            "path_path": Js.Array.joinWith("/", Belt.List.toArray(url.path)),
-          },
-        )
+        gtag(. "config", Constants.gtagId, {"page_path": pagePath})
       | None => ()
       };
 

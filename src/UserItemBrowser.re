@@ -102,7 +102,7 @@ module UserItemCard = {
 };
 
 module Section = {
-  let numResultsPerPage = 12;
+  let numResultsPerPage = 99999;
 
   [@react.component]
   let make =
@@ -155,7 +155,7 @@ module Section = {
            },
          )}
       </div>
-      {userItems->Belt.Array.length > 8
+      {userItems->Belt.Array.length > 99999
          ? <div className=ItemBrowser.Styles.filterBar>
              <ItemFilters
                filters

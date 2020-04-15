@@ -18,6 +18,7 @@ module Styles = {
         important(backgroundColor(Colors.green)),
         important(color(Colors.white)),
       ]),
+      media("(max-width: 430px)", [fontSize(px(14))]),
     ]);
   let card =
     style([
@@ -39,6 +40,11 @@ module Styles = {
         ),
         boxShadow(Shadow.box(~spread=px(6), hex("88c9a180"))),
       ]),
+      media(
+        "(max-width: 600px)",
+        [marginRight(px(16)), marginBottom(px(16)), width(px(160))],
+      ),
+      media("(max-width: 430px)", [width(pct(100.))]),
     ]);
   let cardSelected = style([backgroundColor(hex("ffffff"))]);
   let body =

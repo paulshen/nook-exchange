@@ -12,10 +12,19 @@ module Styles = {
       backgroundColor(Colors.green),
       borderRadius(px(16)),
       backgroundColor(hex("88c9a1a0")),
+      media(
+        "(max-width: 470px)",
+        [width(auto), padding(px(16)), borderRadius(zero)],
+      ),
     ]);
   let rootForTrade = style([backgroundColor(hex("8FCDE0a0"))]);
   let sectionTitle = style([fontSize(px(24)), marginBottom(px(16))]);
-  let cards = style([paddingTop(px(16)), marginRight(px(-16))]);
+  let cards =
+    style([
+      paddingTop(px(16)),
+      marginRight(px(-16)),
+      media("(max-width: 470px)", [paddingTop(zero)]),
+    ]);
   let card =
     style([
       backgroundColor(hex("fffffff0")),
@@ -29,6 +38,7 @@ module Styles = {
       position(relative),
       width(px(160)),
       transition(~duration=200, "all"),
+      media("(max-width: 430px)", [width(pct(100.))]),
     ]);
   let name = style([fontSize(px(16)), marginBottom(px(4))]);
   let userNote =

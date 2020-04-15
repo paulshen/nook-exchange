@@ -10,12 +10,19 @@ module Styles = {
       media("(min-width: 1520px)", [width(px(1408))]),
     ]);
   let cards =
-    style([display(flexBox), flexWrap(wrap), marginRight(px(-32))]);
+    style([
+      display(flexBox),
+      flexWrap(wrap),
+      marginRight(px(-32)),
+      justifyContent(center),
+      media("(max-width: 600px)", [marginRight(px(-16))]),
+    ]);
   let filterBar =
     style([
       display(flexBox),
       justifyContent(spaceBetween),
       marginBottom(px(16)),
+      flexWrap(wrap),
     ]);
   let bottomFilterBar = style([display(flexBox), justifyContent(flexEnd)]);
   let noResults = style([fontSize(px(20)), paddingTop(px(32))]);

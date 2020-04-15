@@ -7,6 +7,12 @@ module Styles = {
       justifyContent(spaceBetween),
       padding3(~top=px(16), ~bottom=px(32), ~h=px(16)),
     ]);
+  let standardLink = style([media("(max-width: 600px)", [display(none)])]);
+  let smallViewportLink =
+    style([
+      display(none),
+      media("(max-width: 600px)", [display(inline)]),
+    ]);
   let logo =
     style([
       width(px(200)),
@@ -28,7 +34,16 @@ let make = (~onLogin) => {
   let user = UserStore.useMe();
   <div className=Styles.root>
     <img src=logo className=Styles.logo alt="Nook Exchange" />
-    <div> <Link path="/"> {React.string("Browse Items")} </Link> </div>
+    <div>
+      <Link path="/">
+        <span className=Styles.standardLink>
+          {React.string("Browse Items")}
+        </span>
+        <span className=Styles.smallViewportLink>
+          {React.string("Nook Exchange")}
+        </span>
+      </Link>
+    </div>
     <div className=Styles.navRight>
       {switch (user) {
        | Some(user) =>

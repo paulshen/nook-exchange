@@ -9,7 +9,12 @@ module Styles = {
       textAlign(center),
       margin3(~top=px(96), ~bottom=px(48), ~h=zero),
     ]);
-  let contents = style([color(hex("808080")), maxWidth(px(512))]);
+  let contents =
+    style([
+      color(hex("808080")),
+      maxWidth(px(512)),
+      padding2(~v=zero, ~h=px(8)),
+    ]);
   let disclaimer = style([marginTop(px(8))]);
 };
 

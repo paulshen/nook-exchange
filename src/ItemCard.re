@@ -53,7 +53,7 @@ module Styles = {
     style([
       fontSize(px(20)),
       marginBottom(px(8)),
-      padding2(~v=zero, ~h=px(12)),
+      padding2(~v=zero, ~h=px(16)),
       textAlign(center),
     ]);
   let mainImage =
@@ -226,13 +226,13 @@ let renderStatusButton =
     title={
       switch (status) {
       | Want => "Add to Wishlist"
-      | WillTrade => "Add to Available list"
+      | ForTrade => "Add to For Trade list"
       }
     }>
     {React.string(
        switch (status) {
        | Want => {j|+ Wishlist|j}
-       | WillTrade => {j|+ Available|j}
+       | ForTrade => {j|+ For Trade|j}
        },
      )}
   </button>;
@@ -316,8 +316,8 @@ let make = (~item: Item.t, ~showLogin) => {
            {React.string(
               {
                 switch (userItem.status) {
-                | Want => {j|🙏 In your wishlist|j}
-                | WillTrade => {j|✅ In your available list|j}
+                | Want => {j|🙏 In your Wishlist|j}
+                | ForTrade => {j|✅ In your For Trade list|j}
                 };
               },
             )}
@@ -342,7 +342,7 @@ let make = (~item: Item.t, ~showLogin) => {
          {renderStatusButton(
             ~itemId=item.id,
             ~variation,
-            ~status=WillTrade,
+            ~status=ForTrade,
             ~userItem,
             ~showLogin,
             (),

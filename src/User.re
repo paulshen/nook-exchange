@@ -1,7 +1,7 @@
 [@bs.deriving jsConverter]
 type itemStatus =
   | [@bs.as 1] Want
-  | WillTrade;
+  | ForTrade;
 type item = {
   status: itemStatus,
   note: string,

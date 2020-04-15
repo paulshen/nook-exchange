@@ -103,11 +103,13 @@ let make = (~onClose) => {
 
   let (username, setUsername) = React.useState(() => "");
   let (password, setPassword) = React.useState(() => "");
+  let (isSubmitting, setIsSubmitting) = React.useState(() => false);
 
   let (registerStatus, setRegisterStatus) = React.useState(() => None);
   let onLoginSubmit = e => {
     ReactEvent.Form.preventDefault(e);
     {
+      setIsSubmitting(_ => true);
       let%Repromise result = UserStore.login(~userId=username, ~password);
       switch (result) {
       | Ok(_) => onClose()
@@ -116,6 +118,7 @@ let make = (~onClose) => {
           Some(Error("Login failed. Please try again."))
         )
       };
+      setIsSubmitting(_ => false);
       Promise.resolved();
     }
     |> ignore;
@@ -124,11 +127,13 @@ let make = (~onClose) => {
   let onRegisterSubmit = e => {
     ReactEvent.Form.preventDefault(e);
     {
+      setIsSubmitting(_ => true);
       let%Repromise result = UserStore.register(~userId=username, ~password);
       switch (result) {
       | Ok(_) => setRegisterStatus(_ => Some(Success))
       | Error(error) => setRegisterStatus(_ => Some(Error(error)))
       };
+      setIsSubmitting(_ => false);
       Promise.resolved();
     }
     |> ignore;
@@ -189,7 +194,7 @@ let make = (~onClose) => {
                      }}>
                      {React.string("Need an account?")}
                    </a>
-                   <button type_="submit" className=Styles.submitButton>
+                   <button type_="submit" disabled=isSubmitting className=Styles.submitButton>
                      {React.string("Login")}
                    </button>
                  </div>
@@ -266,7 +271,7 @@ let make = (~onClose) => {
                          <button
                            type_="submit"
                            className=Styles.submitButton
-                           disabled={Js.String.length(password) < 4}>
+                           disabled={Js.String.length(password) < 4 || isSubmitting}>
                            {React.string("Register")}
                          </button>
                        </div>

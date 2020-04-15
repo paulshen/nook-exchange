@@ -11,9 +11,9 @@ module Styles = {
       padding(px(32)),
       backgroundColor(Colors.green),
       borderRadius(px(16)),
-      backgroundColor(hex("ffbfb9a0")),
+      backgroundColor(hex("88c9a1a0")),
     ]);
-  let rootAvailable = style([backgroundColor(hex("8FCDE0a0"))]);
+  let rootForTrade = style([backgroundColor(hex("8FCDE0a0"))]);
   let sectionTitle = style([fontSize(px(24)), marginBottom(px(16))]);
   let cards = style([paddingTop(px(16)), marginRight(px(-16))]);
   let card =
@@ -145,13 +145,13 @@ module Section = {
     <div
       className={Cn.make([
         Styles.root,
-        Cn.ifTrue(Styles.rootAvailable, status == WillTrade),
+        Cn.ifTrue(Styles.rootForTrade, status == ForTrade),
       ])}>
       <div className=Styles.sectionTitle>
         {React.string(
            switch (status) {
            | Want => {j|🙏 Wishlist|j}
-           | WillTrade => {j|✅ Available|j}
+           | ForTrade => {j|✅ For Trade|j}
            },
          )}
       </div>
@@ -195,18 +195,18 @@ module Section = {
 
 [@react.component]
 let make = (~userItems: array(((string, int), User.item)), ~editable) => {
-  let (wants, willTrades) =
+  let (wants, forTrades) =
     userItems->Array.partitionU((. (_, item: User.item)) =>
       item.status == Want
     );
   <div>
-    {if (wants->Array.length > 0) {
-       <Section status=Want userItems=wants editable />;
+    {if (forTrades->Array.length > 0) {
+       <Section status=ForTrade userItems=forTrades editable />;
      } else {
        React.null;
      }}
-    {if (willTrades->Array.length > 0) {
-       <Section status=WillTrade userItems=willTrades editable />;
+    {if (wants->Array.length > 0) {
+       <Section status=Want userItems=wants editable />;
      } else {
        React.null;
      }}

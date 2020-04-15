@@ -26,6 +26,7 @@ module Styles = {
       fontSize(px(16)),
       position(relative),
       top(px(5)),
+      marginLeft(px(8)),
       paddingRight(px(16)),
     ]);
   let pager = style([fontSize(px(16))]);

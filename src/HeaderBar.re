@@ -5,7 +5,7 @@ module Styles = {
       display(flexBox),
       fontSize(px(16)),
       justifyContent(spaceBetween),
-      padding3(~top=px(16), ~bottom=px(32), ~h=px(16)),
+      padding3(~top=px(16), ~bottom=px(16), ~h=px(16)),
       selector(
         "& a",
         [textDecoration(none), hover([textDecoration(underline)])],
@@ -26,19 +26,26 @@ module Styles = {
       top(px(8)),
       media("(max-width: 600px)", [display(none)]),
     ]);
-  let logo = style([width(px(200)), height(px(60))]);
+  [@bs.module] external logo: string = "./assets/logo.png";
+  let logo =
+    style([
+      backgroundImage(url(logo)),
+      backgroundSize(cover),
+      margin(zero),
+      width(px(200)),
+      height(px(60)),
+      textIndent(px(-9999)),
+    ]);
   let navRight = style([display(flexBox)]);
   let logoutLink = style([marginLeft(px(16))]);
 };
-
-[@bs.module] external logo: string = "./assets/logo.png";
 
 [@react.component]
 let make = (~onLogin) => {
   let user = UserStore.useMe();
   <div className=Styles.root>
     <Link path="/" className=Styles.logoLink>
-      <img src=logo className=Styles.logo alt="Nook Exchange" />
+      <h1 className=Styles.logo> {React.string("Nook Exchange")} </h1>
     </Link>
     <div>
       <Link path="/">

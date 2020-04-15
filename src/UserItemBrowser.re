@@ -64,8 +64,7 @@ module Styles = {
       media("(max-width: 600px)", [position(static), textAlign(center)]),
       media("(max-width: 470px)", [marginBottom(px(16))]),
     ]);
-  let showRecipesLabel =
-    style([fontSize(px(16)), marginRight(px(8)), opacity(0.8)]);
+  let showRecipesLabel = style([fontSize(px(16)), marginRight(px(8))]);
   let showRecipesCheckbox =
     style([
       fontSize(px(24)),

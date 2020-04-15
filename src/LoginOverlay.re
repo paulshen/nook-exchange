@@ -73,7 +73,22 @@ module Styles = {
     ]);
   let registerTitle =
     style([fontSize(px(20)), textAlign(center), marginBottom(px(24))]);
-  let blurb = style([marginBottom(px(16)), textAlign(center)]);
+  let blurb = style([marginBottom(px(16))]);
+  [@bs.val] [@bs.module] external closePng: string = "./assets/close.png";
+  let closeButton =
+    style([
+      backgroundImage(url(closePng)),
+      borderWidth(zero),
+      padding(zero),
+      cursor(pointer),
+      height(px(16)),
+      width(px(16)),
+      position(absolute),
+      top(px(16)),
+      right(px(16)),
+      opacity(0.5),
+      hover([opacity(1.)]),
+    ]);
   let urlPreview =
     style([
       fontSize(px(12)),
@@ -171,7 +186,7 @@ let make = (~onClose) => {
            ? <div>
                <form onSubmit=onLoginSubmit>
                  <div className=Styles.registerTitle>
-                   {React.string("Login!")}
+                   {React.string("Welcome back!")}
                  </div>
                  <input
                    type_="text"
@@ -242,7 +257,12 @@ let make = (~onClose) => {
                  </div>
                : <div>
                    <div className=Styles.registerTitle>
-                     {React.string("Register an account!")}
+                     {React.string("Register an account")}
+                   </div>
+                   <div className=Styles.blurb>
+                     {React.string(
+                        "Create and share lists of Animal Crossing items!",
+                      )}
                    </div>
                    <div className=Styles.urlPreview>
                      {React.string("nook.exchange/u/" ++ username)}
@@ -299,6 +319,7 @@ let make = (~onClose) => {
                    </div>
                  </div>}
       </div>
+      <button onClick={_ => onClose()} className=Styles.closeButton />
     </div>
   </div>;
 };

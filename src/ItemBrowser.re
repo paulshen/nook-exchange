@@ -9,6 +9,12 @@ module Styles = {
       media("(min-width: 1200px)", [width(px(1120))]),
       media("(min-width: 1520px)", [width(px(1408))]),
     ]);
+  let tagline =
+    style([
+      textAlign(center),
+      marginBottom(px(48)),
+      media("(max-width: 600px)", [display(none)]),
+    ]);
   let cards =
     style([
       display(flexBox),
@@ -84,6 +90,9 @@ let make = (~showLogin) => {
   let numResults = filteredItems->Belt.Array.length;
 
   <div className=Styles.root>
+    <div className=Styles.tagline>
+      {React.string("Your friendly Animal Crossing marketplace!")}
+    </div>
     <ItemFilters.CategoryButtons
       filters
       onChange={filters => {

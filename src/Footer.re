@@ -23,6 +23,10 @@ let make = () => {
   <div className=Styles.footer>
     <div className=Styles.contents>
       <div>
+        <a href="https://twitter.com/nookexchange" target="_blank">
+          {React.string("Twitter")}
+        </a>
+        {React.string(" | ")}
         <a
           href="https://docs.google.com/spreadsheets/d/1Hxrdp7oxtK-J5x9u1-rzChUpLtkv3t0_kNGdS6dtyWI/edit#gid=562907750"
           target="_blank">

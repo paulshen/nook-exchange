@@ -40,7 +40,8 @@ module Styles = {
       transition(~duration=200, "all"),
       media("(max-width: 430px)", [width(pct(100.))]),
     ]);
-  let name = style([fontSize(px(16)), marginBottom(px(4))]);
+  let name =
+    style([fontSize(px(16)), marginBottom(px(4)), textAlign(center)]);
   let userNote =
     style([
       borderTop(px(1), solid, hex("f0f0f0")),

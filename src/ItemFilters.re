@@ -6,14 +6,14 @@ module Styles = {
       borderColor(hex("00000040")),
       fontSize(px(16)),
       height(px(32)),
-      marginRight(px(16)),
+      marginRight(px(8)),
       marginBottom(px(8)),
     ]);
   let textInput =
     style([
       backgroundColor(Colors.white),
       fontSize(px(16)),
-      marginRight(px(16)),
+      marginRight(px(8)),
       marginBottom(px(8)),
       padding2(~v=zero, ~h=px(12)),
       borderRadius(px(4)),
@@ -26,11 +26,13 @@ module Styles = {
       fontSize(px(16)),
       position(relative),
       top(px(5)),
+      paddingRight(px(16)),
     ]);
   let pager = style([fontSize(px(16))]);
   let pagerArrow =
     style([
       fontSize(px(24)),
+      lineHeight(px(24)),
       textDecoration(none),
       opacity(0.8),
       transition(~duration=200, "all"),

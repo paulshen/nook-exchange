@@ -1,10 +1,12 @@
 module Styles = {
   open Css;
-  let root = style([paddingBottom(px(64))]);
+  let root =
+    style([display(flexBox), flexDirection(column), minHeight(vh(100.))]);
+  let body = style([flexGrow(1.)]);
 };
 
 [@bs.val] [@bs.scope "window"]
-external gtag: option((string, string, {. "path_path": string}) => unit) =
+external gtag: option((. string, string, {. "path_path": string}) => unit) =
   "gtag";
 
 [@react.component]
@@ -16,7 +18,7 @@ let make = () => {
     () => {
       switch (gtag) {
       | Some(gtag) =>
-        gtag(
+        gtag(.
           "config",
           Constants.gtagId,
           {
@@ -33,10 +35,13 @@ let make = () => {
 
   <div className=Styles.root>
     <HeaderBar onLogin={_ => setShowLogin(_ => true)} />
-    {switch (url.path) {
-     | ["u", userId] => <UserPage userId />
-     | _ => <ItemBrowser showLogin={() => setShowLogin(_ => true)} />
-     }}
+    <div className=Styles.body>
+      {switch (url.path) {
+       | ["u", userId] => <UserPage userId />
+       | _ => <ItemBrowser showLogin={() => setShowLogin(_ => true)} />
+       }}
+    </div>
+    <Footer />
     {showLogin
        ? <LoginOverlay onClose={() => setShowLogin(_ => false)} /> : React.null}
     <ReactAtmosphere.LayerContainer />

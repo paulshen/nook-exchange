@@ -14,6 +14,7 @@ module Styles = {
       backgroundColor(Colors.white),
       fontSize(px(16)),
       marginRight(px(16)),
+      marginBottom(px(8)),
       padding2(~v=zero, ~h=px(12)),
       borderRadius(px(4)),
       borderWidth(zero),

@@ -18,7 +18,7 @@ module Styles = {
       marginBottom(px(16)),
     ]);
   let bottomFilterBar = style([display(flexBox), justifyContent(flexEnd)]);
-  let noResults = style([fontSize(px(20)), paddingTop(px(16))]);
+  let noResults = style([fontSize(px(20)), paddingTop(px(32))]);
 };
 
 let numResultsPerPage = 24;
@@ -93,9 +93,25 @@ let make = (~showLogin) => {
     </div>
     {if (Js.Array.length(filteredItems) == 0) {
        <div className=Styles.noResults>
-         {React.string(
-            "There are no results. Try changing or clearing the filters!",
-          )}
+         {React.string("There are no results. Try changing or ")}
+         <a
+           href="#"
+           onClick={e => {
+             setFilters(_ =>
+               (
+                 {
+                   text: "",
+                   orderable: None,
+                   hasRecipe: None,
+                   category: None,
+                   sort: SellPriceDesc,
+                 }: ItemFilters.t
+               )
+             );
+             ReactEvent.Mouse.preventDefault(e);
+           }}>
+           {React.string("clearing the filters!")}
+         </a>
        </div>;
      } else {
        React.null;

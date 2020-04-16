@@ -8,3 +8,4 @@ let cdnUrl =
 
 let gtagId = "UA-55966633-6";
 let amplitudeApiKey = "d91231e0b8a96baf38ba67eb36d25a48";
+let sentryId = "https://b3e870897abf4c5caef3e12320202dee@o378523.ingest.sentry.io/5202020";

@@ -3,33 +3,33 @@ module Styles = {
   let root = style([display(flexBox), flexWrap(wrap)]);
   let select =
     style([
-      borderColor(hex("00000040")),
+      borderColor(hex("00000020")),
       fontSize(px(16)),
-      height(px(32)),
+      height(px(37)),
       marginRight(px(8)),
       marginBottom(px(8)),
     ]);
+  let selectSort = style([marginRight(px(16))]);
   let textInput =
     style([
       backgroundColor(Colors.white),
+      border(px(1), solid, hex("00000020")),
       fontSize(px(16)),
       marginRight(px(8)),
       marginBottom(px(8)),
       padding2(~v=zero, ~h=px(12)),
       borderRadius(px(4)),
-      borderWidth(zero),
-      height(px(32)),
+      height(px(35)),
+      width(px(180)),
     ]);
   let clearFilters =
     style([
       alignSelf(flexStart),
       fontSize(px(16)),
-      position(relative),
-      top(px(5)),
-      marginLeft(px(8)),
+      lineHeight(px(37)),
       paddingRight(px(16)),
     ]);
-  let pager = style([fontSize(px(16))]);
+  let pager = style([fontSize(px(16)), marginBottom(px(8))]);
   let pagerArrow =
     style([
       fontSize(px(24)),
@@ -163,7 +163,11 @@ external unsafeAsHtmlInputElement: 'a => Webapi.Dom.HtmlInputElement.t =
 module CategoryButtons = {
   module CategoryStyles = {
     open Css;
-    let root = style([marginBottom(px(16))]);
+    let root =
+      style([
+        marginBottom(px(8)),
+        media("(min-width: 1200px)", [marginBottom(px(4))]),
+      ]);
     let button = style([marginRight(px(8)), marginBottom(px(8))]);
     let buttonNotSelected = style([opacity(0.5), hover([opacity(1.)])]);
     let select =
@@ -357,7 +361,7 @@ let make = (~filters, ~onChange) => {
             },
         });
       }}
-      className=Styles.select>
+      className={Cn.make([Styles.select, Styles.selectSort])}>
       <option value="sell-desc">
         {React.string({j|Sell Price ↓|j})}
       </option>

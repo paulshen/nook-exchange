@@ -7,7 +7,7 @@ module Styles = {
       borderRadius(px(4)),
       color(Colors.white),
       cursor(pointer),
-      padding2(~v=px(10), ~h=px(16)),
+      padding2(~v=px(10), ~h=px(14)),
       fontSize(px(14)),
       transition(~duration=200, "all"),
       hover([backgroundColor(Colors.green)]),

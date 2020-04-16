@@ -20,6 +20,7 @@ module Styles = {
     ]);
   let rootForTrade = style([backgroundColor(hex("8FCDE0a0"))]);
   let rootCanCraft = style([backgroundColor(hex("f1e26fa0"))]);
+  let rootMini = style([backgroundColor(hex("fffffff0"))]);
   let sectionTitle =
     style([fontSize(px(24)), marginBottom(px(16)), textAlign(center)]);
   let filterBar = style([marginTop(px(32)), marginBottom(zero)]);
@@ -28,6 +29,13 @@ module Styles = {
       paddingTop(px(16)),
       marginRight(px(-16)),
       media("(max-width: 470px)", [paddingTop(zero)]),
+    ]);
+  let cardsMini =
+    style([
+      justifyContent(flexStart),
+      paddingTop(px(32)),
+      marginLeft(px(-8)),
+      marginRight(px(-8)),
     ]);
   let metaIcons = style([opacity(0.), transition(~duration=200, "all")]);
   let card =
@@ -57,14 +65,23 @@ module Styles = {
       padding3(~top=px(8), ~bottom=zero, ~h=px(4)),
     ]);
   let removeButton = style([top(px(9)), bottom(initial)]);
-  let showRecipesBox =
+  let cardMiniImage =
+    style([display(block), width(px(64)), height(px(64))]);
+  let sectionToggles =
     style([
       position(absolute),
       right(px(32)),
       top(px(36)),
-      media("(max-width: 600px)", [position(static), textAlign(center)]),
+      display(flexBox),
+      flexDirection(column),
+      alignItems(flexEnd),
+      media(
+        "(max-width: 600px)",
+        [position(static), textAlign(center), flexDirection(row)],
+      ),
       media("(max-width: 470px)", [marginBottom(px(16))]),
     ]);
+  let showRecipesBox = style([marginLeft(px(16))]);
   let showRecipesLabel = style([fontSize(px(16)), marginRight(px(8))]);
   let showRecipesCheckbox =
     style([
@@ -151,8 +168,29 @@ module UserItemCard = {
   };
 };
 
+module UserItemCardMini = {
+  [@react.component]
+  let make = (~itemId, ~variation) => {
+    let item = Item.getItem(~itemId);
+    <img
+      src={
+        Constants.cdnUrl
+        ++ "/items/"
+        ++ item.image
+        ++ "__"
+        ++ string_of_int(variation)
+        ++ ".png"
+      }
+      title={item.name}
+      className=Styles.cardMiniImage
+    />;
+  };
+};
+
 module Section = {
   let numResultsPerPage = 60;
+
+  let randomString = () => Js.Math.random()->Js.Float.toString;
 
   [@react.component]
   let make =
@@ -161,7 +199,9 @@ module Section = {
         ~userItems: array(((string, int), User.item)),
         ~editable,
       ) => {
+    let id = React.useMemo0(() => randomString());
     let (showRecipes, setShowRecipes) = React.useState(() => false);
+    let (showMini, setShowMini) = React.useState(() => false);
     let (filters, setFilters) =
       React.useState(() =>
         (
@@ -193,6 +233,7 @@ module Section = {
         Styles.root,
         Cn.ifTrue(Styles.rootForTrade, status == ForTrade),
         Cn.ifTrue(Styles.rootCanCraft, status == CanCraft),
+        Cn.ifTrue(Styles.rootMini, showMini),
       ])}>
       <div className=Styles.sectionTitle>
         {React.string(
@@ -203,29 +244,53 @@ module Section = {
            },
          )}
       </div>
-      {if (status == CanCraft) {
-         <div className=Styles.showRecipesBox>
-           <label htmlFor="craftShowRecipe" className=Styles.showRecipesLabel>
-             {React.string("Show Recipes")}
-           </label>
-           <input
-             id="craftShowRecipe"
-             type_="checkbox"
-             checked=showRecipes
-             onChange={e => {
-               let checked = ReactEvent.Form.target(e)##checked;
-               Analytics.Amplitude.logEventWithProperties(
-                 ~eventName="Show Recipes Clicked",
-                 ~eventProperties={"checked": checked},
-               );
-               setShowRecipes(_ => checked);
-             }}
-             className=Styles.showRecipesCheckbox
-           />
-         </div>;
-       } else {
-         React.null;
-       }}
+      <div className=Styles.sectionToggles>
+        {userItems->Array.length > 16
+           ? <div>
+               <label htmlFor=id className=Styles.showRecipesLabel>
+                 {React.string("Miniature")}
+               </label>
+               <input
+                 id
+                 type_="checkbox"
+                 checked=showMini
+                 onChange={e => {
+                   let checked = ReactEvent.Form.target(e)##checked;
+                   Analytics.Amplitude.logEventWithProperties(
+                     ~eventName="Miniature Mode Clicked",
+                     ~eventProperties={"checked": checked, "status": status},
+                   );
+                   setShowMini(_ => checked);
+                 }}
+                 className=Styles.showRecipesCheckbox
+               />
+             </div>
+           : React.null}
+        {if (status == CanCraft && !showMini) {
+           <div className=Styles.showRecipesBox>
+             <label
+               htmlFor="craftShowRecipe" className=Styles.showRecipesLabel>
+               {React.string("Show Recipes")}
+             </label>
+             <input
+               id="craftShowRecipe"
+               type_="checkbox"
+               checked=showRecipes
+               onChange={e => {
+                 let checked = ReactEvent.Form.target(e)##checked;
+                 Analytics.Amplitude.logEventWithProperties(
+                   ~eventName="Show Recipes Clicked",
+                   ~eventProperties={"checked": checked},
+                 );
+                 setShowRecipes(_ => checked);
+               }}
+               className=Styles.showRecipesCheckbox
+             />
+           </div>;
+         } else {
+           React.null;
+         }}
+      </div>
       {showFilters
          ? <div
              className={Cn.make([
@@ -239,33 +304,50 @@ module Section = {
                  setPageOffset(_ => 0);
                }}
              />
-             <ItemFilters.Pager
-               numResults
-               pageOffset
-               numResultsPerPage
-               setPageOffset
-             />
+             {!showMini
+                ? <ItemFilters.Pager
+                    numResults
+                    pageOffset
+                    numResultsPerPage
+                    setPageOffset
+                  />
+                : React.null}
            </div>
          : React.null}
-      <div className={Cn.make([ItemBrowser.Styles.cards, Styles.cards])}>
+      <div
+        className={Cn.make([
+          ItemBrowser.Styles.cards,
+          Styles.cards,
+          Cn.ifTrue(Styles.cardsMini, showMini),
+        ])}>
         {filteredItems
-         ->Belt.Array.slice(
-             ~offset=pageOffset * numResultsPerPage,
-             ~len=numResultsPerPage,
+         ->(
+             showMini
+               ? x => x
+               : Belt.Array.slice(
+                   ~offset=pageOffset * numResultsPerPage,
+                   ~len=numResultsPerPage,
+                 )
            )
          ->Belt.Array.mapU((. ((itemId, variation), userItem)) => {
-             <UserItemCard
-               itemId
-               variation
-               userItem
-               editable
-               showRecipe=showRecipes
-               key={itemId ++ string_of_int(variation)}
-             />
+             showMini
+               ? <UserItemCardMini
+                   itemId
+                   variation
+                   key={itemId ++ string_of_int(variation)}
+                 />
+               : <UserItemCard
+                   itemId
+                   variation
+                   userItem
+                   editable
+                   showRecipe=showRecipes
+                   key={itemId ++ string_of_int(variation)}
+                 />
            })
          ->React.array}
       </div>
-      {showFilters
+      {showFilters && !showMini
          ? <div className=ItemBrowser.Styles.bottomFilterBar>
              <ItemFilters.Pager
                numResults

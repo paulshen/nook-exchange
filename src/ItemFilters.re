@@ -287,11 +287,24 @@ let make = (~filters, ~onChange) => {
     [|filters|],
   );
 
+  React.useEffect0(() => {
+    open Webapi.Dom;
+    let onKeyDown = e => {
+      switch (KeyboardEvent.key(e)) {
+      | "Esc"
+      | "Escape" => onChange({...filters, text: ""})
+      | _ => ()
+      };
+    };
+    window |> Window.addKeyDownEventListener(onKeyDown);
+    Some(() => {window |> Window.removeKeyDownEventListener(onKeyDown)});
+  });
+
   <div className=Styles.root>
     <input
       type_="text"
       ref={ReactDOMRe.Ref.domRef(inputTextRef)}
-      placeholder="Search by text.."
+      placeholder="Search.. Esc to clear"
       onChange={e => {
         let value = ReactEvent.Form.target(e)##value;
         switch (React.Ref.current(updateTextTimeoutRef)) {

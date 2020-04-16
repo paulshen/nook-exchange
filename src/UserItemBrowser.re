@@ -192,7 +192,7 @@ module Section = {
         (userItems, filters),
       );
     let numResults = filteredItems->Belt.Array.length;
-    let showFilters = numResults > numResultsPerPage;
+    let showFilters = userItems->Belt.Array.length > numResultsPerPage;
 
     <div
       className={Cn.make([

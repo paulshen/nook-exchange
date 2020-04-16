@@ -33,7 +33,10 @@ let fromItemKey = (~key: string) => {
   let [|itemId, variation|] = key |> Js.String.split("//");
   (
     // This should be fixed elsewhere
-    itemId |> Js.String.replace("%C3%A9", {j|é|j}),
+    itemId
+    |> Js.String.replace("%C3%A9", {j|é|j})
+    |> Js.String.replace("%C3%A1", {j|á|j})
+    |> Js.String.replace("%C3%A0", {j|à|j}),
     int_of_string(variation),
   );
 };

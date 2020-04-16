@@ -44,10 +44,16 @@ let handleServerResponse = responseResult =>
       ~eventName="Error Dialog Shown",
       ~eventProperties={
         "error_response":
-          switch (responseResult) {
-          | Ok(response) => response
-          | Error(error) => Obj.magic(error)
-          },
+          Js.Json.stringifyAny(
+            switch (responseResult) {
+            | Ok(response) => {
+                "status": Fetch.Response.status(response),
+                "statusText": Fetch.Response.statusText(response),
+              }
+            | Error(error) => Obj.magic(error)
+            },
+          )
+          ->Option.getExn,
       },
     );
   };

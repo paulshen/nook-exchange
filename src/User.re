@@ -26,7 +26,14 @@ let itemFromJson = json => {
 };
 
 let getItemKey = (~itemId: string, ~variation: int) => {
-  itemId ++ "//" ++ string_of_int(variation);
+  (
+    itemId
+    |> Js.String.replace({j|é|j}, "%C3%A9")
+    |> Js.String.replace({j|á|j}, "%C3%A1")
+    |> Js.String.replace({j|à|j}, "%C3%A0")
+  )
+  ++ "//"
+  ++ string_of_int(variation);
 };
 
 let fromItemKey = (~key: string) => {

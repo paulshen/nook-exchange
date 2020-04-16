@@ -31,6 +31,17 @@ let useItem = (~itemId, ~variation) => {
 
 let isLoggedIn = () => api.getState() != None;
 
+let handleServerResponse = responseResult =>
+  if (switch (responseResult) {
+      | Error(_) => true
+      | Ok(response) => Fetch.Response.status(response) != 200
+      }) {
+    Error.showPopup(
+      ~message=
+        "Something went wrong. Sorry!\nRefresh your browser and try again.",
+    );
+  };
+
 let setItem = (~itemId: string, ~variation: int, ~item: User.item) => {
   let user = Option.getExn(api.getState());
   let updatedUser = {
@@ -69,14 +80,7 @@ let setItem = (~itemId: string, ~variation: int, ~item: User.item) => {
           (),
         ),
       );
-    switch (responseResult) {
-    | Error(_) =>
-      Error.showPopup(
-        ~message=
-          "Something went wrong. Sorry!\nRefresh your browser and try again.",
-      )
-    | _ => ()
-    };
+    handleServerResponse(responseResult);
     Promise.resolved();
   }
   |> ignore;
@@ -100,19 +104,22 @@ let removeItem = (~itemId, ~variation) => {
       ~eventProperties={"itemId": itemId, "variation": variation},
     );
     {
-      Fetch.fetchWithInit(
-        Constants.apiUrl
-        ++ "/@me/items/"
-        ++ itemId
-        ++ "/"
-        ++ string_of_int(variation),
-        Fetch.RequestInit.make(
-          ~method_=Delete,
-          ~credentials=Include,
-          ~mode=CORS,
-          (),
-        ),
-      );
+      let%Repromise.Js responseResult =
+        Fetch.fetchWithInit(
+          Constants.apiUrl
+          ++ "/@me/items/"
+          ++ itemId
+          ++ "/"
+          ++ string_of_int(variation),
+          Fetch.RequestInit.make(
+            ~method_=Delete,
+            ~credentials=Include,
+            ~mode=CORS,
+            (),
+          ),
+        );
+      handleServerResponse(responseResult);
+      Promise.resolved();
     }
     |> ignore;
   };
@@ -149,14 +156,7 @@ let updateProfileText = (~profileText) => {
           (),
         ),
       );
-    switch (responseResult) {
-    | Error(_) =>
-      Error.showPopup(
-        ~message=
-          "Something went wrong. Sorry!\nRefresh your browser and try again.",
-      )
-    | _ => ()
-    };
+    handleServerResponse(responseResult);
     Promise.resolved();
   }
   |> ignore;

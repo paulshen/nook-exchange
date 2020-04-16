@@ -40,6 +40,10 @@ let handleServerResponse = responseResult =>
       ~message=
         "Something went wrong. Sorry!\nRefresh your browser and try again.",
     );
+    Analytics.Amplitude.logEventWithProperties(
+      ~eventName="Error Dialog Shown",
+      ~eventProperties={"response": responseResult},
+    );
   };
 
 let setItem = (~itemId: string, ~variation: int, ~item: User.item) => {

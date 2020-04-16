@@ -36,8 +36,10 @@ module Styles = {
       height(px(60)),
       textIndent(px(-9999)),
     ]);
-  let navRight = style([display(flexBox)]);
-  let logoutLink = style([marginLeft(px(16))]);
+  let nav = style([display(flexBox)]);
+  let navLink = style([marginLeft(px(16))]);
+  let requestFeatureLink =
+    style([media("(max-width: 800px)", [display(none)])]);
 };
 
 [@react.component]
@@ -47,24 +49,30 @@ let make = (~onLogin) => {
     <Link path="/" className=Styles.logoLink>
       <h1 className=Styles.logo> {React.string("Nook Exchange")} </h1>
     </Link>
-    <div>
+    <div className=Styles.nav>
       <Link path="/">
         <span className=Styles.standardLink>
-          {React.string("Browse Items")}
+          {React.string("Browse items")}
         </span>
         <span className=Styles.smallViewportLink>
           {React.string("Nook Exchange")}
         </span>
       </Link>
     </div>
-    <div className=Styles.navRight>
+    <div className=Styles.nav>
       {switch (user) {
        | Some(user) =>
          <>
-           <div>
+           <div className=Styles.navLink>
              <Link path={"/u/" ++ user.id}> {React.string(user.id)} </Link>
            </div>
-           <div className=Styles.logoutLink>
+           <div
+             className={Cn.make([Styles.navLink, Styles.requestFeatureLink])}>
+             <a href="https://twitter.com/nookexchange" target="_blank">
+               {React.string("Request feature")}
+             </a>
+           </div>
+           <div className=Styles.navLink>
              <a
                href="#"
                onClick={e => {
@@ -76,14 +84,16 @@ let make = (~onLogin) => {
            </div>
          </>
        | None =>
-         <a
-           href="#"
-           onClick={e => {
-             onLogin();
-             ReactEvent.Mouse.preventDefault(e);
-           }}>
-           {React.string("Login")}
-         </a>
+         <div className=Styles.navLink>
+           <a
+             href="#"
+             onClick={e => {
+               onLogin();
+               ReactEvent.Mouse.preventDefault(e);
+             }}>
+             {React.string("Login")}
+           </a>
+         </div>
        }}
     </div>
   </div>;

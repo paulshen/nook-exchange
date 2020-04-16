@@ -52,21 +52,32 @@ let setItem = (~itemId: string, ~variation: int, ~item: User.item) => {
     },
   );
   {
-    Fetch.fetchWithInit(
-      Constants.apiUrl
-      ++ "/@me/items/"
-      ++ itemId
-      ++ "/"
-      ++ string_of_int(variation),
-      Fetch.RequestInit.make(
-        ~method_=Post,
-        ~body=Fetch.BodyInit.make(Js.Json.stringify(userItemJson)),
-        ~headers=Fetch.HeadersInit.make({"Content-Type": "application/json"}),
-        ~credentials=Include,
-        ~mode=CORS,
-        (),
-      ),
-    );
+    let%Repromise.Js responseResult =
+      Fetch.fetchWithInit(
+        Constants.apiUrl
+        ++ "/@me/items/"
+        ++ itemId
+        ++ "/"
+        ++ string_of_int(variation),
+        Fetch.RequestInit.make(
+          ~method_=Post,
+          ~body=Fetch.BodyInit.make(Js.Json.stringify(userItemJson)),
+          ~headers=
+            Fetch.HeadersInit.make({"Content-Type": "application/json"}),
+          ~credentials=Include,
+          ~mode=CORS,
+          (),
+        ),
+      );
+    switch (responseResult) {
+    | Error(_) =>
+      Error.showPopup(
+        ~message=
+          "Something went wrong. Sorry!\nRefresh your browser and try again.",
+      )
+    | _ => ()
+    };
+    Promise.resolved();
   }
   |> ignore;
 };
@@ -116,26 +127,37 @@ let updateProfileText = (~profileText) => {
     ~eventProperties={"text": profileText},
   );
   {
-    Fetch.fetchWithInit(
-      Constants.apiUrl ++ "/@me/profileText",
-      Fetch.RequestInit.make(
-        ~method_=Post,
-        ~body=
-          Fetch.BodyInit.make(
-            Js.Json.stringify(
-              Js.Json.object_(
-                Js.Dict.fromArray([|
-                  ("text", Js.Json.string(profileText)),
-                |]),
+    let%Repromise.Js responseResult =
+      Fetch.fetchWithInit(
+        Constants.apiUrl ++ "/@me/profileText",
+        Fetch.RequestInit.make(
+          ~method_=Post,
+          ~body=
+            Fetch.BodyInit.make(
+              Js.Json.stringify(
+                Js.Json.object_(
+                  Js.Dict.fromArray([|
+                    ("text", Js.Json.string(profileText)),
+                  |]),
+                ),
               ),
             ),
-          ),
-        ~headers=Fetch.HeadersInit.make({"Content-Type": "application/json"}),
-        ~credentials=Include,
-        ~mode=CORS,
-        (),
-      ),
-    );
+          ~headers=
+            Fetch.HeadersInit.make({"Content-Type": "application/json"}),
+          ~credentials=Include,
+          ~mode=CORS,
+          (),
+        ),
+      );
+    switch (responseResult) {
+    | Error(_) =>
+      Error.showPopup(
+        ~message=
+          "Something went wrong. Sorry!\nRefresh your browser and try again.",
+      )
+    | _ => ()
+    };
+    Promise.resolved();
   }
   |> ignore;
 };

@@ -1,30 +1,50 @@
 module ErrorPopup = {
   module Styles = {
     open Css;
-    let root =
+    let overlay =
       style([
         position(fixed),
-        top(px(32)),
-        right(px(32)),
+        top(zero),
+        bottom(zero),
+        left(zero),
+        right(zero),
+        display(flexBox),
+        alignItems(center),
+        justifyContent(center),
+      ]);
+    let backdrop =
+      style([
+        position(absolute),
+        top(zero),
+        bottom(zero),
+        left(zero),
+        right(zero),
+        backgroundColor(hex("ffffffc0")),
+      ]);
+    let root =
+      style([
+        padding2(~v=px(32), ~h=px(32)),
         backgroundColor(Colors.red),
         color(Colors.white),
-        padding(px(24)),
-        minWidth(px(256)),
-        borderRadius(px(8)),
-        boxShadow(Shadow.box(~blur=px(16), rgba(0, 0, 0, 0.2))),
-        whiteSpace(`preLine),
+        borderRadius(px(4)),
+        position(relative),
+        maxWidth(px(448)),
+        width(pct(90.)),
         fontSize(px(16)),
-        media("(max-width: 400px)", [right(zero)]),
+        whiteSpace(`preLine),
+        boxShadow(Shadow.box(~spread=px(12), rgba(0, 0, 0, 0.1))),
       ]);
   };
 
   [@react.component]
   let make = (~message) => {
-    <div className=Styles.root> {React.string(message)} </div>;
+    <div className=Styles.overlay>
+      <div className=Styles.backdrop />
+      <div className=Styles.root> {React.string(message)} </div>
+    </div>;
   };
 };
 
 let showPopup = (~message) => {
-  ReactAtmosphere.API.pushLayer(~render=_ => {<ErrorPopup message />})
-  |> ignore;
+  ReactAtmosphere.API.pushLayer(~render=_ => <ErrorPopup message />) |> ignore;
 };

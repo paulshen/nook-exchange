@@ -165,13 +165,7 @@ module Section = {
     let (filters, setFilters) =
       React.useState(() =>
         (
-          {
-            text: "",
-            orderable: None,
-            hasRecipe: None,
-            category: None,
-            sort: SellPriceDesc,
-          }: ItemFilters.t
+          {text: "", mask: None, category: None, sort: SellPriceDesc}: ItemFilters.t
         )
       );
     let (pageOffset, setPageOffset) = React.useState(() => 0);

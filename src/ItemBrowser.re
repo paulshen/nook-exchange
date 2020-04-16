@@ -51,13 +51,7 @@ let make = (~showLogin) => {
   let (filters, setFilters) =
     React.useState(() =>
       (
-        {
-          text: "",
-          orderable: None,
-          hasRecipe: None,
-          category: None,
-          sort: SellPriceDesc,
-        }: ItemFilters.t
+        {text: "", mask: None, category: None, sort: SellPriceDesc}: ItemFilters.t
       )
     );
   let (pageOffset, setPageOffset) = React.useState(() => 0);
@@ -69,8 +63,7 @@ let make = (~showLogin) => {
           ~eventName="Filters Changed",
           ~eventProperties={
             "filter_text": updatedFilters.text,
-            "filter_orderable": updatedFilters.orderable,
-            "filter_hasRecipe": updatedFilters.hasRecipe,
+            "filter_mask": updatedFilters.mask,
             "filter_category": updatedFilters.category,
             "filter_sort": updatedFilters.sort,
           },
@@ -145,13 +138,7 @@ let make = (~showLogin) => {
            onClick={e => {
              setFilters(_ =>
                (
-                 {
-                   text: "",
-                   orderable: None,
-                   hasRecipe: None,
-                   category: None,
-                   sort: SellPriceDesc,
-                 }: ItemFilters.t
+                 {text: "", mask: None, category: None, sort: SellPriceDesc}: ItemFilters.t
                )
              );
              ReactEvent.Mouse.preventDefault(e);

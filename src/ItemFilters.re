@@ -48,10 +48,13 @@ type sort =
   | SellPriceDesc
   | SellPriceAsc;
 
+type mask =
+  | Orderable
+  | HasRecipe;
+
 type t = {
   text: string,
-  orderable: option(bool),
-  hasRecipe: option(bool),
+  mask: option(mask),
   category: option(string),
   sort,
 };
@@ -66,16 +69,9 @@ let doesItemMatchFilters = (~item: Item.t, ~filters: t) => {
     }
   )
   && (
-    switch (filters.orderable) {
-    | Some(true) => item.orderable
-    | Some(false) => !item.orderable
-    | None => true
-    }
-  )
-  && (
-    switch (filters.hasRecipe) {
-    | Some(true) => Belt.Option.isSome(item.recipe)
-    | Some(false) => Belt.Option.isNone(item.recipe)
+    switch (filters.mask) {
+    | Some(Orderable) => item.orderable
+    | Some(HasRecipe) => item.recipe !== None
     | None => true
     }
   )
@@ -316,9 +312,9 @@ let make = (~filters, ~onChange) => {
     />
     <select
       value={
-        switch (filters.orderable) {
-        | Some(true) => "true"
-        | Some(false) => "false"
+        switch (filters.mask) {
+        | Some(Orderable) => "orderable"
+        | Some(HasRecipe) => "has-recipe"
         | None => "none"
         }
       }
@@ -326,45 +322,19 @@ let make = (~filters, ~onChange) => {
         let value = ReactEvent.Form.target(e)##value;
         onChange({
           ...filters,
-          orderable:
+          mask:
             switch (value) {
-            | "true" => Some(true)
-            | "false" => Some(false)
+            | "orderable" => Some(Orderable)
+            | "has-recipe" => Some(HasRecipe)
             | "none" => None
             | _ => None
             },
         });
       }}
       className=Styles.select>
-      <option value="none"> {React.string("-- Orderable")} </option>
-      <option value="true"> {React.string("Orderable")} </option>
-      <option value="false"> {React.string("Not-orderable")} </option>
-    </select>
-    <select
-      value={
-        switch (filters.hasRecipe) {
-        | Some(true) => "true"
-        | Some(false) => "false"
-        | None => "none"
-        }
-      }
-      onChange={e => {
-        let value = ReactEvent.Form.target(e)##value;
-        onChange({
-          ...filters,
-          hasRecipe:
-            switch (value) {
-            | "true" => Some(true)
-            | "false" => Some(false)
-            | "none" => None
-            | _ => None
-            },
-        });
-      }}
-      className=Styles.select>
-      <option value="none"> {React.string("-- Recipe")} </option>
-      <option value="true"> {React.string("Has recipe")} </option>
-      <option value="false"> {React.string("No recipe")} </option>
+      <option value="none"> {React.string("No Filter")} </option>
+      <option value="orderable"> {React.string("Orderable")} </option>
+      <option value="has-recipe"> {React.string("Has Recipe")} </option>
     </select>
     <select
       value={
@@ -394,18 +364,14 @@ let make = (~filters, ~onChange) => {
       <option value="sell-asc"> {React.string({j|Sell Price ↑|j})} </option>
       <option value="abc"> {React.string("A - Z")} </option>
     </select>
-    {if (filters.text != ""
-         || filters.hasRecipe != None
-         || filters.orderable != None
-         || filters.category != None) {
+    {if (filters.text != "" || filters.mask != None || filters.category != None) {
        <a
          href="#"
          onClick={e => {
            ReactEvent.Mouse.preventDefault(e);
            onChange({
              text: "",
-             orderable: None,
-             hasRecipe: None,
+             mask: None,
              category: None,
              sort: SellPriceDesc,
            });

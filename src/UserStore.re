@@ -31,6 +31,18 @@ let useItem = (~itemId, ~variation) => {
 
 let isLoggedIn = () => api.getState() != None;
 
+let sessionId =
+  ref(Dom.Storage.localStorage |> Dom.Storage.getItem("sessionId"));
+let updateSessionId = newValue => {
+  sessionId := newValue;
+  Dom.Storage.(
+    switch (newValue) {
+    | Some(sessionId) => localStorage |> setItem("sessionId", sessionId)
+    | None => localStorage |> removeItem("sessionId")
+    }
+  );
+};
+
 let handleServerResponse = responseResult =>
   if (switch (responseResult) {
       | Error(_) => true
@@ -90,7 +102,11 @@ let setItem = (~itemId: string, ~variation: int, ~item: User.item) => {
           ~method_=Post,
           ~body=Fetch.BodyInit.make(Js.Json.stringify(userItemJson)),
           ~headers=
-            Fetch.HeadersInit.make({"Content-Type": "application/json"}),
+            Fetch.HeadersInit.make({
+              "Content-Type": "application/json",
+              "Authorization":
+                "Bearer " ++ Option.getWithDefault(sessionId^, ""),
+            }),
           ~credentials=Include,
           ~mode=CORS,
           (),
@@ -129,6 +145,12 @@ let removeItem = (~itemId, ~variation) => {
           ++ string_of_int(variation),
           Fetch.RequestInit.make(
             ~method_=Delete,
+            ~headers=?
+              Option.map(sessionId^, sessionId =>
+                Fetch.HeadersInit.make({
+                  "Authorization": "Bearer " ++ sessionId,
+                })
+              ),
             ~credentials=Include,
             ~mode=CORS,
             (),
@@ -166,7 +188,11 @@ let updateProfileText = (~profileText) => {
               ),
             ),
           ~headers=
-            Fetch.HeadersInit.make({"Content-Type": "application/json"}),
+            Fetch.HeadersInit.make({
+              "Content-Type": "application/json",
+              "Authorization":
+                "Bearer " ++ Option.getWithDefault(sessionId^, ""),
+            }),
           ~credentials=Include,
           ~mode=CORS,
           (),
@@ -205,6 +231,9 @@ let register = (~userId, ~password) => {
   switch (Fetch.Response.status(response)) {
   | 200 =>
     let%Repromise.JsExn json = Fetch.Response.json(response);
+    updateSessionId(
+      json |> Json.Decode.(optional(field("sessionId", string))),
+    );
     let user = User.fromAPI(json);
     api.dispatch(Login(user));
     Analytics.Amplitude.setUserId(~userId=Some(user.id));
@@ -249,6 +278,9 @@ let login = (~userId, ~password) => {
   switch (Fetch.Response.status(response)) {
   | 200 =>
     let%Repromise.JsExn json = Fetch.Response.json(response);
+    updateSessionId(
+      json |> Json.Decode.(optional(field("sessionId", string))),
+    );
     let user = User.fromAPI(json);
     api.dispatch(Login(user));
     Analytics.Amplitude.setUserId(~userId=Some(user.id));
@@ -259,12 +291,18 @@ let login = (~userId, ~password) => {
 
 let logout = () => {
   api.dispatch(Logout);
+  Dom.Storage.localStorage |> Dom.Storage.removeItem("sessionId");
   Analytics.Amplitude.setUserId(~userId=None);
+  updateSessionId(None);
   let%Repromise.JsExn response =
     Fetch.fetchWithInit(
       Constants.apiUrl ++ "/logout",
       Fetch.RequestInit.make(
         ~method_=Post,
+        ~headers=?
+          Option.map(sessionId^, sessionId =>
+            Fetch.HeadersInit.make({"Authorization": "Bearer " ++ sessionId})
+          ),
         ~credentials=Include,
         ~mode=CORS,
         (),
@@ -280,6 +318,12 @@ let init = () => {
         Constants.apiUrl ++ "/@me",
         Fetch.RequestInit.make(
           ~method_=Get,
+          ~headers=?
+            Option.map(sessionId^, sessionId =>
+              Fetch.HeadersInit.make({
+                "Authorization": "Bearer " ++ sessionId,
+              })
+            ),
           ~credentials=Include,
           ~mode=CORS,
           (),
@@ -288,6 +332,9 @@ let init = () => {
     switch (Fetch.Response.status(response)) {
     | 200 =>
       let%Repromise.JsExn json = Fetch.Response.json(response);
+      updateSessionId(
+        json |> Json.Decode.(optional(field("sessionId", string))),
+      );
       let user = User.fromAPI(json);
       api.dispatch(Login(user));
       Analytics.Amplitude.setUserId(~userId=Some(user.id));

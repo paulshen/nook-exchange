@@ -38,7 +38,7 @@ let handleServerResponse = responseResult =>
       }) {
     Error.showPopup(
       ~message=
-        "Something went wrong. Sorry!\nRefresh your browser and try again.",
+        "Something went wrong. Sorry!\nRefresh your browser and try again.\nIf you are running into issues, please email hi@nook.exchange",
     );
     Analytics.Amplitude.logEventWithProperties(
       ~eventName="Error Dialog Shown",

@@ -13,6 +13,8 @@ module ErrorPopup = {
         borderRadius(px(8)),
         boxShadow(Shadow.box(~blur=px(16), rgba(0, 0, 0, 0.2))),
         whiteSpace(`preLine),
+        fontSize(px(16)),
+        media("(max-width: 400px)", [right(zero)]),
       ]);
   };
 

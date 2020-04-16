@@ -42,7 +42,13 @@ let handleServerResponse = responseResult =>
     );
     Analytics.Amplitude.logEventWithProperties(
       ~eventName="Error Dialog Shown",
-      ~eventProperties={"response": responseResult},
+      ~eventProperties={
+        "error_response":
+          switch (responseResult) {
+          | Ok(response) => response
+          | Error(error) => Obj.magic(error)
+          },
+      },
     );
   };
 

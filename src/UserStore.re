@@ -162,6 +162,7 @@ let updateProfileText = (~profileText) => {
   |> ignore;
 };
 
+let errorQuotationMarksRegex = [%bs.re {|/^"(.*)"$/|}];
 let register = (~userId, ~password) => {
   let%Repromise.JsExn response =
     Fetch.fetchWithInit(
@@ -194,6 +195,14 @@ let register = (~userId, ~password) => {
     Promise.resolved(Ok(user));
   | _ =>
     let%Repromise.JsExn text = Fetch.Response.text(response);
+    let result = text |> Js.Re.exec_(errorQuotationMarksRegex);
+    let text =
+      switch (result) {
+      | Some(match) =>
+        let captures = Js.Re.captures(match);
+        captures[1]->Option.getExn->Js.Nullable.toOption->Option.getExn;
+      | None => text
+      };
     Promise.resolved(Error(text));
   };
 };

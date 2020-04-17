@@ -1,5 +1,6 @@
 module Styles = {
   open Css;
+  let root = style([unsafe("alignSelf", "stretch")]);
   let textarea =
     style([
       backgroundColor(rgba(0, 0, 0, 0.03)),
@@ -38,7 +39,7 @@ module Styles = {
 let make = (~itemId, ~variation, ~userItem: User.item) => {
   let (userItemNote, setUserItemNote) = React.useState(() => userItem.note);
 
-  <div>
+  <div className=Styles.root>
     <textarea
       value=userItemNote
       placeholder="Add a note"

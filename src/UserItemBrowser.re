@@ -18,6 +18,7 @@ module Styles = {
         [width(auto), padding(px(16)), borderRadius(zero)],
       ),
     ]);
+  let anchor = style([position(absolute), top(px(-100))]);
   let rootForTrade = style([backgroundColor(hex("8FCDE0a0"))]);
   let rootCanCraft = style([backgroundColor(hex("f1e26fa0"))]);
   let rootMini = style([backgroundColor(hex("fffffff0"))]);
@@ -228,6 +229,23 @@ module Section = {
     let numResults = filteredItems->Belt.Array.length;
     let showFilters = userItems->Belt.Array.length > numResultsPerPage;
 
+    let anchorId =
+      switch (status) {
+      | ForTrade => "for-trade"
+      | CanCraft => "can-craft"
+      | Wishlist => "wishlist"
+      };
+    let anchorRef = React.useRef(Js.Nullable.null);
+    React.useEffect0(() => {
+      let url = ReasonReactRouter.dangerouslyGetInitialUrl();
+      if (url.hash == anchorId) {
+        open Webapi.Dom;
+        let anchorElement = Utils.getElementForDomRef(anchorRef);
+        anchorElement->Element.scrollIntoView;
+      };
+      None;
+    });
+
     <div
       className={Cn.make([
         Styles.root,
@@ -235,6 +253,11 @@ module Section = {
         Cn.ifTrue(Styles.rootCanCraft, status == CanCraft),
         Cn.ifTrue(Styles.rootMini, showMini),
       ])}>
+      <div
+        className=Styles.anchor
+        id=anchorId
+        ref={ReactDOMRe.Ref.domRef(anchorRef)}
+      />
       <div className=Styles.sectionTitle>
         {React.string(
            switch (status) {
@@ -361,6 +384,36 @@ module Section = {
   };
 };
 
+module ListLinks = {
+  module Styles = {
+    open Css;
+    let root = style([textAlign(center)]);
+    let link = style([marginLeft(px(8))]);
+  };
+
+  [@react.component]
+  let make = (~hasForTrade, ~hasCanCraft, ~hasWishlist) => {
+    <div className=Styles.root>
+      {React.string("Lists:")}
+      {hasForTrade
+         ? <a href="#for-trade" className=Styles.link>
+             {React.string("For Trade")}
+           </a>
+         : React.null}
+      {hasCanCraft
+         ? <a href="#can-craft" className=Styles.link>
+             {React.string("Can Craft")}
+           </a>
+         : React.null}
+      {hasWishlist
+         ? <a href="#wishlist" className=Styles.link>
+             {React.string("Wishlist")}
+           </a>
+         : React.null}
+    </div>;
+  };
+};
+
 [@react.component]
 let make = (~userItems: array(((string, int), User.item)), ~editable) => {
   let wishlist =
@@ -375,18 +428,29 @@ let make = (~userItems: array(((string, int), User.item)), ~editable) => {
     userItems->Array.keepU((. (_, item: User.item)) =>
       item.status == CanCraft
     );
+  let hasForTrade = forTradeList->Array.length > 0;
+  let hasCanCraft = canCraftList->Array.length > 0;
+  let hasWishlist = wishlist->Array.length > 0;
+  let showListLinks =
+    forTradeList->Array.length > 16
+    && hasCanCraft
+    || forTradeList->Array.length
+    + canCraftList->Array.length > 16
+    && hasWishlist;
   <div>
-    {if (forTradeList->Array.length > 0) {
+    {showListLinks
+       ? <ListLinks hasForTrade hasCanCraft hasWishlist /> : React.null}
+    {if (hasForTrade) {
        <Section status=ForTrade userItems=forTradeList editable />;
      } else {
        React.null;
      }}
-    {if (canCraftList->Array.length > 0) {
+    {if (hasCanCraft) {
        <Section status=CanCraft userItems=canCraftList editable />;
      } else {
        React.null;
      }}
-    {if (wishlist->Array.length > 0) {
+    {if (hasWishlist) {
        <Section status=Wishlist userItems=wishlist editable />;
      } else {
        React.null;

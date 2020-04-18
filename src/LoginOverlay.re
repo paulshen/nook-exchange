@@ -117,6 +117,7 @@ let make = (~onClose) => {
   let (showLogin, setShowLogin) = React.useState(() => false);
 
   let (username, setUsername) = React.useState(() => "");
+  let (email, setEmail) = React.useState(() => "");
   let (password, setPassword) = React.useState(() => "");
   let (isSubmitting, setIsSubmitting) = React.useState(() => false);
 
@@ -151,11 +152,14 @@ let make = (~onClose) => {
     ReactEvent.Form.preventDefault(e);
     {
       setIsSubmitting(_ => true);
-      let%Repromise result = UserStore.register(~username, ~password);
+      let%Repromise result = UserStore.register(~username, ~email, ~password);
       switch (result) {
       | Ok(_) =>
         setRegisterStatus(_ => Some(Success));
-        Analytics.Amplitude.logEvent(~eventName="Registration Succeeded");
+        Analytics.Amplitude.logEventWithProperties(
+          ~eventName="Registration Succeeded",
+          ~eventProperties={"username": username, "email": email},
+        );
       | Error(error) =>
         setRegisterStatus(_ => Some(Error(error)));
         Analytics.Amplitude.logEventWithProperties(
@@ -278,6 +282,16 @@ let make = (~onClose) => {
                            setUsername(_ => value);
                          }}
                          ref={ReactDOMRe.Ref.domRef(usernameRef)}
+                         className=Styles.input
+                       />
+                       <input
+                         type_="text"
+                         placeholder="Email (Optional for account recovery)"
+                         value=email
+                         onChange={e => {
+                           let value = ReactEvent.Form.target(e)##value;
+                           setEmail(_ => value);
+                         }}
                          className=Styles.input
                        />
                        <input

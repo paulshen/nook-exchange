@@ -50,13 +50,15 @@ let fromItemKey = (~key: string) => {
 
 type t = {
   id: string,
+  username: string,
   items: Js.Dict.t(item),
   profileText: string,
 };
 
 let fromAPI = (json: Js.Json.t) => {
   Json.Decode.{
-    id: json |> field("userId", string),
+    id: json |> field("uuid", string),
+    username: json |> field("username", string),
     items: json |> field("items", dict(itemFromJson)),
     profileText:
       (

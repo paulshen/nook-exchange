@@ -130,7 +130,7 @@ let make = (~onClose) => {
     ReactEvent.Form.preventDefault(e);
     {
       setIsSubmitting(_ => true);
-      let%Repromise result = UserStore.login(~userId=username, ~password);
+      let%Repromise result = UserStore.login(~username, ~password);
       switch (result) {
       | Ok(_) =>
         onClose();
@@ -151,7 +151,7 @@ let make = (~onClose) => {
     ReactEvent.Form.preventDefault(e);
     {
       setIsSubmitting(_ => true);
-      let%Repromise result = UserStore.register(~userId=username, ~password);
+      let%Repromise result = UserStore.register(~username, ~password);
       switch (result) {
       | Ok(_) =>
         setRegisterStatus(_ => Some(Success));

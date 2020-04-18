@@ -205,7 +205,7 @@ let updateProfileText = (~profileText) => {
 };
 
 let errorQuotationMarksRegex = [%bs.re {|/^"(.*)"$/|}];
-let register = (~userId, ~password) => {
+let register = (~username, ~password) => {
   let%Repromise.JsExn response =
     Fetch.fetchWithInit(
       Constants.apiUrl ++ "/register",
@@ -216,7 +216,7 @@ let register = (~userId, ~password) => {
             Js.Json.stringify(
               Js.Json.object_(
                 Js.Dict.fromArray([|
-                  ("userId", Js.Json.string(userId)),
+                  ("username", Js.Json.string(username)),
                   ("password", Js.Json.string(password)),
                 |]),
               ),
@@ -252,7 +252,7 @@ let register = (~userId, ~password) => {
   };
 };
 
-let login = (~userId, ~password) => {
+let login = (~username, ~password) => {
   let%Repromise.JsExn response =
     Fetch.fetchWithInit(
       Constants.apiUrl ++ "/login",
@@ -263,7 +263,7 @@ let login = (~userId, ~password) => {
             Js.Json.stringify(
               Js.Json.object_(
                 Js.Dict.fromArray([|
-                  ("userId", Js.Json.string(userId)),
+                  ("username", Js.Json.string(username)),
                   ("password", Js.Json.string(password)),
                 |]),
               ),

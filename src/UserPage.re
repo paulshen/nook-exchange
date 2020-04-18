@@ -30,7 +30,7 @@ module Styles = {
 
 module ViewingPage = {
   [@react.component]
-  let make = (~userId) => {
+  let make = (~username) => {
     let (user, setUser) = React.useState(() => None);
     let isMountedRef = React.useRef(true);
     React.useEffect0(() => {
@@ -40,7 +40,7 @@ module ViewingPage = {
       () => {
         {
           let%Repromise.JsExn response =
-            Fetch.fetch(Constants.apiUrl ++ "/users/" ++ userId);
+            Fetch.fetch(Constants.apiUrl ++ "/users/" ++ username);
           switch (Fetch.Response.status(response)) {
           | 200 =>
             let%Repromise.JsExn json = Fetch.Response.json(response);
@@ -54,10 +54,10 @@ module ViewingPage = {
         |> ignore;
         None;
       },
-      [|userId|],
+      [|username|],
     );
     <div>
-      <div className=Styles.username> {React.string(userId)} </div>
+      <div className=Styles.username> {React.string(username)} </div>
       {switch (user) {
        | Some(user) =>
          <div>
@@ -94,15 +94,16 @@ module ViewingPage = {
 };
 
 [@react.component]
-let make = (~userId) => {
+let make = (~username) => {
   let user = UserStore.useMe();
   switch (user) {
   | Some(user) =>
-    if (user.id == userId) {
+    if (Js.String.toLowerCase(user.username)
+        == Js.String.toLowerCase(username)) {
       <MyPage user />;
     } else {
-      <ViewingPage userId />;
+      <ViewingPage username />;
     }
-  | None => <ViewingPage userId />
+  | None => <ViewingPage username />
   };
 };

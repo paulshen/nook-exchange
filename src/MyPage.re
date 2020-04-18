@@ -174,13 +174,13 @@ module ProfileTextarea = {
 [@react.component]
 let make = (~user: User.t) =>
   <div>
-    <div className=Styles.username> {React.string(user.id)} </div>
+    <div className=Styles.username> {React.string(user.username)} </div>
     <div className=Styles.userBody>
       <ProfileTextarea user />
       <div className=Styles.url>
         {React.string("Share your URL: ")}
-        <a href={"https://nook.exchange/u/" ++ user.id}>
-          {React.string("https://nook.exchange/u/" ++ user.id)}
+        <a href={"https://nook.exchange/u/" ++ user.username}>
+          {React.string("https://nook.exchange/u/" ++ user.username)}
         </a>
       </div>
       <div> {React.string("Only you can edit your items!")} </div>

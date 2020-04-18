@@ -10,6 +10,14 @@ module Amplitude = {
     [@bs.send]
     external logEventWithProperties: (t, string, 'a) => unit = "logEvent";
     [@bs.send] external setUserId: (t, option(string)) => unit = "setUserId";
+
+    type identify;
+    [@bs.module "amplitude-js"] [@bs.new]
+    external getIdentify: unit => identify = "Identify";
+    [@bs.send]
+    external identifySet: (identify, string, string) => identify = "set";
+
+    [@bs.send] external identify: (t, identify) => unit = "identify";
   };
 
   let instanceRef = ref(None);
@@ -38,5 +46,11 @@ module Amplitude = {
 
   let setUserId = (~userId) => {
     getInstance()->API.setUserId(userId);
+  };
+
+  let setUsername = (~username) => {
+    let identifyInstance =
+      API.getIdentify()->API.identifySet("username", username);
+    getInstance()->API.identify(identifyInstance);
   };
 };

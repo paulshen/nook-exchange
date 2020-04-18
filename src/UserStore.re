@@ -238,6 +238,7 @@ let register = (~username, ~email, ~password) => {
     let user = User.fromAPI(json);
     api.dispatch(Login(user));
     Analytics.Amplitude.setUserId(~userId=Some(user.id));
+    Analytics.Amplitude.setUsername(~username);
     Promise.resolved(Ok(user));
   | _ =>
     let%Repromise.JsExn text = Fetch.Response.text(response);
@@ -339,6 +340,7 @@ let init = () => {
       let user = User.fromAPI(json);
       api.dispatch(Login(user));
       Analytics.Amplitude.setUserId(~userId=Some(user.id));
+      Analytics.Amplitude.setUsername(~username=user.username);
       Promise.resolved();
     | _ => Promise.resolved()
     };

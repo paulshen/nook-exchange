@@ -62,10 +62,10 @@ let make = (~showLogin) => {
         Analytics.Amplitude.logEventWithProperties(
           ~eventName="Filters Changed",
           ~eventProperties={
-            "filter_text": updatedFilters.text,
-            "filter_mask": updatedFilters.mask,
-            "filter_category": updatedFilters.category,
-            "filter_sort": updatedFilters.sort,
+            "filterText": updatedFilters.text,
+            "filterMask": updatedFilters.mask,
+            "filterCategory": updatedFilters.category,
+            "filterSort": updatedFilters.sort,
           },
         );
         updatedFilters;

@@ -43,7 +43,7 @@ let updateSessionId = newValue => {
   );
 };
 
-let handleServerResponse = responseResult =>
+let handleServerResponse = (url, responseResult) =>
   if (switch (responseResult) {
       | Error(_) => true
       | Ok(response) => Fetch.Response.status(response) != 200
@@ -55,7 +55,8 @@ let handleServerResponse = responseResult =>
     Analytics.Amplitude.logEventWithProperties(
       ~eventName="Error Dialog Shown",
       ~eventProperties={
-        "error_response":
+        "url": url,
+        "errorResponse":
           Js.Json.stringifyAny(
             switch (responseResult) {
             | Ok(response) => {
@@ -98,17 +99,19 @@ let setItem = (~itemId: string, ~variation: int, ~item: User.item) => {
     },
   );
   {
+    let url =
+      Constants.apiUrl
+      ++ "/@me2/items/"
+      ++ newItemId
+      ++ "/"
+      ++ string_of_int(newVariant)
+      ++ "?itemId2="
+      ++ itemId
+      ++ "&variant2="
+      ++ string_of_int(variation);
     let%Repromise.Js responseResult =
       Fetch.fetchWithInit(
-        Constants.apiUrl
-        ++ "/@me2/items/"
-        ++ newItemId
-        ++ "/"
-        ++ string_of_int(newVariant)
-        ++ "?itemId2="
-        ++ itemId
-        ++ "&variant2="
-        ++ string_of_int(variation),
+        url,
         Fetch.RequestInit.make(
           ~method_=Post,
           ~body=Fetch.BodyInit.make(Js.Json.stringify(userItemJson)),
@@ -123,7 +126,7 @@ let setItem = (~itemId: string, ~variation: int, ~item: User.item) => {
           (),
         ),
       );
-    handleServerResponse(responseResult);
+    handleServerResponse(url, responseResult);
     Promise.resolved();
   }
   |> ignore;
@@ -154,17 +157,19 @@ let removeItem = (~itemId, ~variation) => {
       ~eventProperties={"itemId": newItemId, "variant": newVariant},
     );
     {
+      let url =
+        Constants.apiUrl
+        ++ "/@me2/items/"
+        ++ newItemId
+        ++ "/"
+        ++ string_of_int(newVariant)
+        ++ "?itemId2="
+        ++ itemId
+        ++ "&variant2="
+        ++ string_of_int(variation);
       let%Repromise.Js responseResult =
         Fetch.fetchWithInit(
-          Constants.apiUrl
-          ++ "/@me2/items/"
-          ++ newItemId
-          ++ "/"
-          ++ string_of_int(newVariant)
-          ++ "?itemId2="
-          ++ itemId
-          ++ "&variant2="
-          ++ string_of_int(variation),
+          url,
           Fetch.RequestInit.make(
             ~method_=Delete,
             ~headers=?
@@ -178,7 +183,7 @@ let removeItem = (~itemId, ~variation) => {
             (),
           ),
         );
-      handleServerResponse(responseResult);
+      handleServerResponse(url, responseResult);
       Promise.resolved();
     }
     |> ignore;
@@ -194,9 +199,10 @@ let updateProfileText = (~profileText) => {
     ~eventProperties={"text": profileText},
   );
   {
+    let url = Constants.apiUrl ++ "/@me/profileText";
     let%Repromise.Js responseResult =
       Fetch.fetchWithInit(
-        Constants.apiUrl ++ "/@me/profileText",
+        url,
         Fetch.RequestInit.make(
           ~method_=Post,
           ~body=
@@ -220,7 +226,7 @@ let updateProfileText = (~profileText) => {
           (),
         ),
       );
-    handleServerResponse(responseResult);
+    handleServerResponse(url, responseResult);
     Promise.resolved();
   }
   |> ignore;
@@ -362,7 +368,6 @@ let init = () => {
       let user = User.fromAPI(json);
       api.dispatch(Login(user));
       Analytics.Amplitude.setUserId(~userId=Some(user.id));
-      Analytics.Amplitude.setUsername(~username=user.username);
       Promise.resolved();
     | _ => Promise.resolved()
     };

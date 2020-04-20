@@ -12,6 +12,8 @@ type t = {
   orderable: bool,
   customizable: bool,
   category: string,
+  newId: int,
+  variantMap: option(array(int)),
 };
 
 let categories = [|
@@ -105,6 +107,8 @@ let jsonToItem = (json: Js.Json.t) => {
       (json |> optional(field("customize", bool)))
       ->Belt.Option.getWithDefault(false),
     category: json |> field("category", string),
+    newId: json |> field("id", int),
+    variantMap: json |> optional(field("variantMap", array(int))),
   };
 };
 

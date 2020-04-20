@@ -82,11 +82,18 @@ let setItem = (~itemId: string, ~variation: int, ~item: User.item) => {
   };
   api.dispatch(UpdateUser(updatedUser));
   let userItemJson = User.itemToJson(item);
+  let item = Item.getItem(~itemId);
+  let newItemId = string_of_int(item.newId);
+  let newVariant =
+    switch (item.variantMap) {
+    | Some(variantMap) => Option.getExn(variantMap[variation])
+    | None => variation
+    };
   Analytics.Amplitude.logEventWithProperties(
     ~eventName="Item Updated",
     ~eventProperties={
-      "itemId": itemId,
-      "variation": variation,
+      "itemId": newItemId,
+      "variant": newVariant,
       "data": userItemJson,
     },
   );
@@ -94,9 +101,13 @@ let setItem = (~itemId: string, ~variation: int, ~item: User.item) => {
     let%Repromise.Js responseResult =
       Fetch.fetchWithInit(
         Constants.apiUrl
-        ++ "/@me/items/"
-        ++ itemId
+        ++ "/@me2/items/"
+        ++ newItemId
         ++ "/"
+        ++ string_of_int(newVariant)
+        ++ "?itemId2="
+        ++ itemId
+        ++ "&variant2="
         ++ string_of_int(variation),
         Fetch.RequestInit.make(
           ~method_=Post,
@@ -131,17 +142,28 @@ let removeItem = (~itemId, ~variation) => {
       },
     };
     api.dispatch(UpdateUser(updatedUser));
+    let item = Item.getItem(~itemId);
+    let newItemId = string_of_int(item.newId);
+    let newVariant =
+      switch (item.variantMap) {
+      | Some(variantMap) => Option.getExn(variantMap[variation])
+      | None => variation
+      };
     Analytics.Amplitude.logEventWithProperties(
       ~eventName="Item Removed",
-      ~eventProperties={"itemId": itemId, "variation": variation},
+      ~eventProperties={"itemId": newItemId, "variant": newVariant},
     );
     {
       let%Repromise.Js responseResult =
         Fetch.fetchWithInit(
           Constants.apiUrl
-          ++ "/@me/items/"
-          ++ itemId
+          ++ "/@me2/items/"
+          ++ newItemId
           ++ "/"
+          ++ string_of_int(newVariant)
+          ++ "?itemId2="
+          ++ itemId
+          ++ "&variant2="
           ++ string_of_int(variation),
           Fetch.RequestInit.make(
             ~method_=Delete,

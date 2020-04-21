@@ -124,7 +124,24 @@ let jsonToItem = (json: Js.Json.t) => {
   };
 };
 
-let all = itemsJson |> Json.Decode.array(jsonToItem);
+let all = {
+  let allFromJson = itemsJson |> Json.Decode.array(jsonToItem);
+  let recipeItems =
+    allFromJson->Belt.Array.keepMap(item =>
+      item.recipe
+      ->Belt.Option.map(recipe =>
+          {
+            ...item,
+            id: item.id ++ "d",
+            name: item.name ++ " DIY",
+            recipe: None,
+            category: "recipe",
+            variations: Single,
+          }
+        )
+    );
+  allFromJson->Belt.Array.concat(recipeItems);
+};
 let hasItem = (~itemId) =>
   all->Belt.Array.someU((. item) => item.id == itemId);
 let getItem = (~itemId) =>

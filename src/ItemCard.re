@@ -125,6 +125,7 @@ module MetaIconStyles = {
       color(Colors.white),
       borderRadius(px(8)),
       padding2(~v=px(12), ~h=px(16)),
+      boxShadow(Shadow.box(~blur=px(16), hex("00000040"))),
     ]);
 };
 

@@ -36,11 +36,10 @@ module Styles = {
       lineHeight(px(24)),
       textDecoration(none),
       opacity(0.8),
+      padding2(~v=zero, ~h=px(8)),
       transition(~duration=200, "all"),
       hover([opacity(1.)]),
     ]);
-  let pagerArrowLeft = style([marginRight(px(8))]);
-  let pagerArrowRight = style([marginLeft(px(8))]);
 };
 
 type sort =
@@ -128,7 +127,7 @@ module Pager = {
                  ReactEvent.Mouse.preventDefault(e);
                  setPageOffset(pageOffset => pageOffset - 1);
                }}
-               className={Cn.make([Styles.pagerArrow, Styles.pagerArrowLeft])}>
+               className=Styles.pagerArrow>
                {React.string("<")}
              </a>
            : React.null}
@@ -152,10 +151,7 @@ module Pager = {
                  ReactEvent.Mouse.preventDefault(e);
                  setPageOffset(pageOffset => pageOffset + 1);
                }}
-               className={Cn.make([
-                 Styles.pagerArrow,
-                 Styles.pagerArrowRight,
-               ])}>
+               className=Styles.pagerArrow>
                {React.string(">")}
              </a>
            : React.null}

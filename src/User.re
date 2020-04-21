@@ -26,26 +26,12 @@ let itemFromJson = json => {
 };
 
 let getItemKey = (~itemId: string, ~variation: int) => {
-  (
-    itemId
-    |> Js.String.replace({j|é|j}, "%C3%A9")
-    |> Js.String.replace({j|á|j}, "%C3%A1")
-    |> Js.String.replace({j|à|j}, "%C3%A0")
-  )
-  ++ "@@"
-  ++ string_of_int(variation);
+  itemId ++ "@@" ++ string_of_int(variation);
 };
 
 let fromItemKey = (~key: string) => {
   let [|itemId, variation|] = key |> Js.String.split("@@");
-  (
-    // This should be fixed elsewhere
-    itemId
-    |> Js.String.replace("%C3%A9", {j|é|j})
-    |> Js.String.replace("%C3%A1", {j|á|j})
-    |> Js.String.replace("%C3%A0", {j|à|j}),
-    int_of_string(variation),
-  );
+  (itemId, int_of_string(variation));
 };
 
 type t = {

@@ -62,12 +62,20 @@ module Styles = {
       padding2(~v=zero, ~h=px(16)),
       textAlign(center),
     ]);
+  let mainImageWrapper = style([marginBottom(px(8)), position(relative)]);
   let mainImage =
+    style([display(block), height(px(128)), width(px(128))]);
+  let recipeIcon =
     style([
       display(block),
-      height(px(128)),
-      width(px(128)),
-      marginBottom(px(8)),
+      height(px(64)),
+      width(px(64)),
+      position(absolute),
+      right(px(-16)),
+      bottom(px(-16)),
+      opacity(0.95),
+      transition(~duration=200, "all"),
+      hover([opacity(1.)]),
     ]);
   let variation =
     style([display(flexBox), flexWrap(wrap), justifyContent(center)]);
@@ -282,10 +290,18 @@ let make = (~item: Item.t, ~showLogin) => {
     ])}>
     <div className=Styles.body>
       <div className=Styles.name> {React.string(item.name)} </div>
-      <img
-        src={Item.getImageUrl(~item, ~variant=variation)}
-        className=Styles.mainImage
-      />
+      <div className=Styles.mainImageWrapper>
+        <img
+          src={Item.getImageUrl(~item, ~variant=variation)}
+          className=Styles.mainImage
+        />
+        {item.isRecipe
+           ? <img
+               src={Constants.imageUrl ++ "/DIYRecipe.png"}
+               className=Styles.recipeIcon
+             />
+           : React.null}
+      </div>
       {switch (numVariations) {
        | 1 => React.null
        | numVariations =>
@@ -315,9 +331,9 @@ let make = (~item: Item.t, ~showLogin) => {
          </div>
        }}
       <div className=Styles.metaIcons>
-        {switch (item.recipe) {
-         | Some(recipe) => <RecipeIcon recipe />
-         | None => React.null
+        {switch (item.isRecipe, item.recipe) {
+         | (false, Some(recipe)) => <RecipeIcon recipe />
+         | _ => React.null
          }}
         {if (item.orderable) {
            <OrderableIcon />;
@@ -366,14 +382,16 @@ let make = (~item: Item.t, ~showLogin) => {
             ~showLogin,
             (),
           )}
-         {renderStatusButton(
-            ~itemId=item.id,
-            ~variation,
-            ~status=CanCraft,
-            ~userItem,
-            ~showLogin,
-            (),
-          )}
+         {!item.isRecipe && item.recipe !== None
+            ? renderStatusButton(
+                ~itemId=item.id,
+                ~variation,
+                ~status=CanCraft,
+                ~userItem,
+                ~showLogin,
+                (),
+              )
+            : React.null}
        </div>
      }}
   </div>;

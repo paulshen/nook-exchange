@@ -1,5 +1,5 @@
-type recipeItem = (string, int);
-type recipe = array(recipeItem);
+type recipeMaterial = (string, int);
+type recipe = array(recipeMaterial);
 
 type variations =
   | Single
@@ -16,10 +16,26 @@ type t = {
   variations,
   sellPrice: option(int),
   buyPrice: option(int),
+  isRecipe: bool,
   recipe: option(recipe),
   orderable: bool,
   customizable: bool,
   category: string,
+};
+
+let recipeIdRegex = [%bs.re {|/^(\d+)r$/|}];
+let getRecipeIdForItemId = (~itemId) => {
+  itemId ++ "r";
+};
+let getItemIdForRecipeId = (~recipeId) => {
+  let result = recipeId |> Js.Re.exec_(recipeIdRegex);
+  Belt.Option.map(
+    result,
+    result => {
+      let matches = Js.Re.captures(result);
+      matches[1]->Js.Nullable.toOption->Belt.Option.getExn;
+    },
+  );
 };
 
 let categories = [|
@@ -53,27 +69,27 @@ let categories = [|
 |];
 
 let furnitureCategories = [|
-  "Housewares",
-  "Miscellaneous",
-  "Wall-mounted",
-  "Wallpapers",
-  "Floors",
-  "Rugs",
+  "housewares",
+  "miscellaneous",
+  "wall-mounted",
+  "wallpapers",
+  "floors",
+  "rugs",
 |];
 
 let clothingCategories = [|
-  "Tops",
-  "Bottoms",
-  "Dresses",
-  "Headwear",
-  "Accessories",
-  "Socks",
-  "Shoes",
-  "Bags",
-  "Umbrellas",
+  "tops",
+  "bottoms",
+  "dresses",
+  "headwear",
+  "accessories",
+  "socks",
+  "shoes",
+  "bags",
+  "umbrellas",
 |];
 
-let otherCategories = [|"Photos", "Posters", "Fencing", "Tools", "Music"|];
+let otherCategories = [|"photos", "posters", "fencing", "tools", "music"|];
 
 [@bs.val] [@bs.scope "window"] external itemsJson: Js.Json.t = "items";
 
@@ -107,6 +123,7 @@ let jsonToItem = (json: Js.Json.t) => {
     },
     sellPrice: json |> optional(field("sell", int)),
     buyPrice: json |> optional(field("buy", int)),
+    isRecipe: false,
     recipe:
       json
       |> optional(
@@ -124,7 +141,24 @@ let jsonToItem = (json: Js.Json.t) => {
   };
 };
 
-let all = itemsJson |> Json.Decode.array(jsonToItem);
+let all = {
+  let allFromJson = itemsJson |> Json.Decode.array(jsonToItem);
+  let recipeItems =
+    allFromJson->Belt.Array.keepMap(item =>
+      item.recipe
+      ->Belt.Option.map(recipe =>
+          {
+            ...item,
+            id: getRecipeIdForItemId(~itemId=item.id),
+            name: item.name ++ " DIY",
+            sellPrice: None,
+            buyPrice: None,
+            isRecipe: true,
+          }
+        )
+    );
+  allFromJson->Belt.Array.concat(recipeItems);
+};
 let hasItem = (~itemId) =>
   all->Belt.Array.someU((. item) => item.id == itemId);
 let getItem = (~itemId) =>
@@ -156,10 +190,13 @@ let getImageUrl = (~item, ~variant) => {
   ++ ".png";
 };
 
-let getNumVariations = (~item) => {
-  switch (item.variations) {
-  | Single => 1
-  | OneDimension(a) => a
-  | TwoDimensions(a, b) => a * b
+let getNumVariations = (~item) =>
+  if (item.isRecipe) {
+    1;
+  } else {
+    switch (item.variations) {
+    | Single => 1
+    | OneDimension(a) => a
+    | TwoDimensions(a, b) => a * b
+    };
   };
-};

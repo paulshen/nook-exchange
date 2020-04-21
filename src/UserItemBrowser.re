@@ -55,6 +55,7 @@ module Styles = {
       media("(max-width: 430px)", [width(pct(100.))]),
       hover([selector("& ." ++ metaIcons, [opacity(1.)])]),
     ]);
+  let mainImageWrapperWithRecipe = style([marginBottom(px(16))]);
   let name =
     style([fontSize(px(16)), marginBottom(px(4)), textAlign(center)]);
   let userNote =
@@ -66,8 +67,18 @@ module Styles = {
       padding3(~top=px(8), ~bottom=zero, ~h=px(4)),
     ]);
   let removeButton = style([top(px(9)), bottom(initial)]);
+  let cardMini = style([position(relative)]);
   let cardMiniImage =
     style([display(block), width(px(64)), height(px(64))]);
+  let cardMiniRecipe =
+    style([
+      display(block),
+      width(px(32)),
+      height(px(32)),
+      position(absolute),
+      bottom(px(-4)),
+      right(px(-4)),
+    ]);
   let sectionToggles =
     style([
       position(absolute),
@@ -104,10 +115,22 @@ module UserItemCard = {
     let item = Item.getItem(~itemId);
     <div className={Cn.make([Styles.card])}>
       <div className=ItemCard.Styles.body>
-        <img
-          src={Item.getImageUrl(~item, ~variant=variation)}
-          className=ItemCard.Styles.mainImage
-        />
+        <div
+          className={Cn.make([
+            ItemCard.Styles.mainImageWrapper,
+            Cn.ifTrue(Styles.mainImageWrapperWithRecipe, item.isRecipe),
+          ])}>
+          <img
+            src={Item.getImageUrl(~item, ~variant=variation)}
+            className=ItemCard.Styles.mainImage
+          />
+          {item.isRecipe
+             ? <img
+                 src={Constants.imageUrl ++ "/DIYRecipe.png"}
+                 className=ItemCard.Styles.recipeIcon
+               />
+             : React.null}
+        </div>
         <div className=Styles.name> {React.string(item.name)} </div>
         {switch (showRecipe, item.recipe) {
          | (true, Some(recipe)) =>
@@ -166,11 +189,19 @@ module UserItemCardMini = {
   [@react.component]
   let make = (~itemId, ~variation) => {
     let item = Item.getItem(~itemId);
-    <img
-      src={Item.getImageUrl(~item, ~variant=variation)}
-      title={item.name}
-      className=Styles.cardMiniImage
-    />;
+    <div className=Styles.cardMini>
+      <img
+        src={Item.getImageUrl(~item, ~variant=variation)}
+        title={item.name}
+        className=Styles.cardMiniImage
+      />
+      {item.isRecipe
+         ? <img
+             src={Constants.imageUrl ++ "/DIYRecipe.png"}
+             className=Styles.cardMiniRecipe
+           />
+         : React.null}
+    </div>;
   };
 };
 

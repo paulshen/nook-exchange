@@ -25,13 +25,21 @@ let itemFromJson = json => {
   };
 };
 
+exception InvalidRecipeItemKey(string, int);
 let getItemKey = (~itemId: string, ~variation: int) => {
+  if (Item.getItemIdForRecipeId(~recipeId=itemId) !== None && variation != 0) {
+    raise(InvalidRecipeItemKey(itemId, variation));
+  };
   itemId ++ "@@" ++ string_of_int(variation);
 };
 
 let fromItemKey = (~key: string) => {
   let [|itemId, variation|] = key |> Js.String.split("@@");
-  (itemId, int_of_string(variation));
+  let variation = int_of_string(variation);
+  if (Item.getItemIdForRecipeId(~recipeId=itemId) !== None && variation != 0) {
+    raise(InvalidRecipeItemKey(itemId, variation));
+  };
+  (itemId, variation);
 };
 
 type t = {

@@ -95,6 +95,17 @@ module Styles = {
     ]);
   let variationImageSelected = style([backgroundColor(hex("3aa56320"))]);
   let metaIcons = style([position(absolute), top(px(8)), left(px(6))]);
+  let topRightIcons =
+    style([position(absolute), top(px(8)), right(px(8))]);
+  let catalogCheckbox =
+    style([
+      fontSize(px(24)),
+      opacity(0.8),
+      transition(~duration=200, "all"),
+      margin(zero),
+      cursor(pointer),
+      hover([opacity(1.)]),
+    ]);
   let bottomBar = style([fontSize(px(12))]);
   let bottomBarStatus = style([alignSelf(flexStart), paddingTop(px(8))]);
   let statusButtons = style([]);
@@ -126,11 +137,11 @@ module MetaIconStyles = {
     ]);
   let layer =
     style([
-      backgroundColor(hex("404040f8")),
+      backgroundColor(Colors.darkLayerBackground),
       color(Colors.white),
       borderRadius(px(8)),
       padding2(~v=px(12), ~h=px(16)),
-      boxShadow(Shadow.box(~blur=px(16), hex("00000040"))),
+      Colors.darkLayerShadow,
     ]);
 };
 
@@ -273,6 +284,7 @@ let renderStatusButton =
       | Wishlist => "Add to Wishlist"
       | ForTrade => "Add to For Trade list"
       | CanCraft => "Add to Can Craft list"
+      | InCatalog => raise(Constants.Uhoh)
       }
     }>
     {React.string(
@@ -280,6 +292,7 @@ let renderStatusButton =
        | Wishlist => {j|+ Wishlist|j}
        | ForTrade => {j|+ For Trade|j}
        | CanCraft => {j|+ Can Craft|j}
+       | InCatalog => raise(Constants.Uhoh)
        },
      )}
   </button>;
@@ -368,9 +381,82 @@ let make = (~item: Item.t, ~showLogin) => {
            React.null;
          }}
       </div>
+      <div className=Styles.topRightIcons>
+        <ReactAtmosphere.Tooltip
+          options={
+            placement: Some("top"),
+            modifiers:
+              Some([|
+                {
+                  "name": "offset",
+                  "options": {
+                    "offset": [|0, 4|],
+                  },
+                },
+              |]),
+          }
+          text={React.string(
+            switch (userItem->Option.map(userItem => userItem.status)) {
+            | None => "Add to catalog"
+            | Some(Wishlist) => "Add to catalog from Wishlist"
+            | Some(InCatalog) => "Remove from catalog"
+            | Some(ForTrade) => "Remove from catalog and For Trade"
+            | Some(CanCraft) => "Remove from catalog and Can Craft"
+            },
+          )}>
+          {({onMouseEnter, onMouseLeave, ref}) =>
+             <input
+               type_="checkbox"
+               checked={
+                 switch (userItem) {
+                 | Some(userItem) => userItem.status !== Wishlist
+                 | None => false
+                 }
+               }
+               onChange={e => {
+                 let checked = ReactEvent.Form.target(e)##checked;
+                 let status =
+                   if (checked) {
+                     switch (Option.map(userItem, userItem => userItem.status)) {
+                     | None
+                     | Some(Wishlist) => Some(User.InCatalog)
+                     | _ => raise(Constants.Uhoh)
+                     };
+                   } else {
+                     switch (Option.map(userItem, userItem => userItem.status)) {
+                     | Some(CanCraft)
+                     | Some(ForTrade)
+                     | Some(InCatalog) => None
+                     | _ => raise(Constants.Uhoh)
+                     };
+                   };
+                 switch (status) {
+                 | Some(status) =>
+                   let note =
+                     switch (userItem) {
+                     | Some(userItem) => userItem.note
+                     | None => ""
+                     };
+                   UserStore.setItem(
+                     ~itemId=item.id,
+                     ~variation,
+                     ~item={status, note},
+                   );
+                 | None => UserStore.removeItem(~itemId=item.id, ~variation)
+                 };
+               }}
+               onMouseEnter
+               onMouseLeave
+               className=Styles.catalogCheckbox
+               ref={ReactDOMRe.Ref.domRef(ref)}
+             />}
+        </ReactAtmosphere.Tooltip>
+      </div>
     </div>
-    {switch (userItem) {
-     | Some(userItem) =>
+    {switch (userItem, userItem->Option.map(userItem => userItem.status)) {
+     | (Some(userItem), Some(Wishlist))
+     | (Some(userItem), Some(ForTrade))
+     | (Some(userItem), Some(CanCraft)) =>
        <>
          <UserItemNote itemId={item.id} variation userItem />
          <div className={Cn.make([Styles.bottomBar, Styles.bottomBarStatus])}>
@@ -380,6 +466,7 @@ let make = (~item: Item.t, ~showLogin) => {
                 | Wishlist => {j|🙏 In your Wishlist|j}
                 | ForTrade => {j|✅ In your For Trade list|j}
                 | CanCraft => {j|🔨 In your Can Craft list|j}
+                | _ => raise(Constants.Uhoh)
                 };
               },
             )}
@@ -387,11 +474,28 @@ let make = (~item: Item.t, ~showLogin) => {
          <button
            className=Styles.removeButton
            title="Remove"
-           onClick={_ => {UserStore.removeItem(~itemId=item.id, ~variation)}}>
+           onClick={_ => {
+             let status =
+               switch (userItem.status) {
+               | CanCraft
+               | ForTrade => Some(User.InCatalog)
+               | Wishlist => None
+               | InCatalog => raise(Constants.Uhoh)
+               };
+             switch (status) {
+             | Some(status) =>
+               UserStore.setItem(
+                 ~itemId=item.id,
+                 ~variation,
+                 ~item={status, note: userItem.note},
+               )
+             | None => UserStore.removeItem(~itemId=item.id, ~variation)
+             };
+           }}>
            {React.string({j|❌|j})}
          </button>
        </>
-     | None =>
+     | _ =>
        <div className={Cn.make([Styles.bottomBar, Styles.statusButtons])}>
          {renderStatusButton(
             ~itemId=item.id,

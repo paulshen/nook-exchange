@@ -5,12 +5,13 @@ module Styles = {
   let body = style([flexGrow(1.)]);
   let tooltip =
     style([
-      backgroundColor(Colors.charcoal),
+      backgroundColor(Colors.darkLayerBackground),
       borderRadius(px(4)),
       color(Colors.white),
-      fontSize(px(12)),
+      fontSize(px(14)),
       padding3(~top=px(5), ~bottom=px(3), ~h=px(10)),
       position(relative),
+      Colors.darkLayerShadow,
     ]);
 };
 

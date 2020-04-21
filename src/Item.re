@@ -23,6 +23,21 @@ type t = {
   category: string,
 };
 
+let recipeIdRegex = [%bs.re {|/^(\d+)r$/|}];
+let getRecipeIdForItemId = (~itemId) => {
+  itemId ++ "r";
+};
+let getItemIdForRecipeId = (~recipeId) => {
+  let result = recipeId |> Js.Re.exec_(recipeIdRegex);
+  Belt.Option.map(
+    result,
+    result => {
+      let matches = Js.Re.captures(result);
+      matches[1]->Js.Nullable.toOption->Belt.Option.getExn;
+    },
+  );
+};
+
 let categories = [|
   "Housewares",
   "Miscellaneous",
@@ -134,7 +149,7 @@ let all = {
       ->Belt.Option.map(recipe =>
           {
             ...item,
-            id: item.id ++ "r",
+            id: getRecipeIdForItemId(~itemId=item.id),
             name: item.name ++ " Recipe",
             sellPrice: None,
             buyPrice: None,

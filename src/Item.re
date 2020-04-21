@@ -75,7 +75,7 @@ let clothingCategories = [|
 
 let otherCategories = [|"Photos", "Posters", "Fencing", "Tools", "Music"|];
 
-[@bs.module] external itemsJson: Js.Json.t = "./items.json";
+[@bs.val] [@bs.scope "window"] external itemsJson: Js.Json.t = "items";
 
 exception UnexpectedType(string);
 

@@ -10,10 +10,13 @@ type item = {
 
 let itemToJson = (item: item) => {
   Json.Encode.(
-    object_([
-      ("status", int(itemStatusToJs(item.status))),
-      ("note", string(item.note)),
-    ])
+    object_(
+      [
+        Some(("status", int(itemStatusToJs(item.status)))),
+        item.note != "" ? Some(("note", string(item.note))) : None,
+      ]
+      ->Belt.List.keepMap(x => x),
+    )
   );
 };
 

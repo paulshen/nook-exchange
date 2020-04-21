@@ -84,9 +84,6 @@ let setItem = (~itemId: string, ~variation: int, ~item: User.item) => {
   api.dispatch(UpdateUser(updatedUser));
   let userItemJson = User.itemToJson(item);
   let item = Item.getItem(~itemId);
-  let oldItemId =
-    item.name |> Js.String.toLowerCase |> Js.String.replace(" ", "-");
-  let oldVariant = variation;
   Analytics.Amplitude.logEventWithProperties(
     ~eventName="Item Updated",
     ~eventProperties={
@@ -98,20 +95,21 @@ let setItem = (~itemId: string, ~variation: int, ~item: User.item) => {
   {
     let url =
       Constants.apiUrl
-      ++ "/@me2/items/"
+      ++ "/@me3/items/"
       ++ item.id
       ++ "/"
-      ++ string_of_int(variation)
-      ++ "?itemId2="
-      ++ oldItemId
-      ++ "&variant2="
-      ++ string_of_int(oldVariant);
+      ++ string_of_int(variation);
     let%Repromise.Js responseResult =
       Fetch.fetchWithInit(
         url,
         Fetch.RequestInit.make(
           ~method_=Post,
-          ~body=Fetch.BodyInit.make(Js.Json.stringify(userItemJson)),
+          ~body=
+            Fetch.BodyInit.make(
+              Js.Json.stringify(
+                Json.Encode.object_([("data", userItemJson)]),
+              ),
+            ),
           ~headers=
             Fetch.HeadersInit.make({
               "X-Client-Version": Constants.gitCommitRef,
@@ -144,9 +142,6 @@ let removeItem = (~itemId, ~variation) => {
     };
     api.dispatch(UpdateUser(updatedUser));
     let item = Item.getItem(~itemId);
-    let oldItemId =
-      item.name |> Js.String.toLowerCase |> Js.String.replace(" ", "-");
-    let oldVariant = variation;
     Analytics.Amplitude.logEventWithProperties(
       ~eventName="Item Removed",
       ~eventProperties={"itemId": item.id, "variant": variation},
@@ -154,14 +149,10 @@ let removeItem = (~itemId, ~variation) => {
     {
       let url =
         Constants.apiUrl
-        ++ "/@me2/items/"
+        ++ "/@me3/items/"
         ++ item.id
         ++ "/"
-        ++ string_of_int(variation)
-        ++ "?itemId2="
-        ++ oldItemId
-        ++ "&variant2="
-        ++ string_of_int(oldVariant);
+        ++ string_of_int(variation);
       let%Repromise.Js responseResult =
         Fetch.fetchWithInit(
           url,

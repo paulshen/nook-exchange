@@ -114,6 +114,7 @@ let setItem = (~itemId: string, ~variation: int, ~item: User.item) => {
           ~body=Fetch.BodyInit.make(Js.Json.stringify(userItemJson)),
           ~headers=
             Fetch.HeadersInit.make({
+              "X-Client-Version": Constants.gitCommitRef,
               "Content-Type": "application/json",
               "Authorization":
                 "Bearer " ++ Option.getWithDefault(sessionId^, ""),
@@ -169,6 +170,7 @@ let removeItem = (~itemId, ~variation) => {
             ~headers=?
               Option.map(sessionId^, sessionId =>
                 Fetch.HeadersInit.make({
+                  "X-Client-Version": Constants.gitCommitRef,
                   "Authorization": "Bearer " ++ sessionId,
                 })
               ),
@@ -211,6 +213,7 @@ let updateProfileText = (~profileText) => {
             ),
           ~headers=
             Fetch.HeadersInit.make({
+              "X-Client-Version": Constants.gitCommitRef,
               "Content-Type": "application/json",
               "Authorization":
                 "Bearer " ++ Option.getWithDefault(sessionId^, ""),
@@ -245,7 +248,11 @@ let register = (~username, ~email, ~password) => {
               ),
             ),
           ),
-        ~headers=Fetch.HeadersInit.make({"Content-Type": "application/json"}),
+        ~headers=
+          Fetch.HeadersInit.make({
+            "X-Client-Version": Constants.gitCommitRef,
+            "Content-Type": "application/json",
+          }),
         ~credentials=Include,
         ~mode=CORS,
         (),
@@ -293,7 +300,11 @@ let login = (~username, ~password) => {
               ),
             ),
           ),
-        ~headers=Fetch.HeadersInit.make({"Content-Type": "application/json"}),
+        ~headers=
+          Fetch.HeadersInit.make({
+            "X-Client-Version": Constants.gitCommitRef,
+            "Content-Type": "application/json",
+          }),
         ~credentials=Include,
         ~mode=CORS,
         (),
@@ -325,7 +336,10 @@ let logout = () => {
         ~method_=Post,
         ~headers=?
           Option.map(sessionId^, sessionId =>
-            Fetch.HeadersInit.make({"Authorization": "Bearer " ++ sessionId})
+            Fetch.HeadersInit.make({
+              "X-Client-Version": Constants.gitCommitRef,
+              "Authorization": "Bearer " ++ sessionId,
+            })
           ),
         ~credentials=Include,
         ~mode=CORS,
@@ -345,6 +359,7 @@ let init = () => {
           ~headers=?
             Option.map(sessionId^, sessionId =>
               Fetch.HeadersInit.make({
+                "X-Client-Version": Constants.gitCommitRef,
                 "Authorization": "Bearer " ++ sessionId,
               })
             ),

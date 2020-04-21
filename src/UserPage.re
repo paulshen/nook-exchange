@@ -40,7 +40,16 @@ module ViewingPage = {
       () => {
         {
           let%Repromise.JsExn response =
-            Fetch.fetch(Constants.apiUrl ++ "/users2/" ++ username);
+            Fetch.fetchWithInit(
+              Constants.apiUrl ++ "/users2/" ++ username,
+              Fetch.RequestInit.make(
+                ~headers=
+                  Fetch.HeadersInit.make({
+                    "X-Client-Version": Constants.gitCommitRef,
+                  }),
+                (),
+              ),
+            );
           switch (Fetch.Response.status(response)) {
           | 200 =>
             let%Repromise.JsExn json = Fetch.Response.json(response);

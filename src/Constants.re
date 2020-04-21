@@ -1,8 +1,12 @@
 [@bs.val] [@bs.scope ("process", "env")]
 external nodeEnv: option(string) = "NODE_ENV";
+[@bs.val] [@bs.scope ("process", "env")]
+external gitCommitRef: option(string) = "COMMIT_REF";
+let gitCommitRef =
+  Belt.Option.getWithDefault(gitCommitRef, "")
+  |> Js.String.slice(~from=0, ~to_=8);
 
 let apiUrl = "https://paulshen-animalcrossing.builtwithdark.com";
-let cdnUrl = nodeEnv === Some("production") ? "https://s3.nook.exchange" : "";
 let imageUrl =
   nodeEnv === Some("production")
     ? "https://s.nook.exchange/images" : "/images";

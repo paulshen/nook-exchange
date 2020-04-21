@@ -279,7 +279,7 @@ let register = (~username, ~email, ~password) => {
 let login = (~username, ~password) => {
   let%Repromise.JsExn response =
     Fetch.fetchWithInit(
-      Constants.apiUrl ++ "/login",
+      Constants.apiUrl ++ "/login2",
       Fetch.RequestInit.make(
         ~method_=Post,
         ~body=

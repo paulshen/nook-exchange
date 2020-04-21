@@ -382,14 +382,16 @@ let make = (~item: Item.t, ~showLogin) => {
             ~showLogin,
             (),
           )}
-         {renderStatusButton(
-            ~itemId=item.id,
-            ~variation,
-            ~status=CanCraft,
-            ~userItem,
-            ~showLogin,
-            (),
-          )}
+         {!item.isRecipe && item.recipe !== None
+            ? renderStatusButton(
+                ~itemId=item.id,
+                ~variation,
+                ~status=CanCraft,
+                ~userItem,
+                ~showLogin,
+                (),
+              )
+            : React.null}
        </div>
      }}
   </div>;

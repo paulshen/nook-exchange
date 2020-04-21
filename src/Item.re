@@ -150,7 +150,7 @@ let all = {
           {
             ...item,
             id: getRecipeIdForItemId(~itemId=item.id),
-            name: item.name ++ " Recipe",
+            name: item.name ++ " DIY",
             sellPrice: None,
             buyPrice: None,
             isRecipe: true,

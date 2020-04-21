@@ -69,7 +69,7 @@ module Styles = {
       width(px(128)),
       marginBottom(px(8)),
     ]);
-  let variations =
+  let variation =
     style([display(flexBox), flexWrap(wrap), justifyContent(center)]);
   let variationImage =
     style([
@@ -274,6 +274,7 @@ let make = (~item: Item.t, ~showLogin) => {
   let (variation, setVariation) = React.useState(() => 0);
   let userItem = UserStore.useItem(~itemId=item.id, ~variation);
 
+  let numVariations = Item.getNumVariations(~item);
   <div
     className={Cn.make([
       Styles.card,
@@ -282,19 +283,13 @@ let make = (~item: Item.t, ~showLogin) => {
     <div className=Styles.body>
       <div className=Styles.name> {React.string(item.name)} </div>
       <img
-        src={
-          Constants.cdnUrl
-          ++ "/items/"
-          ++ item.image
-          ++ "__"
-          ++ string_of_int(variation)
-          ++ ".png"
-        }
+        src={Item.getImageUrl(~item, ~variant=variation)}
         className=Styles.mainImage
       />
-      {switch (item.numVariations) {
-       | Some(numVariations) =>
-         <div className=Styles.variations>
+      {switch (numVariations) {
+       | 1 => React.null
+       | numVariations =>
+         <div className=Styles.variation>
            {let children = [||];
             for (v in 0 to numVariations - 1) {
               children
@@ -303,14 +298,7 @@ let make = (~item: Item.t, ~showLogin) => {
                      onClick={_ => {setVariation(_ => v)}}
                      key={string_of_int(v)}>
                      <img
-                       src={
-                         Constants.cdnUrl
-                         ++ "/items/"
-                         ++ item.image
-                         ++ "__"
-                         ++ string_of_int(v)
-                         ++ ".png"
-                       }
+                       src={Item.getImageUrl(~item, ~variant=v)}
                        className={Cn.make([
                          Styles.variationImage,
                          Cn.ifTrue(
@@ -325,7 +313,6 @@ let make = (~item: Item.t, ~showLogin) => {
             };
             children->React.array}
          </div>
-       | None => React.null
        }}
       <div className=Styles.metaIcons>
         {switch (item.recipe) {

@@ -84,17 +84,14 @@ let setItem = (~itemId: string, ~variation: int, ~item: User.item) => {
   api.dispatch(UpdateUser(updatedUser));
   let userItemJson = User.itemToJson(item);
   let item = Item.getItem(~itemId);
-  let newItemId = string_of_int(item.newId);
-  let newVariant =
-    switch (item.variantMap) {
-    | Some(variantMap) => Option.getExn(variantMap[variation])
-    | None => variation
-    };
+  let oldItemId =
+    item.name |> Js.String.toLowerCase |> Js.String.replace(" ", "-");
+  let oldVariant = variation;
   Analytics.Amplitude.logEventWithProperties(
     ~eventName="Item Updated",
     ~eventProperties={
-      "itemId": newItemId,
-      "variant": newVariant,
+      "itemId": item.id,
+      "variant": variation,
       "data": userItemJson,
     },
   );
@@ -102,13 +99,13 @@ let setItem = (~itemId: string, ~variation: int, ~item: User.item) => {
     let url =
       Constants.apiUrl
       ++ "/@me2/items/"
-      ++ newItemId
+      ++ item.id
       ++ "/"
-      ++ string_of_int(newVariant)
+      ++ string_of_int(variation)
       ++ "?itemId2="
-      ++ itemId
+      ++ oldItemId
       ++ "&variant2="
-      ++ string_of_int(variation);
+      ++ string_of_int(oldVariant);
     let%Repromise.Js responseResult =
       Fetch.fetchWithInit(
         url,
@@ -146,27 +143,24 @@ let removeItem = (~itemId, ~variation) => {
     };
     api.dispatch(UpdateUser(updatedUser));
     let item = Item.getItem(~itemId);
-    let newItemId = string_of_int(item.newId);
-    let newVariant =
-      switch (item.variantMap) {
-      | Some(variantMap) => Option.getExn(variantMap[variation])
-      | None => variation
-      };
+    let oldItemId =
+      item.name |> Js.String.toLowerCase |> Js.String.replace(" ", "-");
+    let oldVariant = variation;
     Analytics.Amplitude.logEventWithProperties(
       ~eventName="Item Removed",
-      ~eventProperties={"itemId": newItemId, "variant": newVariant},
+      ~eventProperties={"itemId": item.id, "variant": variation},
     );
     {
       let url =
         Constants.apiUrl
         ++ "/@me2/items/"
-        ++ newItemId
+        ++ item.id
         ++ "/"
-        ++ string_of_int(newVariant)
+        ++ string_of_int(variation)
         ++ "?itemId2="
-        ++ itemId
+        ++ oldItemId
         ++ "&variant2="
-        ++ string_of_int(variation);
+        ++ string_of_int(oldVariant);
       let%Repromise.Js responseResult =
         Fetch.fetchWithInit(
           url,
@@ -345,7 +339,7 @@ let init = () => {
   {
     let%Repromise.JsExn response =
       Fetch.fetchWithInit(
-        Constants.apiUrl ++ "/@me",
+        Constants.apiUrl ++ "/@me2",
         Fetch.RequestInit.make(
           ~method_=Get,
           ~headers=?

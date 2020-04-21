@@ -3,6 +3,9 @@ external nodeEnv: option(string) = "NODE_ENV";
 
 let apiUrl = "https://paulshen-animalcrossing.builtwithdark.com";
 let cdnUrl = nodeEnv === Some("production") ? "https://s3.nook.exchange" : "";
+let imageUrl =
+  nodeEnv === Some("production")
+    ? "https://storage.googleapis.com/acdb" : "/images";
 
 let gtagId = "UA-55966633-6";
 let amplitudeApiKey = "d91231e0b8a96baf38ba67eb36d25a48";

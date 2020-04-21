@@ -32,12 +32,12 @@ let getItemKey = (~itemId: string, ~variation: int) => {
     |> Js.String.replace({j|á|j}, "%C3%A1")
     |> Js.String.replace({j|à|j}, "%C3%A0")
   )
-  ++ "//"
+  ++ "@@"
   ++ string_of_int(variation);
 };
 
 let fromItemKey = (~key: string) => {
-  let [|itemId, variation|] = key |> Js.String.split("//");
+  let [|itemId, variation|] = key |> Js.String.split("@@");
   (
     // This should be fixed elsewhere
     itemId

@@ -40,7 +40,7 @@ module ViewingPage = {
       () => {
         {
           let%Repromise.JsExn response =
-            Fetch.fetch(Constants.apiUrl ++ "/users/" ++ username);
+            Fetch.fetch(Constants.apiUrl ++ "/users2/" ++ username);
           switch (Fetch.Response.status(response)) {
           | 200 =>
             let%Repromise.JsExn json = Fetch.Response.json(response);

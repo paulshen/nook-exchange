@@ -28,3 +28,8 @@ let deleteJsDictKey = (dict, key) =>
 let getElementForDomRef = domRef => {
   domRef->React.Ref.current->Js.Nullable.toOption->Belt.Option.getExn;
 };
+
+let capitalizeFirstLetter = input => {
+  Js.String.toUpperCase(Js.String.charAt(0, input))
+  ++ (input |> Js.String.sliceToEnd(~from=1));
+};

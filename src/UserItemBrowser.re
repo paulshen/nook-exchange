@@ -105,14 +105,7 @@ module UserItemCard = {
     <div className={Cn.make([Styles.card])}>
       <div className=ItemCard.Styles.body>
         <img
-          src={
-            Constants.cdnUrl
-            ++ "/items/"
-            ++ item.image
-            ++ "__"
-            ++ string_of_int(variation)
-            ++ ".png"
-          }
+          src={Item.getImageUrl(~item, ~variant=variation)}
           className=ItemCard.Styles.mainImage
         />
         <div className=Styles.name> {React.string(item.name)} </div>
@@ -174,14 +167,7 @@ module UserItemCardMini = {
   let make = (~itemId, ~variation) => {
     let item = Item.getItem(~itemId);
     <img
-      src={
-        Constants.cdnUrl
-        ++ "/items/"
-        ++ item.image
-        ++ "__"
-        ++ string_of_int(variation)
-        ++ ".png"
-      }
+      src={Item.getImageUrl(~item, ~variant=variation)}
       title={item.name}
       className=Styles.cardMiniImage
     />;

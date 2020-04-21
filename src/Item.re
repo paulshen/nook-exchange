@@ -1,11 +1,19 @@
 type recipeItem = (string, int);
 type recipe = array(recipeItem);
 
+type variations =
+  | Single
+  | OneDimension(int)
+  | TwoDimensions(int, int);
+
+type image =
+  | Base(string)
+  | Array(array(string));
 type t = {
   id: string,
   name: string,
-  image: string,
-  numVariations: option(int),
+  image,
+  variations,
   sellPrice: option(int),
   buyPrice: option(int),
   recipe: option(recipe),
@@ -20,7 +28,7 @@ let categories = [|
   "Housewares",
   "Miscellaneous",
   "Wall-mounted",
-  "Wallpaper",
+  "Wallpapers",
   "Floors",
   "Rugs",
   "Tops",
@@ -36,7 +44,7 @@ let categories = [|
   "Posters",
   "Fencing",
   "Tools",
-  "Songs",
+  "Music",
   // "Recipes",
   // "Bugs - North",
   // "Fish - North",
@@ -50,7 +58,7 @@ let furnitureCategories = [|
   "Housewares",
   "Miscellaneous",
   "Wall-mounted",
-  "Wallpaper",
+  "Wallpapers",
   "Floors",
   "Rugs",
 |];
@@ -67,7 +75,7 @@ let clothingCategories = [|
   "Umbrellas",
 |];
 
-let otherCategories = [|"Photos", "Posters", "Fencing", "Tools", "Songs"|];
+let otherCategories = [|"Photos", "Posters", "Fencing", "Tools", "Music"|];
 
 [@bs.module] external itemsJson: Js.Json.t = "./items.json";
 
@@ -75,16 +83,30 @@ exception UnexpectedType(string);
 
 let spaceRegex = [%bs.re "/\\s/g"];
 
+exception Unexpected;
 let jsonToItem = (json: Js.Json.t) => {
   open Json.Decode;
-  let name = json |> field("name", string);
-  let id =
-    name |> Js.String.toLowerCase |> Js.String.replaceByRe(spaceRegex, "-");
+  let flags = json |> field("flags", int);
   {
-    id,
-    name,
-    image: id,
-    numVariations: json |> optional(field("num_variants", int)),
+    id: json |> field("id", int) |> string_of_int,
+    name: json |> field("name", string),
+    image:
+      json
+      |> field(
+           "image",
+           oneOf([
+             json => Base(string(json)),
+             json => Array(array(string, json)),
+           ]),
+         ),
+    variations: {
+      switch (json |> field("variants", array(int))) {
+      | [||] => Single
+      | [|a|] => OneDimension(a)
+      | [|a, b|] => TwoDimensions(a, b)
+      | _ => raise(Unexpected)
+      };
+    },
     sellPrice: json |> optional(field("sell", int)),
     buyPrice: json |> optional(field("buy", int)),
     recipe:
@@ -92,20 +114,14 @@ let jsonToItem = (json: Js.Json.t) => {
       |> optional(
            field(
              "recipe",
-             array(json =>
-               (
-                 json |> field("itemName", string),
-                 json |> field("count", int),
-               )
-             ),
+             array(json => {
+               let (quantity, itemName) = json |> tuple2(int, string);
+               (itemName, quantity);
+             }),
            ),
          ),
-    orderable:
-      (json |> optional(field("catalog", bool)))
-      ->Belt.Option.getWithDefault(false),
-    customizable:
-      (json |> optional(field("customize", bool)))
-      ->Belt.Option.getWithDefault(false),
+    orderable: flags land 2 !== 0,
+    customizable: flags land (4 lor 8) !== 0,
     category: json |> field("category", string),
     newId: json |> field("id", int),
     variantMap: json |> optional(field("variantMap", array(int))),
@@ -115,3 +131,37 @@ let jsonToItem = (json: Js.Json.t) => {
 let all = itemsJson |> Json.Decode.array(jsonToItem);
 let getItem = (~itemId) =>
   all->Belt.Array.getByU((. item) => item.id == itemId)->Belt.Option.getExn;
+
+let getImageUrl = (~item, ~variant) => {
+  Constants.imageUrl
+  ++ "/"
+  ++ item.category
+  ++ "/"
+  ++ (
+    switch (item.image) {
+    | Base(base) =>
+      base
+      ++ (
+        switch (item.variations) {
+        | Single => ""
+        | OneDimension(_) => string_of_int(variant)
+        | TwoDimensions(_a, b) =>
+          "_"
+          ++ string_of_int(variant / b)
+          ++ "_"
+          ++ string_of_int(variant mod b)
+        }
+      )
+    | Array(variantImages) => variantImages[variant]
+    }
+  )
+  ++ ".png";
+};
+
+let getNumVariations = (~item) => {
+  switch (item.variations) {
+  | Single => 1
+  | OneDimension(a) => a
+  | TwoDimensions(a, b) => a * b
+  };
+};

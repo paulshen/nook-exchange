@@ -77,12 +77,15 @@ let doesItemMatchFilters = (~item: Item.t, ~filters: t) => {
   )
   && (
     switch (filters.category) {
-    | Some("Furniture") =>
-      Item.furnitureCategories |> Js.Array.includes(item.category)
-    | Some("Clothing") =>
-      Item.clothingCategories |> Js.Array.includes(item.category)
-    | Some("Other") =>
-      Item.otherCategories |> Js.Array.includes(item.category)
+    | Some("furniture") =>
+      Item.furnitureCategories->Belt.Array.map(Js.String.toLowerCase)
+      |> Js.Array.includes(item.category)
+    | Some("clothing") =>
+      Item.clothingCategories->Belt.Array.map(Js.String.toLowerCase)
+      |> Js.Array.includes(item.category)
+    | Some("other") =>
+      Item.otherCategories->Belt.Array.map(Js.String.toLowerCase)
+      |> Js.Array.includes(item.category)
     | Some(category) => item.category == category
     | None => true
     }
@@ -207,11 +210,13 @@ module CategoryButtons = {
         ])}>
         {React.string("Everything!")}
       </Button>
-      {renderButton("Furniture", "All Furniture")}
+      {renderButton("furniture", "All Furniture")}
       {Item.furnitureCategories
-       ->Belt.Array.mapU((. category) => renderButton(category, category))
+       ->Belt.Array.mapU((. category) =>
+           renderButton(Js.String.toLowerCase(category), category)
+         )
        ->React.array}
-      {renderButton("Clothing", "All Clothing")}
+      {renderButton("clothing", "All Clothing")}
       <select
         value={
           switch (filters.category) {
@@ -250,7 +255,7 @@ module CategoryButtons = {
         <option value=""> {React.string("-- Other Categories")} </option>
         {Belt.Array.concat(Item.clothingCategories, Item.otherCategories)
          ->Belt.Array.mapU((. category) =>
-             <option value=category key=category>
+             <option value={Js.String.toLowerCase(category)} key=category>
                {React.string(category)}
              </option>
            )

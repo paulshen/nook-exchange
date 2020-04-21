@@ -25,13 +25,32 @@ let itemFromJson = json => {
   };
 };
 
+let recipeIdRegex = [%bs.re {|/^(\d+)r$/|}];
+let getItemIdFromRecipeId = (~recipeId) => {
+  let result = recipeId |> Js.Re.exec_(recipeIdRegex);
+  Belt.Option.map(
+    result,
+    result => {
+      let matches = Js.Re.captures(result);
+      matches[1]->Js.Nullable.toOption->Belt.Option.getExn;
+    },
+  );
+};
+exception InvalidRecipeItemKey(string, int);
 let getItemKey = (~itemId: string, ~variation: int) => {
+  if (getItemIdFromRecipeId(~recipeId=itemId) !== None && variation != 0) {
+    raise(InvalidRecipeItemKey(itemId, variation));
+  };
   itemId ++ "@@" ++ string_of_int(variation);
 };
 
 let fromItemKey = (~key: string) => {
   let [|itemId, variation|] = key |> Js.String.split("@@");
-  (itemId, int_of_string(variation));
+  let variation = int_of_string(variation);
+  if (getItemIdFromRecipeId(~recipeId=itemId) !== None && variation != 0) {
+    raise(InvalidRecipeItemKey(itemId, variation));
+  };
+  (itemId, variation);
 };
 
 type t = {

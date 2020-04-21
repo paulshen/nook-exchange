@@ -85,14 +85,12 @@ let doesItemMatchFilters = (~item: Item.t, ~filters: t) => {
   && (
     switch (filters.category) {
     | Some("furniture") =>
-      Item.furnitureCategories->Belt.Array.map(Js.String.toLowerCase)
-      |> Js.Array.includes(item.category)
+      Item.furnitureCategories |> Js.Array.includes(item.category)
     | Some("clothing") =>
-      Item.clothingCategories->Belt.Array.map(Js.String.toLowerCase)
-      |> Js.Array.includes(item.category)
+      Item.clothingCategories |> Js.Array.includes(item.category)
     | Some("other") =>
-      Item.otherCategories->Belt.Array.map(Js.String.toLowerCase)
-      |> Js.Array.includes(item.category)
+      Item.otherCategories |> Js.Array.includes(item.category)
+    | Some("recipes") => item.isRecipe
     | Some(category) => item.category == category
     | None => true
     }
@@ -206,6 +204,13 @@ module CategoryButtons = {
       </Button>;
     };
 
+    let selectCategories =
+      Belt.Array.concatMany([|
+        [|"wallpapers", "floors", "rugs"|],
+        Item.clothingCategories,
+        Item.otherCategories,
+      |]);
+
     <div className=CategoryStyles.root>
       <Button
         onClick={_ => {onChange({...filters, category: None})}}
@@ -219,18 +224,16 @@ module CategoryButtons = {
         {React.string("Everything!")}
       </Button>
       {renderButton("furniture", "All Furniture")}
-      {Item.furnitureCategories
-       ->Belt.Array.mapU((. category) =>
-           renderButton(Js.String.toLowerCase(category), category)
-         )
-       ->React.array}
+      {renderButton("housewares", "Housewares")}
+      {renderButton("miscellaneous", "Miscellaneous")}
+      {renderButton("wall-mounted", "Wall-mounted")}
+      {renderButton("recipes", "Recipes")}
       {renderButton("clothing", "All Clothing")}
       <select
         value={
           switch (filters.category) {
           | Some(category) =>
-            Item.clothingCategories |> Js.Array.includes(category)
-              ? category : ""
+            selectCategories |> Js.Array.includes(category) ? category : ""
           | None => ""
           }
         }
@@ -253,19 +256,16 @@ module CategoryButtons = {
             CategoryStyles.selectSelected,
             switch (filters.category) {
             | Some(category) =>
-              Item.clothingCategories
-              |> Js.Array.includes(category)
-              || Item.otherCategories
-              |> Js.Array.includes(category)
+              selectCategories |> Js.Array.includes(category)
             | None => false
             },
           ),
         ])}>
         <option value=""> {React.string("-- Other Categories")} </option>
-        {Belt.Array.concat(Item.clothingCategories, Item.otherCategories)
+        {selectCategories
          ->Belt.Array.mapU((. category) =>
-             <option value={Js.String.toLowerCase(category)} key=category>
-               {React.string(category)}
+             <option value=category key=category>
+               {React.string(Utils.capitalizeFirstLetter(category))}
              </option>
            )
          ->React.array}

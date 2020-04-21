@@ -1,5 +1,5 @@
-type recipeItem = (string, int);
-type recipe = array(recipeItem);
+type recipeMaterial = (string, int);
+type recipe = array(recipeMaterial);
 
 type variations =
   | Single
@@ -16,6 +16,7 @@ type t = {
   variations,
   sellPrice: option(int),
   buyPrice: option(int),
+  isRecipe: bool,
   recipe: option(recipe),
   orderable: bool,
   customizable: bool,
@@ -53,27 +54,27 @@ let categories = [|
 |];
 
 let furnitureCategories = [|
-  "Housewares",
-  "Miscellaneous",
-  "Wall-mounted",
-  "Wallpapers",
-  "Floors",
-  "Rugs",
+  "housewares",
+  "miscellaneous",
+  "wall-mounted",
+  "wallpapers",
+  "floors",
+  "rugs",
 |];
 
 let clothingCategories = [|
-  "Tops",
-  "Bottoms",
-  "Dresses",
-  "Headwear",
-  "Accessories",
-  "Socks",
-  "Shoes",
-  "Bags",
-  "Umbrellas",
+  "tops",
+  "bottoms",
+  "dresses",
+  "headwear",
+  "accessories",
+  "socks",
+  "shoes",
+  "bags",
+  "umbrellas",
 |];
 
-let otherCategories = [|"Photos", "Posters", "Fencing", "Tools", "Music"|];
+let otherCategories = [|"photos", "posters", "fencing", "tools", "music"|];
 
 [@bs.val] [@bs.scope "window"] external itemsJson: Js.Json.t = "items";
 
@@ -107,6 +108,7 @@ let jsonToItem = (json: Js.Json.t) => {
     },
     sellPrice: json |> optional(field("sell", int)),
     buyPrice: json |> optional(field("buy", int)),
+    isRecipe: false,
     recipe:
       json
       |> optional(
@@ -132,11 +134,11 @@ let all = {
       ->Belt.Option.map(recipe =>
           {
             ...item,
-            id: item.id ++ "d",
-            name: item.name ++ " DIY",
-            recipe: None,
-            category: "recipe",
-            variations: Single,
+            id: item.id ++ "r",
+            name: item.name ++ " Recipe",
+            sellPrice: None,
+            buyPrice: None,
+            isRecipe: true,
           }
         )
     );
@@ -173,10 +175,13 @@ let getImageUrl = (~item, ~variant) => {
   ++ ".png";
 };
 
-let getNumVariations = (~item) => {
-  switch (item.variations) {
-  | Single => 1
-  | OneDimension(a) => a
-  | TwoDimensions(a, b) => a * b
+let getNumVariations = (~item) =>
+  if (item.isRecipe) {
+    1;
+  } else {
+    switch (item.variations) {
+    | Single => 1
+    | OneDimension(a) => a
+    | TwoDimensions(a, b) => a * b
+    };
   };
-};

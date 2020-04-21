@@ -64,8 +64,15 @@ let doesItemMatchFilters = (~item: Item.t, ~filters: t) => {
     switch (filters.text) {
     | "" => true
     | text =>
-      Js.String.toLowerCase(item.name)
-      |> Js.String.indexOf(Js.String.toLowerCase(text)) != (-1)
+      let fragments =
+        (
+          Js.String.toLowerCase(text)
+          |> Js.String.splitByRe([%bs.re {|/[\s-]+/|}])
+        )
+        ->Belt.Array.keepMap(x => x);
+      fragments->Belt.Array.every(fragment =>
+        Js.String.toLowerCase(item.name) |> Js.String.includes(fragment)
+      );
     }
   )
   && (

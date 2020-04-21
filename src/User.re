@@ -59,7 +59,14 @@ let fromAPI = (json: Js.Json.t) => {
   Json.Decode.{
     id: json |> field("uuid", string),
     username: json |> field("username", string),
-    items: json |> field("items", dict(itemFromJson)),
+    items:
+      (json |> field("items", dict(itemFromJson)))
+      ->Js.Dict.entries
+      ->Belt.Array.keep(((itemKey, _)) => {
+          let (itemId, _) = fromItemKey(~key=itemKey);
+          Item.hasItem(~itemId);
+        })
+      ->Js.Dict.fromArray,
     profileText:
       (
         json

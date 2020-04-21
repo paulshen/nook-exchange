@@ -129,6 +129,8 @@ let jsonToItem = (json: Js.Json.t) => {
 };
 
 let all = itemsJson |> Json.Decode.array(jsonToItem);
+let hasItem = (~itemId) =>
+  all->Belt.Array.someU((. item) => item.id == itemId);
 let getItem = (~itemId) =>
   all->Belt.Array.getByU((. item) => item.id == itemId)->Belt.Option.getExn;
 

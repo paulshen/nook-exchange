@@ -223,7 +223,7 @@ module Section = {
     let (filters, setFilters) =
       React.useState(() =>
         (
-          {text: "", mask: None, category: None, sort: SellPriceDesc}: ItemFilters.t
+          {text: "", mask: None, category: None, sort: Category}: ItemFilters.t
         )
       );
     let (pageOffset, setPageOffset) = React.useState(() => 0);

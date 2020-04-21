@@ -45,7 +45,8 @@ module Styles = {
 type sort =
   | ABC
   | SellPriceDesc
-  | SellPriceAsc;
+  | SellPriceAsc
+  | Category;
 
 type mask =
   | Orderable
@@ -111,6 +112,21 @@ let getSort = (~filters: t) => {
       (a: Item.t, b: Item.t) =>
         Belt.Option.getWithDefault(a.sellPrice, 0)
         - Belt.Option.getWithDefault(b.sellPrice, 0)
+    )
+  | Category => (
+      (a: Item.t, b: Item.t) => {
+        let categorySort =
+          Belt.Array.getIndexBy(Item.categories, x => x == a.category)
+          ->Belt.Option.getExn
+          - Belt.Array.getIndexBy(Item.categories, x => x == b.category)
+            ->Belt.Option.getExn;
+        if (categorySort == 0) {
+          Belt.Option.getWithDefault(b.sellPrice, 0)
+          - Belt.Option.getWithDefault(a.sellPrice, 0);
+        } else {
+          categorySort;
+        };
+      }
     )
   };
 };
@@ -369,6 +385,7 @@ let make = (~filters, ~onChange) => {
         | ABC => "abc"
         | SellPriceDesc => "sell-desc"
         | SellPriceAsc => "sell-asc"
+        | Category => "category"
         }
       }
       onChange={e => {
@@ -380,11 +397,13 @@ let make = (~filters, ~onChange) => {
             | "abc" => ABC
             | "sell-desc" => SellPriceDesc
             | "sell-asc" => SellPriceAsc
-            | _ => ABC
+            | "category" => Category
+            | _ => Category
             },
         });
       }}
       className={Cn.make([Styles.select, Styles.selectSort])}>
+      <option value="category"> {React.string("Category")} </option>
       <option value="sell-desc">
         {React.string({j|Sell Price ↓|j})}
       </option>
@@ -396,12 +415,7 @@ let make = (~filters, ~onChange) => {
          href="#"
          onClick={e => {
            ReactEvent.Mouse.preventDefault(e);
-           onChange({
-             text: "",
-             mask: None,
-             category: None,
-             sort: SellPriceDesc,
-           });
+           onChange({text: "", mask: None, category: None, sort: Category});
          }}
          className=Styles.clearFilters>
          {React.string("Clear filters")}

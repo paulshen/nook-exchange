@@ -186,6 +186,7 @@ module CategoryButtons = {
         onClick={_ => {
           onChange({
             ...filters,
+            text: "",
             category: isSelected ? None : Some(category),
           })
         }}
@@ -230,6 +231,7 @@ module CategoryButtons = {
           let value = ReactEvent.Form.target(e)##value;
           onChange({
             ...filters,
+            text: "",
             category:
               switch (value) {
               | "" => None

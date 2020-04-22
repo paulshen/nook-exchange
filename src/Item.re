@@ -155,6 +155,8 @@ let all = {
             sellPrice: None,
             buyPrice: None,
             isRecipe: true,
+            orderable: false,
+            customizable: false,
           }
         )
     );

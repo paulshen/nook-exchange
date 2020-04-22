@@ -18,13 +18,16 @@ let itemToJson = (item: item) => {
 };
 
 let itemFromJson = json => {
-  Json.Decode.{
-    status:
-      (json |> field("status", int))->itemStatusFromJs->Belt.Option.getExn,
-    note:
-      (json |> optional(field("note", string)))
-      ->Belt.Option.getWithDefault(""),
-  };
+  open Json.Decode;
+  let status = (json |> field("status", int))->itemStatusFromJs;
+  Belt.Option.map(status, status =>
+    {
+      status,
+      note:
+        (json |> optional(field("note", string)))
+        ->Belt.Option.getWithDefault(""),
+    }
+  );
 };
 
 exception InvalidRecipeItemKey(string, int);
@@ -58,9 +61,14 @@ let fromAPI = (json: Js.Json.t) => {
     items:
       (json |> field("items", dict(itemFromJson)))
       ->Js.Dict.entries
-      ->Belt.Array.keep(((itemKey, _)) => {
-          let (itemId, _) = fromItemKey(~key=itemKey);
-          Item.hasItem(~itemId);
+      ->Belt.Array.keepMap(((itemKey, value)) => {
+          Belt.Option.flatMap(
+            value,
+            value => {
+              let (itemId, _) = fromItemKey(~key=itemKey);
+              Item.hasItem(~itemId) ? Some((itemKey, value)) : None;
+            },
+          )
         })
       ->Js.Dict.fromArray,
     profileText:

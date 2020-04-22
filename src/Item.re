@@ -59,6 +59,7 @@ let categories = [|
   "fencing",
   "tools",
   "music",
+  "other",
   // "Recipes",
   // "Bugs - North",
   // "Fish - North",

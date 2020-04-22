@@ -117,10 +117,8 @@ let getSort = (~filters: t) => {
     | Category => (
         (a: Item.t, b: Item.t) => {
           let categorySort =
-            Array.getIndexBy(Item.categories, x => x == a.category)
-            ->Option.getExn
-            - Array.getIndexBy(Item.categories, x => x == b.category)
-              ->Option.getExn;
+            (Item.categories |> Js.Array.indexOf(a.category))
+            - (Item.categories |> Js.Array.indexOf(b.category));
           if (categorySort != 0) {
             categorySort;
           } else {

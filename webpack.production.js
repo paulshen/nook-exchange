@@ -9,9 +9,6 @@ module.exports = {
     Index: "./src/Index.bs.js",
   },
   devtool: "source-map",
-  output: {
-    publicPath: "/",
-  },
   module: {
     rules: [
       {
@@ -37,5 +34,6 @@ module.exports = {
   output: {
     filename: "[name].[contenthash:8].js",
     path: path.resolve(__dirname, "dist"),
+    publicPath: "/",
   },
 };

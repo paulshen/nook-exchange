@@ -29,7 +29,7 @@ module Styles = {
 };
 
 [@react.component]
-let make = (~username) => {
+let make = (~username, ~urlRest, ~url) => {
   let (user, setUser) = React.useState(() => None);
   let isMountedRef = React.useRef(true);
   React.useEffect0(() => {
@@ -76,24 +76,28 @@ let make = (~username) => {
               {Emoji.parseText(profileText)}
             </div>
           }}
-         {if (user.items->Js.Dict.keys->Js.Array.length > 0) {
-            <UserItemBrowser
-              username
-              userItems={
-                user.items
-                ->Js.Dict.entries
-                ->Belt.Array.mapU((. (itemKey, item)) =>
-                    (User.fromItemKey(~key=itemKey), item)
-                  )
-              }
-              editable=false
-            />;
-          } else {
-            <div className=Styles.emptyProfile>
-              <div className=Styles.bodyText>
-                {React.string("I have no lists!")}
-              </div>
-            </div>;
+         {switch (urlRest) {
+          | [list] => <UserListBrowser user list url />
+          | _ =>
+            if (user.items->Js.Dict.keys->Js.Array.length > 0) {
+              <UserItemBrowser
+                username
+                userItems={
+                  user.items
+                  ->Js.Dict.entries
+                  ->Belt.Array.mapU((. (itemKey, item)) =>
+                      (User.fromItemKey(~key=itemKey), item)
+                    )
+                }
+                editable=false
+              />;
+            } else {
+              <div className=Styles.emptyProfile>
+                <div className=Styles.bodyText>
+                  {React.string("I have no lists!")}
+                </div>
+              </div>;
+            }
           }}
        </div>
      | None => React.null

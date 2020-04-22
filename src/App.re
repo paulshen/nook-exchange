@@ -97,7 +97,7 @@ let make = () => {
       <div className=Styles.body>
         {switch (url.path) {
          | ["me"] => <MyPage url />
-         | ["u", username] => <UserPage username />
+         | ["u", username, ...urlRest] => <UserPage username urlRest url />
          | _ => <ItemBrowser showLogin={() => setShowLogin(_ => true)} url />
          }}
       </div>

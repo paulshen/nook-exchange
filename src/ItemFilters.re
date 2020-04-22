@@ -98,37 +98,39 @@ let doesItemMatchFilters = (~item: Item.t, ~filters: t) => {
 };
 
 let getSort = (~filters: t) => {
-  switch (filters.sort) {
-  | ABC => (
-      (a: Item.t, b: Item.t) =>
-        int_of_float(Js.String.localeCompare(b.name, a.name))
-    )
-  | SellPriceDesc => (
-      (a: Item.t, b: Item.t) =>
-        Belt.Option.getWithDefault(b.sellPrice, 0)
-        - Belt.Option.getWithDefault(a.sellPrice, 0)
-    )
-  | SellPriceAsc => (
-      (a: Item.t, b: Item.t) =>
-        Belt.Option.getWithDefault(a.sellPrice, 0)
-        - Belt.Option.getWithDefault(b.sellPrice, 0)
-    )
-  | Category => (
-      (a: Item.t, b: Item.t) => {
-        let categorySort =
-          Belt.Array.getIndexBy(Item.categories, x => x == a.category)
-          ->Belt.Option.getExn
-          - Belt.Array.getIndexBy(Item.categories, x => x == b.category)
-            ->Belt.Option.getExn;
-        if (categorySort == 0) {
-          Belt.Option.getWithDefault(b.sellPrice, 0)
-          - Belt.Option.getWithDefault(a.sellPrice, 0);
-        } else {
-          categorySort;
-        };
-      }
-    )
-  };
+  Belt.(
+    switch (filters.sort) {
+    | ABC => (
+        (a: Item.t, b: Item.t) =>
+          int_of_float(Js.String.localeCompare(b.name, a.name))
+      )
+    | SellPriceDesc => (
+        (a: Item.t, b: Item.t) =>
+          Option.getWithDefault(b.sellPrice, 0)
+          - Option.getWithDefault(a.sellPrice, 0)
+      )
+    | SellPriceAsc => (
+        (a: Item.t, b: Item.t) =>
+          Option.getWithDefault(a.sellPrice, 0)
+          - Option.getWithDefault(b.sellPrice, 0)
+      )
+    | Category => (
+        (a: Item.t, b: Item.t) => {
+          let categorySort =
+            Array.getIndexBy(Item.categories, x => x == a.category)
+            ->Option.getExn
+            - Array.getIndexBy(Item.categories, x => x == b.category)
+              ->Option.getExn;
+          if (categorySort != 0) {
+            categorySort;
+          } else {
+            Option.getWithDefault(b.sellPrice, 0)
+            - Option.getWithDefault(a.sellPrice, 0);
+          };
+        }
+      )
+    }
+  );
 };
 
 module Pager = {
@@ -419,7 +421,12 @@ let make = (~filters, ~onChange, ~showCategorySort) => {
          href="#"
          onClick={e => {
            ReactEvent.Mouse.preventDefault(e);
-           onChange({text: "", mask: None, category: None, sort: Category});
+           onChange({
+             text: "",
+             mask: None,
+             category: None,
+             sort: filters.sort,
+           });
          }}
          className=Styles.clearFilters>
          {React.string("Clear filters")}

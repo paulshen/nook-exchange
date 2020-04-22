@@ -10,7 +10,7 @@ external setOnError:
   unit =
   "onerror";
 
-// initSentry({"dsn": Constants.sentryId});
+initSentry({"dsn": Constants.sentryId});
 Analytics.Amplitude.init();
 Webapi.Dom.window->setOnError((message, url, _line, _column, error) => {
   Analytics.Amplitude.logEventWithProperties(

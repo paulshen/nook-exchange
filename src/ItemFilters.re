@@ -45,7 +45,8 @@ module Styles = {
 type sort =
   | ABC
   | SellPriceDesc
-  | SellPriceAsc;
+  | SellPriceAsc
+  | Category;
 
 type mask =
   | Orderable
@@ -97,22 +98,39 @@ let doesItemMatchFilters = (~item: Item.t, ~filters: t) => {
 };
 
 let getSort = (~filters: t) => {
-  switch (filters.sort) {
-  | ABC => (
-      (a: Item.t, b: Item.t) =>
-        int_of_float(Js.String.localeCompare(b.name, a.name))
-    )
-  | SellPriceDesc => (
-      (a: Item.t, b: Item.t) =>
-        Belt.Option.getWithDefault(b.sellPrice, 0)
-        - Belt.Option.getWithDefault(a.sellPrice, 0)
-    )
-  | SellPriceAsc => (
-      (a: Item.t, b: Item.t) =>
-        Belt.Option.getWithDefault(a.sellPrice, 0)
-        - Belt.Option.getWithDefault(b.sellPrice, 0)
-    )
-  };
+  Belt.(
+    switch (filters.sort) {
+    | ABC => (
+        (a: Item.t, b: Item.t) =>
+          int_of_float(Js.String.localeCompare(b.name, a.name))
+      )
+    | SellPriceDesc => (
+        (a: Item.t, b: Item.t) =>
+          Option.getWithDefault(b.sellPrice, 0)
+          - Option.getWithDefault(a.sellPrice, 0)
+      )
+    | SellPriceAsc => (
+        (a: Item.t, b: Item.t) =>
+          Option.getWithDefault(a.sellPrice, 0)
+          - Option.getWithDefault(b.sellPrice, 0)
+      )
+    | Category => (
+        (a: Item.t, b: Item.t) => {
+          let categorySort =
+            Array.getIndexBy(Item.categories, x => x == a.category)
+            ->Option.getExn
+            - Array.getIndexBy(Item.categories, x => x == b.category)
+              ->Option.getExn;
+          if (categorySort != 0) {
+            categorySort;
+          } else {
+            Option.getWithDefault(b.sellPrice, 0)
+            - Option.getWithDefault(a.sellPrice, 0);
+          };
+        }
+      )
+    }
+  );
 };
 
 module Pager = {
@@ -271,7 +289,7 @@ module CategoryButtons = {
 };
 
 [@react.component]
-let make = (~filters, ~onChange) => {
+let make = (~filters, ~onChange, ~showCategorySort) => {
   let inputTextRef = React.useRef(Js.Nullable.null);
   let updateTextTimeoutRef = React.useRef(None);
   React.useEffect1(
@@ -369,6 +387,7 @@ let make = (~filters, ~onChange) => {
         | ABC => "abc"
         | SellPriceDesc => "sell-desc"
         | SellPriceAsc => "sell-asc"
+        | Category => "category"
         }
       }
       onChange={e => {
@@ -380,11 +399,17 @@ let make = (~filters, ~onChange) => {
             | "abc" => ABC
             | "sell-desc" => SellPriceDesc
             | "sell-asc" => SellPriceAsc
-            | _ => ABC
+            | "category" => Category
+            | _ => Category
             },
         });
       }}
       className={Cn.make([Styles.select, Styles.selectSort])}>
+      {if (showCategorySort) {
+         <option value="category"> {React.string("Sort: Category")} </option>;
+       } else {
+         React.null;
+       }}
       <option value="sell-desc">
         {React.string({j|Sell Price ↓|j})}
       </option>
@@ -400,7 +425,7 @@ let make = (~filters, ~onChange) => {
              text: "",
              mask: None,
              category: None,
-             sort: SellPriceDesc,
+             sort: filters.sort,
            });
          }}
          className=Styles.clearFilters>

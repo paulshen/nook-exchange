@@ -5,7 +5,7 @@ let make = (~username, ~urlRest, ~url, ~showLogin) => {
   | Some(me) =>
     if (Js.String.toLowerCase(me.username) == Js.String.toLowerCase(username)) {
       switch (urlRest) {
-      | ["catalog"] => <MyCatalogPage user />
+      | ["catalog"] => <MyCatalogPage user=me />
       | _ => <MyPage user=me urlRest url />
       };
     } else {

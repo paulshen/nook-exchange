@@ -21,6 +21,31 @@ module Styles = {
       ]),
       media("(max-width: 430px)", [fontSize(px(14))]),
     ]);
+  let catalogCheckbox =
+    style([
+      height(px(20)),
+      width(px(20)),
+      borderRadius(px(3)),
+      border(px(2), solid, hex("c0c0c0")),
+      padding(zero),
+      transition(~duration=200, "all"),
+      margin(zero),
+      cursor(pointer),
+      outlineStyle(none),
+      opacity(0.),
+      transition(~duration=200, "all"),
+      hover([borderColor(hex("808080"))]),
+    ]);
+  [@bs.module] external checkImage: string = "./assets/check.png";
+  let catalogCheckboxChecked =
+    style([
+      borderColor(Colors.white),
+      backgroundImage(url(checkImage)),
+      backgroundSize(size(px(16), px(16))),
+      backgroundRepeat(noRepeat),
+      backgroundPosition(center),
+      opacity(0.5),
+    ]);
   let card =
     style([
       backgroundColor(hex("fffffff0")),
@@ -40,6 +65,7 @@ module Styles = {
           "& ." ++ statusButton,
           [backgroundColor(hex("3aa56320")), color(Colors.green)],
         ),
+        selector("& ." ++ catalogCheckbox, [opacity(1.)]),
       ]),
       media(
         "(max-width: 600px)",
@@ -96,18 +122,9 @@ module Styles = {
   let variationImageSelected = style([backgroundColor(hex("3aa56320"))]);
   let metaIcons = style([position(absolute), top(px(8)), left(px(6))]);
   let topRightIcons =
-    style([position(absolute), top(px(8)), right(px(8))]);
-  let catalogCheckbox =
-    style([
-      fontSize(px(24)),
-      opacity(0.8),
-      transition(~duration=200, "all"),
-      margin(zero),
-      cursor(pointer),
-      hover([opacity(1.)]),
-    ]);
+    style([position(absolute), top(px(10)), right(px(10))]);
   let bottomBar = style([fontSize(px(12))]);
-  let bottomBarStatus = style([alignSelf(flexStart), paddingTop(px(8))]);
+  let bottomBarStatus = style([alignSelf(flexStart), paddingTop(px(4))]);
   let statusButtons = style([]);
   let statusButtonSelected =
     style([backgroundColor(Colors.green), color(Colors.white)]);
@@ -135,14 +152,7 @@ module MetaIconStyles = {
       height(px(24)),
       marginRight(px(8)),
     ]);
-  let layer =
-    style([
-      backgroundColor(Colors.darkLayerBackground),
-      color(Colors.white),
-      borderRadius(px(8)),
-      padding2(~v=px(12), ~h=px(16)),
-      Colors.darkLayerShadow,
-    ]);
+  let layer = style([padding2(~v=px(4), ~h=px(4))]);
 };
 
 module RecipeIcon = {
@@ -166,35 +176,18 @@ module RecipeIcon = {
 
   [@react.component]
   let make = (~recipe: Item.recipe) => {
-    let (showLayer, setShowLayer) = React.useState(() => false);
-    let iconRef = React.useRef(Js.Nullable.null);
-    <>
-      <img
-        src=recipeIcon
-        className=MetaIconStyles.icon
-        onMouseEnter={_ => setShowLayer(_ => true)}
-        onMouseLeave={_ => setShowLayer(_ => false)}
-        ref={ReactDOMRe.Ref.domRef(iconRef)}
-      />
-      {showLayer
-         ? <ReactAtmosphere.PopperLayer
-             reference=iconRef
-             render={_ => <RecipeLayer recipe />}
-             options={
-               placement: Some("bottom-start"),
-               modifiers:
-                 Some([|
-                   {
-                     "name": "offset",
-                     "options": {
-                       "offset": [|0, 4|],
-                     },
-                   },
-                 |]),
-             }
-           />
-         : React.null}
-    </>;
+    <ReactAtmosphere.Tooltip
+      text={<RecipeLayer recipe />}
+      options={Obj.magic({"placement": "bottom-start"})}>
+      {({onMouseEnter, onMouseLeave, ref}) =>
+         <img
+           src=recipeIcon
+           className=MetaIconStyles.icon
+           onMouseEnter
+           onMouseLeave
+           ref={ReactDOMRe.Ref.domRef(ref)}
+         />}
+    </ReactAtmosphere.Tooltip>;
   };
 };
 
@@ -214,35 +207,18 @@ module OrderableIcon = {
 
   [@react.component]
   let make = () => {
-    let (showLayer, setShowLayer) = React.useState(() => false);
-    let iconRef = React.useRef(Js.Nullable.null);
-    <>
-      <img
-        src=orderableIcon
-        className=MetaIconStyles.icon
-        onMouseEnter={_ => setShowLayer(_ => true)}
-        onMouseLeave={_ => setShowLayer(_ => false)}
-        ref={ReactDOMRe.Ref.domRef(iconRef)}
-      />
-      {showLayer
-         ? <ReactAtmosphere.PopperLayer
-             reference=iconRef
-             render={_ => <OrderableLayer />}
-             options={
-               placement: Some("bottom-start"),
-               modifiers:
-                 Some([|
-                   {
-                     "name": "offset",
-                     "options": {
-                       "offset": [|0, 4|],
-                     },
-                   },
-                 |]),
-             }
-           />
-         : React.null}
-    </>;
+    <ReactAtmosphere.Tooltip
+      text={<OrderableLayer />}
+      options={Obj.magic({"placement": "bottom-start"})}>
+      {({onMouseEnter, onMouseLeave, ref}) =>
+         <img
+           src=orderableIcon
+           className=MetaIconStyles.icon
+           onMouseEnter
+           onMouseLeave
+           ref={ReactDOMRe.Ref.domRef(ref)}
+         />}
+    </ReactAtmosphere.Tooltip>;
   };
 };
 
@@ -398,37 +374,32 @@ let make = (~item: Item.t, ~showLogin) => {
           text={React.string(
             switch (userItem->Option.map(userItem => userItem.status)) {
             | None => "Add to catalog"
-            | Some(Wishlist) => "Add to catalog from Wishlist"
+            | Some(Wishlist) => "Move to catalog from Wishlist"
             | Some(InCatalog) => "Remove from catalog"
             | Some(ForTrade) => "Remove from catalog and For Trade"
             | Some(CanCraft) => "Remove from catalog and Can Craft"
             },
           )}>
           {({onMouseEnter, onMouseLeave, ref}) =>
-             <input
-               type_="checkbox"
-               checked={
-                 switch (userItem) {
-                 | Some(userItem) => userItem.status !== Wishlist
-                 | None => false
-                 }
-               }
-               onChange={e => {
-                 let checked = ReactEvent.Form.target(e)##checked;
+             <button
+               className={Cn.make([
+                 Styles.catalogCheckbox,
+                 Cn.ifTrue(
+                   Styles.catalogCheckboxChecked,
+                   switch (userItem) {
+                   | Some(userItem) => userItem.status !== Wishlist
+                   | None => false
+                   },
+                 ),
+               ])}
+               onClick={e => {
                  let status =
-                   if (checked) {
-                     switch (Option.map(userItem, userItem => userItem.status)) {
-                     | None
-                     | Some(Wishlist) => Some(User.InCatalog)
-                     | _ => raise(Constants.Uhoh)
-                     };
-                   } else {
-                     switch (Option.map(userItem, userItem => userItem.status)) {
-                     | Some(CanCraft)
-                     | Some(ForTrade)
-                     | Some(InCatalog) => None
-                     | _ => raise(Constants.Uhoh)
-                     };
+                   switch (Option.map(userItem, userItem => userItem.status)) {
+                   | None
+                   | Some(Wishlist) => Some(User.InCatalog)
+                   | Some(CanCraft)
+                   | Some(ForTrade)
+                   | Some(InCatalog) => None
                    };
                  switch (status) {
                  | Some(status) =>
@@ -447,7 +418,6 @@ let make = (~item: Item.t, ~showLogin) => {
                }}
                onMouseEnter
                onMouseLeave
-               className=Styles.catalogCheckbox
                ref={ReactDOMRe.Ref.domRef(ref)}
              />}
         </ReactAtmosphere.Tooltip>
@@ -464,7 +434,7 @@ let make = (~item: Item.t, ~showLogin) => {
               {
                 switch (userItem.status) {
                 | Wishlist => {j|🙏 In your Wishlist|j}
-                | ForTrade => {j|✅ In your For Trade list|j}
+                | ForTrade => {j|🤝 In your For Trade list|j}
                 | CanCraft => {j|🔨 In your Can Craft list|j}
                 | _ => raise(Constants.Uhoh)
                 };

@@ -69,15 +69,15 @@ module Catalog = {
     let filteredItems =
       React.useMemo2(
         () => {
-          let sortFn = ItemFilters.getSort(~filters);
+          let sortFn = ItemFilters.getUserItemSort(~sort=filters.sort);
           userItems->Belt.Array.keep((((itemId, _), _)) =>
             ItemFilters.doesItemMatchFilters(
               ~item=Item.getItem(~itemId),
               ~filters,
             )
           )
-          |> Js.Array.sortInPlaceWith((((aId, _), _), ((bId, _), _)) =>
-               sortFn(Item.getItem(~itemId=aId), Item.getItem(~itemId=bId))
+          |> Js.Array.sortInPlaceWith(((aItemKey, _), (bItemKey, _)) =>
+               sortFn(aItemKey, bItemKey)
              );
         },
         (userItems, filters),
@@ -122,6 +122,7 @@ module Catalog = {
                userItem
                editable=true
                showRecipe=false
+               onCatalogPage=true
                key={itemId ++ string_of_int(variation)}
              />
            })

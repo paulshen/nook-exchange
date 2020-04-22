@@ -11,6 +11,7 @@ module Styles = {
       fontSize(px(14)),
       padding3(~top=px(5), ~bottom=px(3), ~h=px(10)),
       position(relative),
+      whiteSpace(`preLine),
       Colors.darkLayerShadow,
     ]);
 };
@@ -54,7 +55,7 @@ let tooltipConfig:
         Some([|{
                  "name": "offset",
                  "options": {
-                   "offset": [|0, 4|],
+                   "offset": [|0, 2|],
                  },
                }|]),
     }),

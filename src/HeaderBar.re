@@ -3,6 +3,7 @@ module Styles = {
   let root =
     style([
       display(flexBox),
+      flexWrap(wrap),
       fontSize(px(16)),
       justifyContent(spaceBetween),
       padding3(~top=px(16), ~bottom=px(16), ~h=px(16)),
@@ -24,7 +25,7 @@ module Styles = {
       left(pct(50.)),
       marginLeft(px(-100)),
       top(px(8)),
-      media("(max-width: 600px)", [display(none)]),
+      media("(max-width: 680px)", [display(none)]),
     ]);
   [@bs.module "./assets/logo.png"] external logo: string = "default";
   let logo =
@@ -65,6 +66,11 @@ let make = (~onLogin) => {
            <div className=Styles.navLink>
              <Link path={"/u/" ++ user.username}>
                {React.string(user.username)}
+             </Link>
+           </div>
+           <div className=Styles.navLink>
+             <Link path={"/u/" ++ user.username ++ "/catalog"}>
+               {React.string("My Catalog")}
              </Link>
            </div>
            <div className={Cn.make([Styles.navLink, Styles.twitterLink])}>

@@ -10,14 +10,14 @@ let itemStatusToUrl = itemStatus =>
   | Wishlist => "wishlist"
   | ForTrade => "for-trade"
   | CanCraft => "can-craft"
-  | Catalog => "catalog"
+  | InCatalog => "catalog"
   };
 let urlToItemStatus = url =>
   switch (url) {
   | "for-trade" => Some(ForTrade)
   | "can-craft" => Some(CanCraft)
   | "wishlist" => Some(Wishlist)
-  | "catalog" => Some(Catalog)
+  | "catalog" => Some(InCatalog)
   | _ => None
   };
 let itemStatusToEmoji = itemStatus => {
@@ -25,7 +25,7 @@ let itemStatusToEmoji = itemStatus => {
   | Wishlist => {j|🙏|j}
   | ForTrade => {j|🤝|j}
   | CanCraft => {j|🔨|j}
-  | Catalog => {j|🔨|j}
+  | InCatalog => {j|🔨|j}
   };
 };
 let itemStatusToString = itemStatus =>
@@ -33,7 +33,7 @@ let itemStatusToString = itemStatus =>
   | Wishlist => "Wishlist"
   | ForTrade => "For Trade"
   | CanCraft => "Can Craft"
-  | Catalog => "Catalog"
+  | InCatalog => "Catalog"
   };
 
 type item = {

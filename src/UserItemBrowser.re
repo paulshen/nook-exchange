@@ -2,7 +2,7 @@ module Styles = {
   open Css;
   let root =
     style([
-      width(px(368)),
+      padding2(~v=zero, ~h=px(16)),
       margin3(~top=px(32), ~bottom=zero, ~h=auto),
       media("(min-width: 660px)", [width(px(560))]),
       media("(min-width: 860px)", [width(px(752))]),
@@ -29,6 +29,7 @@ module Styles = {
     style([
       paddingTop(px(16)),
       marginRight(px(-16)),
+      media("(max-width: 430px)", [marginRight(zero)]),
       media("(max-width: 470px)", [paddingTop(zero)]),
     ]);
   let cardsMini =
@@ -52,7 +53,7 @@ module Styles = {
       position(relative),
       width(px(160)),
       transition(~duration=200, "all"),
-      media("(max-width: 430px)", [width(pct(100.))]),
+      media("(max-width: 430px)", [width(pct(100.)), marginRight(zero)]),
       hover([selector("& ." ++ metaIcons, [opacity(1.)])]),
     ]);
   let mainImageWrapperWithRecipe = style([marginBottom(px(16))]);
@@ -219,7 +220,7 @@ module Section = {
       10;
     } else if (viewportWidth >= 860) {
       12;
-    } else if (viewportWidth >= 660) {
+    } else if (viewportWidth >= 640) {
       9;
     } else {
       8;

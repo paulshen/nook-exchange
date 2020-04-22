@@ -18,9 +18,9 @@ let urlToItemStatus = url =>
   };
 let itemStatusToString = itemStatus =>
   switch (itemStatus) {
-  | Wishlist => "Wishlist"
-  | ForTrade => "For Trade"
-  | CanCraft => "Can Craft"
+  | Wishlist => {j|🙏 Wishlist|j}
+  | ForTrade => {j|✅ For Trade|j}
+  | CanCraft => {j|🔨 Can Craft|j}
   };
 type item = {
   status: itemStatus,

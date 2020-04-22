@@ -44,33 +44,66 @@ let getNumResultsPerPage = () => {
   };
 };
 
+let getUrl =
+    (
+      ~url: ReasonReactRouter.url,
+      ~urlSearchParams: Webapi.Url.URLSearchParams.t,
+    ) => {
+  "/"
+  ++ Js.Array.joinWith("/", Belt.List.toArray(url.path))
+  ++ (
+    switch (Webapi.Url.URLSearchParams.toString(urlSearchParams)) {
+    | "" => ""
+    | search => "?" ++ search
+    }
+  );
+};
+
 [@react.component]
-let make = (~showLogin) => {
+let make = (~showLogin, ~url: ReasonReactRouter.url) => {
   let (numResultsPerPage, _setNumResultsPerPage) =
     React.useState(() => getNumResultsPerPage());
-  let (filters, setFilters) =
-    React.useState(() =>
-      (
-        {text: "", mask: None, category: None, sort: SellPriceDesc}: ItemFilters.t
-      )
+  let (filters, pageOffset) =
+    React.useMemo1(
+      () =>
+        ItemFilters.fromUrlSearch(
+          ~urlSearch=url.search,
+          ~defaultSort=SellPriceDesc,
+        ),
+      [|url.search|],
     );
-  let (pageOffset, setPageOffset) = React.useState(() => 0);
-  let setFilters =
-    React.useCallback0(f => {
-      setFilters((filters: ItemFilters.t) => {
-        let updatedFilters: ItemFilters.t = f(filters);
-        Analytics.Amplitude.logEventWithProperties(
-          ~eventName="Filters Changed",
-          ~eventProperties={
-            "filterText": updatedFilters.text,
-            "filterMask": updatedFilters.mask,
-            "filterCategory": updatedFilters.category,
-            "filterSort": updatedFilters.sort,
-          },
-        );
-        updatedFilters;
-      })
-    });
+  let setFilters = (filters: ItemFilters.t) => {
+    Analytics.Amplitude.logEventWithProperties(
+      ~eventName="Filters Changed",
+      ~eventProperties={
+        "filterText": filters.text,
+        "filterMask": filters.mask,
+        "filterCategory": filters.category,
+        "filterSort": filters.sort,
+      },
+    );
+    let urlSearchParams =
+      Webapi.Url.URLSearchParams.makeWithArray(
+        ItemFilters.serialize(
+          ~filters,
+          ~defaultSort=SellPriceDesc,
+          ~pageOffset=0,
+        ),
+      );
+    ReasonReactRouter.push(getUrl(~url, ~urlSearchParams));
+  };
+  let setPageOffset = f => {
+    let nextPageOffset = f(pageOffset);
+    let urlSearchParams =
+      Webapi.Url.URLSearchParams.makeWithArray(
+        ItemFilters.serialize(
+          ~filters,
+          ~defaultSort=SellPriceDesc,
+          ~pageOffset=nextPageOffset,
+        ),
+      );
+    ReasonReactRouter.push(getUrl(~url, ~urlSearchParams));
+  };
   let filteredItems =
     React.useMemo1(
       () =>
@@ -88,18 +121,12 @@ let make = (~showLogin) => {
     </div>
     <ItemFilters.CategoryButtons
       filters
-      onChange={filters => {
-        setFilters(_ => filters);
-        setPageOffset(_ => 0);
-      }}
+      onChange={filters => {setFilters(filters)}}
     />
     <div className=Styles.filterBar>
       <ItemFilters
         filters
-        onChange={filters => {
-          setFilters(_ => filters);
-          setPageOffset(_ => 0);
-        }}
+        onChange={filters => {setFilters(filters)}}
         showCategorySort=false
       />
       <ItemFilters.Pager
@@ -137,10 +164,8 @@ let make = (~showLogin) => {
          <a
            href="#"
            onClick={e => {
-             setFilters(_ =>
-               (
-                 {text: "", mask: None, category: None, sort: SellPriceDesc}: ItemFilters.t
-               )
+             setFilters(
+               {text: "", mask: None, category: None, sort: SellPriceDesc}: ItemFilters.t,
              );
              ReactEvent.Mouse.preventDefault(e);
            }}>

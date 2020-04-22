@@ -172,7 +172,7 @@ module ProfileTextarea = {
 };
 
 [@react.component]
-let make = (~user: User.t) =>
+let make = (~user: User.t, ~url) =>
   <div>
     <div className=Styles.username> {React.string(user.username)} </div>
     <div className=Styles.userBody>
@@ -204,7 +204,7 @@ let make = (~user: User.t) =>
              <div> {React.string("Add your first item below.")} </div>
            </div>
          </div>
-         <ItemBrowser showLogin={() => ()} />
+         <ItemBrowser showLogin={() => ()} url />
        </>;
      }}
   </div>;

@@ -9,6 +9,10 @@ module.exports = {
   devtool: "inline-source-map",
   devServer: {
     contentBase: "./s3",
+    historyApiFallback: true,
+  },
+  output: {
+    publicPath: "/",
   },
   module: {
     rules: [

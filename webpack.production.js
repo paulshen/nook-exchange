@@ -9,8 +9,8 @@ module.exports = {
     Index: "./src/Index.bs.js",
   },
   devtool: "source-map",
-  devServer: {
-    contentBase: "./dev",
+  output: {
+    publicPath: "/",
   },
   module: {
     rules: [

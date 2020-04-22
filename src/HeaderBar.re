@@ -64,9 +64,7 @@ let make = (~onLogin) => {
        | Some(user) =>
          <>
            <div className=Styles.navLink>
-             <Link path={"/u/" ++ user.username}>
-               {React.string(user.username)}
-             </Link>
+             <Link path="/me"> {React.string(user.username)} </Link>
            </div>
            <div
              className={Cn.make([Styles.navLink, Styles.requestFeatureLink])}>

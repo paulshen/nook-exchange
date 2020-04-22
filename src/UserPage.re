@@ -28,91 +28,74 @@ module Styles = {
   let bodyText = style([fontSize(px(18))]);
 };
 
-module ViewingPage = {
-  [@react.component]
-  let make = (~username) => {
-    let (user, setUser) = React.useState(() => None);
-    let isMountedRef = React.useRef(true);
-    React.useEffect0(() => {
-      Some(() => {React.Ref.setCurrent(isMountedRef, false)})
-    });
-    React.useEffect1(
-      () => {
-        {
-          let%Repromise.JsExn response =
-            Fetch.fetchWithInit(
-              Constants.apiUrl ++ "/users2/" ++ username,
-              Fetch.RequestInit.make(
-                ~headers=
-                  Fetch.HeadersInit.make({
-                    "X-Client-Version": Constants.gitCommitRef,
-                  }),
-                (),
-              ),
-            );
-          switch (Fetch.Response.status(response)) {
-          | 200 =>
-            let%Repromise.JsExn json = Fetch.Response.json(response);
-            if (React.Ref.current(isMountedRef)) {
-              setUser(_ => Some(User.fromAPI(json)));
-            };
-            Promise.resolved();
-          | _ => Promise.resolved()
-          };
-        }
-        |> ignore;
-        None;
-      },
-      [|username|],
-    );
-    <div>
-      <div className=Styles.username> {React.string(username)} </div>
-      {switch (user) {
-       | Some(user) =>
-         <div>
-           {switch (user.profileText) {
-            | "" => React.null
-            | profileText =>
-              <div className=Styles.userBody>
-                {Emoji.parseText(profileText)}
-              </div>
-            }}
-           {if (user.items->Js.Dict.keys->Js.Array.length > 0) {
-              <UserItemBrowser
-                userItems={
-                  user.items
-                  ->Js.Dict.entries
-                  ->Belt.Array.mapU((. (itemKey, item)) =>
-                      (User.fromItemKey(~key=itemKey), item)
-                    )
-                }
-                editable=false
-              />;
-            } else {
-              <div className=Styles.emptyProfile>
-                <div className=Styles.bodyText>
-                  {React.string("I have no lists!")}
-                </div>
-              </div>;
-            }}
-         </div>
-       | None => React.null
-       }}
-    </div>;
-  };
-};
-
 [@react.component]
-let make = (~username, ~url) => {
-  let user = UserStore.useMe();
-  switch (user) {
-  | Some(user) =>
-    if (Js.String.toLowerCase(user.username)
-        == Js.String.toLowerCase(username)) {
-      <MyPage user url />;
-    } else {
-      <ViewingPage username />;
-    }
-  | None => <ViewingPage username />
-  };
+let make = (~username) => {
+  let (user, setUser) = React.useState(() => None);
+  let isMountedRef = React.useRef(true);
+  React.useEffect0(() => {
+    Some(() => {React.Ref.setCurrent(isMountedRef, false)})
+  });
+  React.useEffect1(
+    () => {
+      {
+        let%Repromise.JsExn response =
+          Fetch.fetchWithInit(
+            Constants.apiUrl ++ "/users2/" ++ username,
+            Fetch.RequestInit.make(
+              ~headers=
+                Fetch.HeadersInit.make({
+                  "X-Client-Version": Constants.gitCommitRef,
+                }),
+              (),
+            ),
+          );
+        switch (Fetch.Response.status(response)) {
+        | 200 =>
+          let%Repromise.JsExn json = Fetch.Response.json(response);
+          if (React.Ref.current(isMountedRef)) {
+            setUser(_ => Some(User.fromAPI(json)));
+          };
+          Promise.resolved();
+        | _ => Promise.resolved()
+        };
+      }
+      |> ignore;
+      None;
+    },
+    [|username|],
+  );
+  <div>
+    <div className=Styles.username> {React.string(username)} </div>
+    {switch (user) {
+     | Some(user) =>
+       <div>
+         {switch (user.profileText) {
+          | "" => React.null
+          | profileText =>
+            <div className=Styles.userBody>
+              {Emoji.parseText(profileText)}
+            </div>
+          }}
+         {if (user.items->Js.Dict.keys->Js.Array.length > 0) {
+            <UserItemBrowser
+              userItems={
+                user.items
+                ->Js.Dict.entries
+                ->Belt.Array.mapU((. (itemKey, item)) =>
+                    (User.fromItemKey(~key=itemKey), item)
+                  )
+              }
+              editable=false
+            />;
+          } else {
+            <div className=Styles.emptyProfile>
+              <div className=Styles.bodyText>
+                {React.string("I have no lists!")}
+              </div>
+            </div>;
+          }}
+       </div>
+     | None => React.null
+     }}
+  </div>;
 };

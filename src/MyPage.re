@@ -171,40 +171,50 @@ module ProfileTextarea = {
   };
 };
 
-[@react.component]
-let make = (~user: User.t, ~url) =>
-  <div>
-    <div className=Styles.username> {React.string(user.username)} </div>
-    <div className=Styles.userBody>
-      <ProfileTextarea user />
-      <div className=Styles.url>
-        {React.string("Share your URL: ")}
-        <a href={"https://nook.exchange/u/" ++ user.username}>
-          {React.string("https://nook.exchange/u/" ++ user.username)}
-        </a>
+module Loaded = {
+  [@react.component]
+  let make = (~user: User.t, ~url) =>
+    <div>
+      <div className=Styles.username> {React.string(user.username)} </div>
+      <div className=Styles.userBody>
+        <ProfileTextarea user />
+        <div className=Styles.url>
+          {React.string("Preview your profile: ")}
+          <Link path={"/u/" ++ user.username}>
+            {React.string("https://nook.exchange/u/" ++ user.username)}
+          </Link>
+        </div>
       </div>
-      <div> {React.string("Only you can edit your items!")} </div>
-    </div>
-    {if (user.items->Js.Dict.keys->Array.length > 0) {
-       <UserItemBrowser
-         userItems={
-           user.items
-           ->Js.Dict.entries
-           ->Belt.Array.mapU((. (itemKey, item)) =>
-               (User.fromItemKey(~key=itemKey), item)
-             )
-         }
-         editable=true
-       />;
-     } else {
-       <>
-         <div className=Styles.emptyProfile>
-           <div className=Styles.bodyText>
-             <div> {React.string("Your profile is empty!")} </div>
-             <div> {React.string("Add your first item below.")} </div>
+      {if (user.items->Js.Dict.keys->Array.length > 0) {
+         <UserItemBrowser
+           userItems={
+             user.items
+             ->Js.Dict.entries
+             ->Belt.Array.mapU((. (itemKey, item)) =>
+                 (User.fromItemKey(~key=itemKey), item)
+               )
+           }
+           editable=true
+         />;
+       } else {
+         <>
+           <div className=Styles.emptyProfile>
+             <div className=Styles.bodyText>
+               <div> {React.string("Your profile is empty!")} </div>
+               <div> {React.string("Add your first item below.")} </div>
+             </div>
            </div>
-         </div>
-         <ItemBrowser showLogin={() => ()} url />
-       </>;
-     }}
-  </div>;
+           <ItemBrowser showLogin={() => ()} url />
+         </>;
+       }}
+    </div>;
+};
+
+[@react.component]
+let make = (~url) => {
+  let me = UserStore.useMe();
+  switch (me) {
+  | Some(user) => <Loaded user url />
+  | None => React.null
+  };
+};

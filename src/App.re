@@ -104,7 +104,8 @@ let make = () => {
       <HeaderBar onLogin={_ => setShowLogin(_ => true)} />
       <div className=Styles.body>
         {switch (url.path) {
-         | ["u", username] => <UserPage username url />
+         | ["me"] => <MyPage url />
+         | ["u", username] => <UserPage username />
          | _ => <ItemBrowser showLogin={() => setShowLogin(_ => true)} url />
          }}
       </div>

@@ -21,7 +21,9 @@ let itemFromJson = json => {
   Json.Decode.{
     status:
       (json |> field("status", int))->itemStatusFromJs->Belt.Option.getExn,
-    note: json |> field("note", string),
+    note:
+      (json |> optional(field("note", string)))
+      ->Belt.Option.getWithDefault(""),
   };
 };
 

@@ -44,6 +44,21 @@ let getNumResultsPerPage = () => {
   };
 };
 
+let getUrl =
+    (
+      ~url: ReasonReactRouter.url,
+      ~urlSearchParams: Webapi.Url.URLSearchParams.t,
+    ) => {
+  "/"
+  ++ Js.Array.joinWith("/", Belt.List.toArray(url.path))
+  ++ (
+    switch (Webapi.Url.URLSearchParams.toString(urlSearchParams)) {
+    | "" => ""
+    | search => "?" ++ search
+    }
+  );
+};
+
 [@react.component]
 let make = (~showLogin, ~url: ReasonReactRouter.url) => {
   let (numResultsPerPage, _setNumResultsPerPage) =
@@ -69,27 +84,25 @@ let make = (~showLogin, ~url: ReasonReactRouter.url) => {
     );
     let urlSearchParams =
       Webapi.Url.URLSearchParams.makeWithArray(
-        ItemFilters.serialize(~filters, ~pageOffset=0),
+        ItemFilters.serialize(
+          ~filters,
+          ~defaultSort=SellPriceDesc,
+          ~pageOffset=0,
+        ),
       );
-    let url =
-      "/"
-      ++ Js.Array.joinWith("/", Belt.List.toArray(url.path))
-      ++ "?"
-      ++ Webapi.Url.URLSearchParams.toString(urlSearchParams);
-
-    ReasonReactRouter.push(url);
+    ReasonReactRouter.push(getUrl(~url, ~urlSearchParams));
   };
   let setPageOffset = f => {
     let nextPageOffset = f(pageOffset);
     let urlSearchParams =
       Webapi.Url.URLSearchParams.makeWithArray(
-        ItemFilters.serialize(~filters, ~pageOffset=nextPageOffset),
+        ItemFilters.serialize(
+          ~filters,
+          ~defaultSort=SellPriceDesc,
+          ~pageOffset=nextPageOffset,
+        ),
       );
-    ReasonReactRouter.push(
-      Js.Array.joinWith("/", Belt.List.toArray(url.path))
-      ++ "?"
-      ++ Webapi.Url.URLSearchParams.toString(urlSearchParams),
-    );
+    ReasonReactRouter.push(getUrl(~url, ~urlSearchParams));
   };
   let filteredItems =
     React.useMemo1(

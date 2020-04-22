@@ -59,18 +59,21 @@ type t = {
   sort,
 };
 
-let serialize = (~filters, ~pageOffset) => {
-  let p = [|
-    (
-      "s",
-      switch (filters.sort) {
-      | ABC => "abc"
-      | SellPriceDesc => "pd"
-      | SellPriceAsc => "pa"
-      | Category => "cat"
-      },
-    ),
-  |];
+let serialize = (~filters, ~defaultSort, ~pageOffset) => {
+  let p = [||];
+  if (filters.sort != defaultSort) {
+    p
+    |> Js.Array.push((
+         "s",
+         switch (filters.sort) {
+         | ABC => "abc"
+         | SellPriceDesc => "pd"
+         | SellPriceAsc => "pa"
+         | Category => "cat"
+         },
+       ))
+    |> ignore;
+  };
   if (filters.text != "") {
     p |> Js.Array.push(("q", filters.text)) |> ignore;
   };
@@ -84,7 +87,7 @@ let serialize = (~filters, ~pageOffset) => {
   | None => ()
   };
   if (pageOffset != 0) {
-    p |> Js.Array.push(("p", string_of_int(pageOffset))) |> ignore;
+    p |> Js.Array.push(("p", string_of_int(pageOffset + 1))) |> ignore;
   };
   p;
 };
@@ -117,7 +120,7 @@ let fromUrlSearch = (~urlSearch, ~defaultSort) => {
         | _ => defaultSort
         },
     },
-    Option.map(searchParams |> get("p"), int_of_string)
+    Option.map(searchParams |> get("p"), s => int_of_string(s) - 1)
     ->Option.getWithDefault(0),
   );
 };

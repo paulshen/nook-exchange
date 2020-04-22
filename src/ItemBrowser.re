@@ -58,7 +58,6 @@ let make = (~showLogin, ~url: ReasonReactRouter.url) => {
       [|url.search|],
     );
   let setFilters = (filters: ItemFilters.t) => {
-    [%debugger];
     Analytics.Amplitude.logEventWithProperties(
       ~eventName="Filters Changed",
       ~eventProperties={
@@ -70,13 +69,15 @@ let make = (~showLogin, ~url: ReasonReactRouter.url) => {
     );
     let urlSearchParams =
       Webapi.Url.URLSearchParams.makeWithArray(
-        ItemFilters.serialize(~filters, ~pageOffset),
+        ItemFilters.serialize(~filters, ~pageOffset=0),
       );
-    ReasonReactRouter.push(
-      Js.Array.joinWith("/", Belt.List.toArray(url.path))
+    let url =
+      "/"
+      ++ Js.Array.joinWith("/", Belt.List.toArray(url.path))
       ++ "?"
-      ++ Webapi.Url.URLSearchParams.toString(urlSearchParams),
-    );
+      ++ Webapi.Url.URLSearchParams.toString(urlSearchParams);
+
+    ReasonReactRouter.push(url);
   };
   let setPageOffset = f => {
     let nextPageOffset = f(pageOffset);
@@ -107,18 +108,12 @@ let make = (~showLogin, ~url: ReasonReactRouter.url) => {
     </div>
     <ItemFilters.CategoryButtons
       filters
-      onChange={filters => {
-        setFilters(filters);
-        setPageOffset(_ => 0);
-      }}
+      onChange={filters => {setFilters(filters)}}
     />
     <div className=Styles.filterBar>
       <ItemFilters
         filters
-        onChange={filters => {
-          setFilters(filters);
-          setPageOffset(_ => 0);
-        }}
+        onChange={filters => {setFilters(filters)}}
         showCategorySort=false
       />
       <ItemFilters.Pager

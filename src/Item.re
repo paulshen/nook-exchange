@@ -60,14 +60,9 @@ let categories = [|
   "tools",
   "music",
   "other",
-  // "Recipes",
-  // "Bugs - North",
-  // "Fish - North",
-  // "Fossils",
-  // "Construction",
-  // "Nook Miles",
-  // "Other",
 |];
+let validCategoryStrings =
+  categories->Belt.Array.concat([|"furniture", "clothing", "recipes"|]);
 
 let furnitureCategories = [|
   "housewares",

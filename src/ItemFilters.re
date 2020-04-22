@@ -102,7 +102,7 @@ let fromUrlSearch = (~urlSearch, ~defaultSort) => {
           : searchParams |> has("has-recipe") ? Some(HasRecipe) : None,
       category:
         Option.flatMap(searchParams |> get("c"), category =>
-          if (Item.categories |> Js.Array.includes(category)) {
+          if (Item.validCategoryStrings |> Js.Array.includes(category)) {
             Some(category);
           } else {
             None;

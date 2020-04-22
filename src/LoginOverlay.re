@@ -74,7 +74,7 @@ module Styles = {
   let registerTitle =
     style([fontSize(px(20)), textAlign(center), marginBottom(px(24))]);
   let blurb = style([marginBottom(px(16))]);
-  [@bs.val] [@bs.module] external closePng: string = "./assets/close.png";
+  [@bs.module "./assets/close.png"] external closePng: string = "default";
   let closeButton =
     style([
       backgroundImage(url(closePng)),

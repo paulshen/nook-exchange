@@ -27,7 +27,7 @@
   </script>
   <link rel="stylesheet" href="https://use.typekit.net/vch5bnm.css">
   <style type="text/css">
-body { background-color: #E6F2E8; background-image: url(/assets/background.png); background-size: 332px 332px; background-repeat: repeat; color: #303030; margin: 0; }
+body { background-color: #E6F2E8; background-image: url(<%=require("./assets/background.png").default%>); background-size: 332px 332px; background-repeat: repeat; color: #303030; margin: 0; }
 a { color: #247d46; }
 body, input, textarea, button, select {
   font-family: atten-round-new, -apple-system, system-ui, BlinkMacSystemFont, sans-serif;
@@ -38,7 +38,5 @@ body, input, textarea, button, select {
 </head>
 <body>
   <div id="container"></div>
-  <script src="./Data.js"></script>
-  <script src="./Index.bs.js"></script>
 </body>
 </html>

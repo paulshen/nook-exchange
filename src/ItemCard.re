@@ -145,7 +145,8 @@ module RecipeIcon = {
     };
   };
 
-  [@bs.module] external recipeIcon: string = "./assets/recipe_icon.png";
+  [@bs.module "./assets/recipe_icon.png"]
+  external recipeIcon: string = "default";
 
   [@react.component]
   let make = (~recipe: Item.recipe) => {
@@ -192,7 +193,8 @@ module OrderableIcon = {
     };
   };
 
-  [@bs.module] external orderableIcon: string = "./assets/shop_icon.png";
+  [@bs.module "./assets/shop_icon.png"]
+  external orderableIcon: string = "default";
 
   [@react.component]
   let make = () => {

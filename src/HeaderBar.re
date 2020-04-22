@@ -26,7 +26,7 @@ module Styles = {
       top(px(8)),
       media("(max-width: 600px)", [display(none)]),
     ]);
-  [@bs.module] external logo: string = "./assets/logo.png";
+  [@bs.module "./assets/logo.png"] external logo: string = "default";
   let logo =
     style([
       backgroundImage(url(logo)),

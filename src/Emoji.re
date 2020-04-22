@@ -3,8 +3,8 @@ module Component = {
   external make: (~emoji: string, ~size: int) => React.element = "Emoji";
 };
 
-[@bs.val] [@bs.module] external nmtPng: string = "./assets/nmt.png";
-[@bs.val] [@bs.module] external bellPng: string = "./assets/bell.png";
+[@bs.module "./assets/nmt.png"] external nmtPng: string = "default";
+[@bs.module "./assets/bell.png"] external bellPng: string = "default";
 
 module Styles = {
   open Css;

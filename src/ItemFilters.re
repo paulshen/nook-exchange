@@ -287,7 +287,7 @@ module CategoryButtons = {
 };
 
 [@react.component]
-let make = (~filters, ~onChange) => {
+let make = (~filters, ~onChange, ~showCategorySort) => {
   let inputTextRef = React.useRef(Js.Nullable.null);
   let updateTextTimeoutRef = React.useRef(None);
   React.useEffect1(
@@ -403,7 +403,11 @@ let make = (~filters, ~onChange) => {
         });
       }}
       className={Cn.make([Styles.select, Styles.selectSort])}>
-      <option value="category"> {React.string("Category")} </option>
+      {if (showCategorySort) {
+         <option value="category"> {React.string("Sort: Category")} </option>;
+       } else {
+         React.null;
+       }}
       <option value="sell-desc">
         {React.string({j|Sell Price ↓|j})}
       </option>

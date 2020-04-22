@@ -100,6 +100,7 @@ let make = (~showLogin) => {
           setFilters(_ => filters);
           setPageOffset(_ => 0);
         }}
+        showCategorySort=false
       />
       <ItemFilters.Pager
         numResults

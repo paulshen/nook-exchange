@@ -59,6 +59,69 @@ type t = {
   sort,
 };
 
+let serialize = (~filters, ~pageOffset) => {
+  let p = [|
+    (
+      "s",
+      switch (filters.sort) {
+      | ABC => "abc"
+      | SellPriceDesc => "pd"
+      | SellPriceAsc => "pa"
+      | Category => "cat"
+      },
+    ),
+  |];
+  if (filters.text != "") {
+    p |> Js.Array.push(("q", filters.text)) |> ignore;
+  };
+  switch (filters.mask) {
+  | Some(Orderable) => p |> Js.Array.push(("orderable", "")) |> ignore
+  | Some(HasRecipe) => p |> Js.Array.push(("has-recipe", "")) |> ignore
+  | None => ()
+  };
+  switch (filters.category) {
+  | Some(category) => p |> Js.Array.push(("c", category)) |> ignore
+  | None => ()
+  };
+  if (pageOffset != 0) {
+    p |> Js.Array.push(("p", string_of_int(pageOffset))) |> ignore;
+  };
+  p;
+};
+
+let fromUrlSearch = (~urlSearch, ~defaultSort) => {
+  open Belt;
+  open Webapi.Url.URLSearchParams;
+  let searchParams = make(urlSearch);
+  (
+    {
+      text: (searchParams |> get("q"))->Option.getWithDefault(""),
+      mask:
+        searchParams |> has("orderable")
+          ? Some(Orderable)
+          : searchParams |> has("has-recipe") ? Some(HasRecipe) : None,
+      category:
+        Option.flatMap(searchParams |> get("c"), category =>
+          if (Item.categories |> Js.Array.includes(category)) {
+            Some(category);
+          } else {
+            None;
+          }
+        ),
+      sort:
+        switch (searchParams |> get("s")) {
+        | Some("abc") => ABC
+        | Some("pd") => SellPriceDesc
+        | Some("pa") => SellPriceAsc
+        | Some("cat") => Category
+        | _ => defaultSort
+        },
+    },
+    Option.map(searchParams |> get("p"), int_of_string)
+    ->Option.getWithDefault(0),
+  );
+};
+
 let doesItemMatchFilters = (~item: Item.t, ~filters: t) => {
   (
     switch (filters.text) {

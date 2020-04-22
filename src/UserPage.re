@@ -103,13 +103,13 @@ module ViewingPage = {
 };
 
 [@react.component]
-let make = (~username) => {
+let make = (~username, ~url) => {
   let user = UserStore.useMe();
   switch (user) {
   | Some(user) =>
     if (Js.String.toLowerCase(user.username)
         == Js.String.toLowerCase(username)) {
-      <MyPage user />;
+      <MyPage user url />;
     } else {
       <ViewingPage username />;
     }

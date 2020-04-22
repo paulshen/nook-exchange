@@ -18,7 +18,7 @@ module Styles = {
       backgroundColor(hex("ffffffc0")),
       boxSizing(borderBox),
       lineHeight(px(20)),
-      margin2(~v=px(16), ~h=auto),
+      margin3(~top=px(16), ~bottom=px(32), ~h=auto),
       maxWidth(px(512)),
       padding2(~v=px(16), ~h=px(24)),
       borderRadius(px(8)),

@@ -163,9 +163,9 @@ let doesItemMatchFilters = (~item: Item.t, ~filters: t) => {
   );
 };
 
-let getSort = (~filters: t) => {
+let getSort = (~sort) => {
   Belt.(
-    switch (filters.sort) {
+    switch (sort) {
     | ABC => (
         (a: Item.t, b: Item.t) =>
           int_of_float(Js.String.localeCompare(b.name, a.name))

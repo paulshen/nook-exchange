@@ -19,7 +19,6 @@ module Styles = {
         [width(auto), padding(px(16)), borderRadius(zero)],
       ),
     ]);
-  let anchor = style([position(absolute), top(px(-100))]);
   let rootForTrade = style([backgroundColor(hex("8FCDE0a0"))]);
   let rootCanCraft = style([backgroundColor(hex("f1e26fa0"))]);
   let rootMini = style([backgroundColor(hex("fffffff0"))]);
@@ -239,48 +238,18 @@ module Section = {
     let maxResults = getMaxResults(~viewportWidth);
     let (showRecipes, setShowRecipes) = React.useState(() => false);
     let (showMini, setShowMini) = React.useState(() => false);
-    let (filters, setFilters) =
-      React.useState(() =>
-        (
-          {text: "", mask: None, category: None, sort: Category}: ItemFilters.t
-        )
-      );
-    let (pageOffset, setPageOffset) = React.useState(() => 0);
     let filteredItems =
-      React.useMemo2(
+      React.useMemo1(
         () => {
-          let sortFn = ItemFilters.getSort(~filters);
-          userItems->Belt.Array.keep((((itemId, _), _)) =>
-            ItemFilters.doesItemMatchFilters(
-              ~item=Item.getItem(~itemId),
-              ~filters,
-            )
-          )
+          let sortFn = ItemFilters.getSort(~sort=ItemFilters.Category);
+          userItems
           |> Js.Array.sortInPlaceWith((((aId, _), _), ((bId, _), _)) =>
                sortFn(Item.getItem(~itemId=aId), Item.getItem(~itemId=bId))
              );
         },
-        (userItems, filters),
+        [|userItems|],
       );
-    let numResults = filteredItems->Belt.Array.length;
-    let showFilters = false; // userItems->Belt.Array.length > numResultsPerPage;
-
-    let anchorId =
-      switch (status) {
-      | ForTrade => "for-trade"
-      | CanCraft => "can-craft"
-      | Wishlist => "wishlist"
-      };
-    let anchorRef = React.useRef(Js.Nullable.null);
-    React.useEffect0(() => {
-      let url = ReasonReactRouter.dangerouslyGetInitialUrl();
-      if (url.hash == anchorId) {
-        open Webapi.Dom;
-        let anchorElement = Utils.getElementForDomRef(anchorRef);
-        anchorElement->Element.scrollIntoView;
-      };
-      None;
-    });
+    let numResults = userItems |> Js.Array.length;
 
     <div
       className={Cn.make([
@@ -289,11 +258,6 @@ module Section = {
         Cn.ifTrue(Styles.rootCanCraft, status == CanCraft),
         Cn.ifTrue(Styles.rootMini, showMini),
       ])}>
-      <div
-        className=Styles.anchor
-        id=anchorId
-        ref={ReactDOMRe.Ref.domRef(anchorRef)}
-      />
       <div className=Styles.sectionTitle>
         {React.string(
            switch (status) {
@@ -350,30 +314,6 @@ module Section = {
            React.null;
          }}
       </div>
-      {showFilters
-         ? <div
-             className={Cn.make([
-               ItemBrowser.Styles.filterBar,
-               Styles.filterBar,
-             ])}>
-             <ItemFilters
-               filters
-               onChange={filters => {
-                 setFilters(_ => filters);
-                 setPageOffset(_ => 0);
-               }}
-               showCategorySort=true
-             />
-             {!showMini
-                ? <ItemFilters.Pager
-                    numResults
-                    pageOffset
-                    numResultsPerPage
-                    setPageOffset
-                  />
-                : React.null}
-           </div>
-         : React.null}
       <div
         className={Cn.make([
           ItemBrowser.Styles.cards,
@@ -406,7 +346,7 @@ module Section = {
                  />
            })
          ->(
-             numResults > maxResults
+             !showMini && numResults > maxResults
                ? Belt.Array.concat(
                    _,
                    [|
@@ -435,46 +375,6 @@ module Section = {
            )
          ->React.array}
       </div>
-      {showFilters && !showMini
-         ? <div className=ItemBrowser.Styles.bottomFilterBar>
-             <ItemFilters.Pager
-               numResults
-               pageOffset
-               numResultsPerPage
-               setPageOffset
-             />
-           </div>
-         : React.null}
-    </div>;
-  };
-};
-
-module ListLinks = {
-  module Styles = {
-    open Css;
-    let root = style([textAlign(center)]);
-    let link = style([marginLeft(px(8))]);
-  };
-
-  [@react.component]
-  let make = (~hasForTrade, ~hasCanCraft, ~hasWishlist) => {
-    <div className=Styles.root>
-      {React.string("Lists:")}
-      {hasForTrade
-         ? <a href="#for-trade" className=Styles.link>
-             {React.string("For Trade")}
-           </a>
-         : React.null}
-      {hasCanCraft
-         ? <a href="#can-craft" className=Styles.link>
-             {React.string("Can Craft")}
-           </a>
-         : React.null}
-      {hasWishlist
-         ? <a href="#wishlist" className=Styles.link>
-             {React.string("Wishlist")}
-           </a>
-         : React.null}
     </div>;
   };
 };
@@ -497,15 +397,7 @@ let make =
   let hasForTrade = forTradeList->Array.length > 0;
   let hasCanCraft = canCraftList->Array.length > 0;
   let hasWishlist = wishlist->Array.length > 0;
-  let showListLinks =
-    forTradeList->Array.length > 16
-    && hasCanCraft
-    || forTradeList->Array.length
-    + canCraftList->Array.length > 16
-    && hasWishlist;
   <div>
-    {showListLinks
-       ? <ListLinks hasForTrade hasCanCraft hasWishlist /> : React.null}
     {if (hasForTrade) {
        <Section username status=ForTrade userItems=forTradeList editable />;
      } else {

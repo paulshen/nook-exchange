@@ -15,7 +15,7 @@ module Styles = {
     style([
       display(flexBox),
       justifyContent(center),
-      margin3(~top=zero, ~bottom=px(32), ~h=px(-16)),
+      margin3(~top=zero, ~bottom=px(16), ~h=px(-16)),
     ]);
   let listLink =
     style([
@@ -71,6 +71,12 @@ let getNumResultsPerPage = (~viewportWidth) =>
     12;
   };
 
+let userItemsHasOneWithStatus = (~userItems, ~status) => {
+  userItems
+  ->Js.Dict.values
+  ->Belt.Array.someU((. item: User.item) => item.status == status);
+};
+
 [@react.component]
 let make = (~user: User.t, ~list: string, ~url: ReasonReactRouter.url) => {
   let viewportWidth = Utils.useViewportWidth();
@@ -79,25 +85,19 @@ let make = (~user: User.t, ~list: string, ~url: ReasonReactRouter.url) => {
   let hasForTrade =
     React.useMemo1(
       () =>
-        user.items
-        ->Js.Dict.values
-        ->Belt.Array.someU((. item: User.item) => item.status == ForTrade),
+        userItemsHasOneWithStatus(~userItems=user.items, ~status=ForTrade),
       [|user|],
     );
   let hasCanCraft =
     React.useMemo1(
       () =>
-        user.items
-        ->Js.Dict.values
-        ->Belt.Array.someU((. item: User.item) => item.status == CanCraft),
+        userItemsHasOneWithStatus(~userItems=user.items, ~status=CanCraft),
       [|user|],
     );
   let hasWishlist =
     React.useMemo1(
       () =>
-        user.items
-        ->Js.Dict.values
-        ->Belt.Array.someU((. item: User.item) => item.status == Wishlist),
+        userItemsHasOneWithStatus(~userItems=user.items, ~status=Wishlist),
       [|user|],
     );
   let userItems =
@@ -157,7 +157,7 @@ let make = (~user: User.t, ~list: string, ~url: ReasonReactRouter.url) => {
   let filteredItems =
     React.useMemo2(
       () => {
-        let sortFn = ItemFilters.getSort(~filters);
+        let sortFn = ItemFilters.getSort(~sort=filters.sort);
         userItems->Belt.Array.keep((((itemId, _), _)) =>
           ItemFilters.doesItemMatchFilters(
             ~item=Item.getItem(~itemId),
@@ -189,6 +189,11 @@ let make = (~user: User.t, ~list: string, ~url: ReasonReactRouter.url) => {
     } else {
       React.null;
     };
+
+  React.useEffect0(() => {
+    Webapi.Dom.(window |> Window.scrollTo(0., 0.));
+    None;
+  });
 
   <div className=Styles.root>
     <div className=Styles.listLinks>

@@ -110,7 +110,7 @@ let make = (~showLogin, ~url: ReasonReactRouter.url) => {
         Item.all->Belt.Array.keep(item =>
           ItemFilters.doesItemMatchFilters(~item, ~filters)
         )
-        |> Js.Array.sortInPlaceWith(ItemFilters.getSort(~filters)),
+        |> Js.Array.sortInPlaceWith(ItemFilters.getSort(~sort=filters.sort)),
       [|filters|],
     );
   let numResults = filteredItems->Belt.Array.length;

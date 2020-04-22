@@ -4,10 +4,11 @@ module Styles = {
     style([
       width(px(368)),
       margin3(~top=px(32), ~bottom=zero, ~h=auto),
-      media("(min-width: 600px)", [width(px(560))]),
-      media("(min-width: 940px)", [width(px(752))]),
-      media("(min-width: 1200px)", [width(px(944))]),
-      media("(min-width: 1460px)", [width(px(1136))]),
+      media("(min-width: 660px)", [width(px(560))]),
+      media("(min-width: 860px)", [width(px(752))]),
+      media("(min-width: 1040px)", [width(px(944))]),
+      media("(min-width: 1240px)", [width(px(1136))]),
+      media("(min-width: 1440px)", [width(px(1328))]),
       padding(px(32)),
       backgroundColor(Colors.green),
       borderRadius(px(16)),
@@ -22,8 +23,7 @@ module Styles = {
   let rootForTrade = style([backgroundColor(hex("8FCDE0a0"))]);
   let rootCanCraft = style([backgroundColor(hex("f1e26fa0"))]);
   let rootMini = style([backgroundColor(hex("fffffff0"))]);
-  let sectionTitle =
-    style([fontSize(px(24)), marginBottom(px(16)), textAlign(center)]);
+  let sectionTitle = style([fontSize(px(24)), marginBottom(px(16))]);
   let filterBar = style([marginTop(px(32)), marginBottom(zero)]);
   let cards =
     style([
@@ -206,18 +206,36 @@ module UserItemCardMini = {
 };
 
 module Section = {
-  let numResultsPerPage = 60;
+  let numResultsPerPage = 14;
 
   let randomString = () => Js.Math.random()->Js.Float.toString;
+
+  let getMaxResults = (~viewportWidth) =>
+    if (viewportWidth >= 1440) {
+      14;
+    } else if (viewportWidth >= 1240) {
+      12;
+    } else if (viewportWidth >= 1040) {
+      10;
+    } else if (viewportWidth >= 860) {
+      12;
+    } else if (viewportWidth >= 660) {
+      9;
+    } else {
+      8;
+    };
 
   [@react.component]
   let make =
       (
+        ~username: string,
         ~status: User.itemStatus,
         ~userItems: array(((string, int), User.item)),
         ~editable,
       ) => {
     let id = React.useMemo0(() => randomString());
+    let viewportWidth = Utils.useViewportWidth();
+    let maxResults = getMaxResults(~viewportWidth);
     let (showRecipes, setShowRecipes) = React.useState(() => false);
     let (showMini, setShowMini) = React.useState(() => false);
     let (filters, setFilters) =
@@ -244,7 +262,7 @@ module Section = {
         (userItems, filters),
       );
     let numResults = filteredItems->Belt.Array.length;
-    let showFilters = userItems->Belt.Array.length > numResultsPerPage;
+    let showFilters = false; // userItems->Belt.Array.length > numResultsPerPage;
 
     let anchorId =
       switch (status) {
@@ -366,8 +384,8 @@ module Section = {
              showMini
                ? x => x
                : Belt.Array.slice(
-                   ~offset=pageOffset * numResultsPerPage,
-                   ~len=numResultsPerPage,
+                   ~offset=0,
+                   ~len=numResults > maxResults ? maxResults - 1 : maxResults,
                  )
            )
          ->Belt.Array.mapU((. ((itemId, variation), userItem)) => {
@@ -386,6 +404,34 @@ module Section = {
                    key={itemId ++ string_of_int(variation)}
                  />
            })
+         ->(
+             numResults > maxResults
+               ? Belt.Array.concat(
+                   _,
+                   [|
+                     <Link
+                       path={
+                         "/u/"
+                         ++ username
+                         ++ "/"
+                         ++ (
+                           switch (status) {
+                           | Wishlist => "wishlist"
+                           | CanCraft => "can-craft"
+                           | ForTrade => "for-trade"
+                           }
+                         )
+                       }
+                       className=Styles.card
+                       key="link">
+                       <div className=Styles.name>
+                         {React.string("See all")}
+                       </div>
+                     </Link>,
+                   |],
+                 )
+               : (x => x)
+           )
          ->React.array}
       </div>
       {showFilters && !showMini
@@ -433,7 +479,8 @@ module ListLinks = {
 };
 
 [@react.component]
-let make = (~userItems: array(((string, int), User.item)), ~editable) => {
+let make =
+    (~username, ~userItems: array(((string, int), User.item)), ~editable) => {
   let wishlist =
     userItems->Array.keepU((. (_, item: User.item)) =>
       item.status == Wishlist
@@ -459,17 +506,17 @@ let make = (~userItems: array(((string, int), User.item)), ~editable) => {
     {showListLinks
        ? <ListLinks hasForTrade hasCanCraft hasWishlist /> : React.null}
     {if (hasForTrade) {
-       <Section status=ForTrade userItems=forTradeList editable />;
+       <Section username status=ForTrade userItems=forTradeList editable />;
      } else {
        React.null;
      }}
     {if (hasCanCraft) {
-       <Section status=CanCraft userItems=canCraftList editable />;
+       <Section username status=CanCraft userItems=canCraftList editable />;
      } else {
        React.null;
      }}
     {if (hasWishlist) {
-       <Section status=Wishlist userItems=wishlist editable />;
+       <Section username status=Wishlist userItems=wishlist editable />;
      } else {
        React.null;
      }}

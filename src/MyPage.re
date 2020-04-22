@@ -187,6 +187,7 @@ module Loaded = {
       </div>
       {if (user.items->Js.Dict.keys->Array.length > 0) {
          <UserItemBrowser
+           username={user.username}
            userItems={
              user.items
              ->Js.Dict.entries

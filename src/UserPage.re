@@ -78,6 +78,7 @@ let make = (~username) => {
           }}
          {if (user.items->Js.Dict.keys->Js.Array.length > 0) {
             <UserItemBrowser
+              username
               userItems={
                 user.items
                 ->Js.Dict.entries

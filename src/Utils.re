@@ -33,3 +33,38 @@ let capitalizeFirstLetter = input => {
   Js.String.toUpperCase(Js.String.charAt(0, input))
   ++ (input |> Js.String.sliceToEnd(~from=1));
 };
+
+let throttle = (fn, ms) => {
+  let timeoutRef = ref(None);
+  _ => {
+    switch (timeoutRef^) {
+    | Some(timeout) => Js.Global.clearTimeout(timeout)
+    | None => ()
+    };
+    timeoutRef :=
+      Some(
+        Js.Global.setTimeout(
+          () => {
+            timeoutRef := None;
+            fn();
+          },
+          ms,
+        ),
+      );
+  };
+};
+
+let useViewportWidth = () => {
+  let (viewportWidth, setViewportWidth) =
+    React.useState(() => Webapi.Dom.(window |> Window.innerWidth));
+  React.useEffect0(() => {
+    open Webapi.Dom;
+    let onResize = _ => {
+      setViewportWidth(_ => window |> Window.innerWidth);
+    };
+    let onResize = throttle(onResize, 300);
+    window |> Window.addEventListener("resize", onResize);
+    Some(() => {window |> Window.removeEventListener("resize", onResize)});
+  });
+  viewportWidth;
+};

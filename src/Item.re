@@ -55,7 +55,6 @@ let categories = [|
   "shoes",
   "bags",
   "umbrellas",
-  "art",
   "fossils",
   "photos",
   "posters",

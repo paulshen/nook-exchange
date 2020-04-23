@@ -206,3 +206,64 @@ let getNumVariations = (~item) =>
     | TwoDimensions(a, b) => a * b
     };
   };
+
+let loadVariants: (Js.Json.t => unit) => unit = [%raw
+  {|function(callback) {
+    import(/* webpackChunkName variants */ './variants.json').then(j => callback(j.default))
+  }|}
+];
+type variantNames =
+  | NameOneDimension(array(string))
+  | NameTwoDimensions((array(string), array(string)));
+let variantNames: ref(option(Js.Dict.t(variantNames))) = ref(None);
+loadVariants(json => {
+  Json.Decode.(
+    variantNames :=
+      Some(
+        json
+        |> dict(
+             oneOf([
+               json =>
+                 NameTwoDimensions(
+                   json |> tuple2(array(string), array(string)),
+                 ),
+               json => NameOneDimension(json |> array(string)),
+             ]),
+           ),
+      )
+  )
+});
+
+let getVariantName = (~item: t, ~variant: int) => {
+  switch (item.variations) {
+  | Single => None
+  | OneDimension(_) =>
+    (variantNames^)
+    ->Belt.Option.flatMap(Js.Dict.get(_, item.id))
+    ->Belt.Option.flatMap(value =>
+        switch (value) {
+        | NameOneDimension(names) => Some(names[variant])
+        | _ => None
+        }
+      )
+  | TwoDimensions(_a, b) =>
+    (variantNames^)
+    ->Belt.Option.flatMap(Js.Dict.get(_, item.id))
+    ->Belt.Option.flatMap(value =>
+        switch (value) {
+        | NameTwoDimensions((nameA, nameB)) =>
+          Some(
+            nameA[variant / b]
+            ++ (
+              if (b > 1) {
+                " x " ++ nameB[variant mod b];
+              } else {
+                "";
+              }
+            ),
+          )
+        | _ => None
+        }
+      )
+  };
+};

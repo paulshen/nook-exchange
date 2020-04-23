@@ -9,24 +9,8 @@ module Styles = {
       borderRadius(px(4)),
       color(Colors.white),
       fontSize(px(12)),
-      padding2(~v=px(4), ~h=px(10)),
+      padding3(~top=px(5), ~bottom=px(3), ~h=px(10)),
       position(relative),
-      before([
-        unsafe("content", ""),
-        width(px(3)),
-        height(px(3)),
-        position(absolute),
-        transform(rotateZ(deg(45.))),
-        borderColor(Colors.charcoal),
-        borderStyle(solid),
-        borderTopWidth(zero),
-        borderRightWidth(px(3)),
-        borderBottomWidth(px(3)),
-        borderLeftWidth(zero),
-        bottom(px(-3)),
-        left(pct(50.)),
-        marginLeft(px(-4)),
-      ]),
     ]);
 };
 

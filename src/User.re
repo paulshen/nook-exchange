@@ -19,7 +19,7 @@ let urlToItemStatus = url =>
 let itemStatusToEmoji = itemStatus => {
   switch (itemStatus) {
   | Wishlist => {j|🙏|j}
-  | ForTrade => {j|✅|j}
+  | ForTrade => {j|🤝|j}
   | CanCraft => {j|🔨|j}
   };
 };

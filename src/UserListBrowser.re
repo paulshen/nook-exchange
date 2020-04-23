@@ -15,7 +15,7 @@ module Styles = {
   let body =
     style([
       padding(px(32)),
-      backgroundColor(hex("88c9a1a0")),
+      backgroundColor(hex("3aa56360")),
       position(relative),
       media("(max-width: 640px)", [padding(px(16))]),
     ]);
@@ -326,7 +326,7 @@ let make =
                <label
                  htmlFor="show-mini"
                  className=UserProfileBrowser.Styles.showRecipesLabel>
-                 {React.string("Miniature")}
+                 {React.string("Thumbnails")}
                </label>
                <input
                  id="show-mini"

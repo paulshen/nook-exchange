@@ -23,7 +23,15 @@ module Styles = {
       padding2(~v=px(16), ~h=px(24)),
       borderRadius(px(8)),
       whiteSpace(`preLine),
-      media("(max-width: 512px)", [borderRadius(zero), padding(px(16))]),
+      media(
+        "(max-width: 512px)",
+        [
+          borderRadius(zero),
+          padding(px(16)),
+          marginBottom(zero),
+          borderBottom(px(1), solid, Colors.faintGray),
+        ],
+      ),
     ]);
   let bodyText = style([fontSize(px(18))]);
 };

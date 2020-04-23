@@ -3,7 +3,7 @@ module Styles = {
   let root =
     style([
       padding2(~v=zero, ~h=px(16)),
-      margin3(~top=px(32), ~bottom=zero, ~h=auto),
+      margin3(~top=zero, ~bottom=px(48), ~h=auto),
       media("(min-width: 660px)", [width(px(560))]),
       media("(min-width: 860px)", [width(px(752))]),
       media("(min-width: 1040px)", [width(px(944))]),
@@ -11,15 +11,13 @@ module Styles = {
       media("(min-width: 1440px)", [width(px(1328))]),
       padding(px(32)),
       borderRadius(px(16)),
-      backgroundColor(hex("88c9a1a0")),
+      backgroundColor(hex("3aa56360")),
       position(relative),
       media(
         "(max-width: 640px)",
         [width(auto), padding(px(16)), borderRadius(zero)],
       ),
     ]);
-  let rootForTrade = style([backgroundColor(hex("8FCDE0a0"))]);
-  let rootCanCraft = style([backgroundColor(hex("f1e26fa0"))]);
   let rootMini = style([backgroundColor(hex("fffffff0"))]);
   let sectionTitle = style([marginBottom(px(16))]);
   [@bs.module "./assets/link.png"] external linkIcon: string = "default";
@@ -33,6 +31,7 @@ module Styles = {
       opacity(0.5),
       position(relative),
       top(px(4)),
+      left(px(-2)),
       transition(~duration=200, "all"),
     ]);
   let sectionTitleLink =
@@ -40,7 +39,12 @@ module Styles = {
       color(Colors.charcoal),
       fontSize(px(24)),
       textDecoration(none),
-      hover([selector("& ." ++ sectionTitleLinkIcon, [opacity(1.)])]),
+      hover([
+        selector(
+          "& ." ++ sectionTitleLinkIcon,
+          [opacity(1.), transform(translateX(px(4)))],
+        ),
+      ]),
     ]);
   let filterBar = style([marginTop(px(32)), marginBottom(zero)]);
   let cards =
@@ -74,6 +78,7 @@ module Styles = {
       media("(max-width: 430px)", [width(pct(100.)), marginRight(zero)]),
       hover([selector("& ." ++ metaIcons, [opacity(1.)])]),
     ]);
+  let cardSeeAllLinkIcon = style([opacity(0.8), top(px(-1))]);
   let cardSeeAll =
     style([
       flexDirection(row),
@@ -83,9 +88,14 @@ module Styles = {
       paddingTop(px(36)),
       paddingBottom(px(36)),
       textDecoration(none),
-      hover([boxShadow(Shadow.box(~blur=px(16), hex("808080c0")))]),
+      hover([
+        boxShadow(Shadow.box(~blur=px(24), hex("3aa563a0"))),
+        selector(
+          "& ." ++ cardSeeAllLinkIcon,
+          [transform(translateX(px(2)))],
+        ),
+      ]),
     ]);
-  let cardSeeAllLinkIcon = style([opacity(0.8), top(zero)]);
   let mainImageWrapperWithRecipe = style([marginBottom(px(16))]);
   let name =
     style([fontSize(px(16)), marginBottom(px(4)), textAlign(center)]);
@@ -121,7 +131,8 @@ module Styles = {
       transform(translateY(pct(-50.))),
       media("(max-width: 640px)", [top(px(32)), right(px(16))]),
     ]);
-  let showRecipesBox = style([marginLeft(px(16))]);
+  let showRecipesBox =
+    style([marginLeft(px(16)), firstChild([marginLeft(zero)])]);
   let showRecipesLabel = style([fontSize(px(16)), marginRight(px(8))]);
   let showRecipesLabelDisabled = style([opacity(0.5)]);
   let showRecipesCheckbox =
@@ -219,11 +230,20 @@ module UserItemCardMini = {
   let make = (~itemId, ~variation) => {
     let item = Item.getItem(~itemId);
     <div className=Styles.cardMini>
-      <img
-        src={Item.getImageUrl(~item, ~variant=variation)}
-        title={item.name}
-        className=Styles.cardMiniImage
-      />
+      <ReactAtmosphere.Tooltip text={React.string(item.name)}>
+        {({onMouseEnter, onMouseLeave, onFocus, onBlur, ref}) =>
+           <div
+             onMouseEnter
+             onMouseLeave
+             onFocus
+             onBlur
+             ref={ReactDOMRe.Ref.domRef(ref)}>
+             <img
+               src={Item.getImageUrl(~item, ~variant=variation)}
+               className=Styles.cardMiniImage
+             />
+           </div>}
+      </ReactAtmosphere.Tooltip>
       {item.isRecipe
          ? <img
              src={Constants.cdnUrl ++ "/images/DIYRecipe.png"}
@@ -281,22 +301,21 @@ module Section = {
     <div
       className={Cn.make([
         Styles.root,
-        Cn.ifTrue(Styles.rootForTrade, status == ForTrade),
-        Cn.ifTrue(Styles.rootCanCraft, status == CanCraft),
         Cn.ifTrue(Styles.rootMini, showMini),
       ])}>
       <div className=Styles.sectionTitle>
         <Link
           path={"/u/" ++ username ++ "/" ++ User.itemStatusToUrl(status)}
           className=Styles.sectionTitleLink>
-          {React.string(User.itemStatusToString(status))}
+          {React.string(User.itemStatusToEmoji(status))}
+          {React.string(" " ++ User.itemStatusToString(status))}
           <span className=Styles.sectionTitleLinkIcon />
         </Link>
       </div>
       <div className=Styles.sectionToggles>
         <div>
           <label htmlFor=id className=Styles.showRecipesLabel>
-            {React.string("Miniature")}
+            {React.string("Thumbnails")}
           </label>
           <input
             id

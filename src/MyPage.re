@@ -22,7 +22,15 @@ module Styles = {
       maxWidth(px(512)),
       padding2(~v=px(16), ~h=px(24)),
       borderRadius(px(8)),
-      media("(max-width: 512px)", [borderRadius(zero), padding(px(16))]),
+      media(
+        "(max-width: 512px)",
+        [
+          borderRadius(zero),
+          padding(px(16)),
+          marginBottom(zero),
+          borderBottom(px(1), solid, Colors.faintGray),
+        ],
+      ),
     ]);
   let url = style([]);
   let bodyText = style([fontSize(px(18))]);
@@ -178,11 +186,10 @@ let make = (~user: User.t, ~urlRest, ~url) => {
     <div className=Styles.userBody>
       <ProfileTextarea user />
       <div className=Styles.url>
-        {React.string("Share your profile: ")}
+        {React.string("Share your profile! ")}
         <Link path={"/u/" ++ user.username}>
           {React.string("https://nook.exchange/u/" ++ user.username)}
         </Link>
-        <div> {React.string("Only you can edit your profile.")} </div>
       </div>
     </div>
     {switch (urlRest) {

@@ -11,18 +11,26 @@ module Styles = {
       fontSize(px(36)),
       textAlign(center),
       marginTop(px(32)),
-      marginBottom(px(32)),
+      marginBottom(px(16)),
     ]);
   let userBody =
     style([
       backgroundColor(hex("ffffffc0")),
       boxSizing(borderBox),
       lineHeight(px(20)),
-      margin2(~v=px(16), ~h=auto),
+      margin3(~top=zero, ~bottom=px(48), ~h=auto),
       maxWidth(px(512)),
       padding2(~v=px(16), ~h=px(24)),
       borderRadius(px(8)),
-      media("(max-width: 512px)", [borderRadius(zero), padding(px(16))]),
+      media(
+        "(max-width: 512px)",
+        [
+          borderRadius(zero),
+          padding(px(16)),
+          marginBottom(zero),
+          borderBottom(px(1), solid, Colors.faintGray),
+        ],
+      ),
     ]);
   let url = style([]);
   let bodyText = style([fontSize(px(18))]);
@@ -171,22 +179,27 @@ module ProfileTextarea = {
   };
 };
 
-module Loaded = {
-  [@react.component]
-  let make = (~user: User.t, ~url) =>
-    <div>
-      <div className=Styles.username> {React.string(user.username)} </div>
-      <div className=Styles.userBody>
-        <ProfileTextarea user />
-        <div className=Styles.url>
-          {React.string("Preview your profile: ")}
-          <Link path={"/u/" ++ user.username}>
-            {React.string("https://nook.exchange/u/" ++ user.username)}
-          </Link>
-        </div>
+[@react.component]
+let make = (~user: User.t, ~urlRest, ~url) => {
+  <div>
+    <div className=Styles.username> {React.string(user.username)} </div>
+    <div className=Styles.userBody>
+      <ProfileTextarea user />
+      <div className=Styles.url>
+        {React.string("Share your profile! ")}
+        <Link path={"/u/" ++ user.username}>
+          {React.string("https://nook.exchange/u/" ++ user.username)}
+        </Link>
       </div>
-      {if (user.items->Js.Dict.keys->Array.length > 0) {
-         <UserItemBrowser
+    </div>
+    {switch (urlRest) {
+     | ["wishlist" as list]
+     | ["for-trade" as list]
+     | ["can-craft" as list] => <UserListBrowser user list url me=true />
+     | _ =>
+       if (user.items->Js.Dict.keys->Js.Array.length > 0) {
+         <UserProfileBrowser
+           username={user.username}
            userItems={
              user.items
              ->Js.Dict.entries
@@ -206,15 +219,7 @@ module Loaded = {
            </div>
            <ItemBrowser showLogin={() => ()} url />
          </>;
-       }}
-    </div>;
-};
-
-[@react.component]
-let make = (~url) => {
-  let me = UserStore.useMe();
-  switch (me) {
-  | Some(user) => <Loaded user url />
-  | None => React.null
-  };
+       }
+     }}
+  </div>;
 };

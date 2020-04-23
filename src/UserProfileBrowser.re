@@ -2,41 +2,64 @@ module Styles = {
   open Css;
   let root =
     style([
-      width(px(368)),
-      margin3(~top=px(32), ~bottom=zero, ~h=auto),
-      media("(min-width: 600px)", [width(px(560))]),
-      media("(min-width: 940px)", [width(px(752))]),
-      media("(min-width: 1200px)", [width(px(944))]),
-      media("(min-width: 1460px)", [width(px(1136))]),
+      padding2(~v=zero, ~h=px(16)),
+      margin3(~top=zero, ~bottom=px(48), ~h=auto),
+      media("(min-width: 660px)", [width(px(560))]),
+      media("(min-width: 860px)", [width(px(752))]),
+      media("(min-width: 1040px)", [width(px(944))]),
+      media("(min-width: 1240px)", [width(px(1136))]),
+      media("(min-width: 1440px)", [width(px(1328))]),
       padding(px(32)),
-      backgroundColor(Colors.green),
       borderRadius(px(16)),
-      backgroundColor(hex("88c9a1a0")),
+      backgroundColor(hex("3aa56340")),
       position(relative),
       media(
-        "(max-width: 470px)",
+        "(max-width: 640px)",
         [width(auto), padding(px(16)), borderRadius(zero)],
       ),
     ]);
-  let anchor = style([position(absolute), top(px(-100))]);
-  let rootForTrade = style([backgroundColor(hex("8FCDE0a0"))]);
-  let rootCanCraft = style([backgroundColor(hex("f1e26fa0"))]);
   let rootMini = style([backgroundColor(hex("fffffff0"))]);
-  let sectionTitle =
-    style([fontSize(px(24)), marginBottom(px(16)), textAlign(center)]);
+  let sectionTitle = style([marginBottom(px(16))]);
+  [@bs.module "./assets/link.png"] external linkIcon: string = "default";
+  let sectionTitleLinkIcon =
+    style([
+      backgroundImage(url(linkIcon)),
+      display(inlineBlock),
+      backgroundSize(cover),
+      width(px(24)),
+      height(px(24)),
+      opacity(0.5),
+      position(relative),
+      top(px(4)),
+      left(px(-2)),
+      transition(~duration=200, "all"),
+    ]);
+  let sectionTitleLink =
+    style([
+      color(Colors.charcoal),
+      fontSize(px(24)),
+      textDecoration(none),
+      hover([
+        selector(
+          "& ." ++ sectionTitleLinkIcon,
+          [opacity(1.), transform(translateX(px(4)))],
+        ),
+      ]),
+    ]);
   let filterBar = style([marginTop(px(32)), marginBottom(zero)]);
   let cards =
     style([
       paddingTop(px(16)),
       marginRight(px(-16)),
+      media("(max-width: 430px)", [marginRight(zero)]),
       media("(max-width: 470px)", [paddingTop(zero)]),
     ]);
   let cardsMini =
     style([
       justifyContent(flexStart),
-      paddingTop(px(32)),
       marginLeft(px(-8)),
       marginRight(px(-8)),
+      media("(max-width: 640px)", [justifyContent(center)]),
     ]);
   let metaIcons = style([opacity(0.), transition(~duration=200, "all")]);
   let card =
@@ -52,8 +75,26 @@ module Styles = {
       position(relative),
       width(px(160)),
       transition(~duration=200, "all"),
-      media("(max-width: 430px)", [width(pct(100.))]),
+      media("(max-width: 430px)", [width(pct(100.)), marginRight(zero)]),
       hover([selector("& ." ++ metaIcons, [opacity(1.)])]),
+    ]);
+  let cardSeeAllLinkIcon = style([opacity(0.8), top(px(-1))]);
+  let cardSeeAll =
+    style([
+      flexDirection(row),
+      justifyContent(center),
+      fontSize(px(20)),
+      color(Colors.charcoal),
+      paddingTop(px(36)),
+      paddingBottom(px(36)),
+      textDecoration(none),
+      hover([
+        boxShadow(Shadow.box(~blur=px(24), hex("3aa563a0"))),
+        selector(
+          "& ." ++ cardSeeAllLinkIcon,
+          [transform(translateX(px(2)))],
+        ),
+      ]),
     ]);
   let mainImageWrapperWithRecipe = style([marginBottom(px(16))]);
   let name =
@@ -83,18 +124,17 @@ module Styles = {
     style([
       position(absolute),
       right(px(32)),
-      top(px(36)),
+      top(px(48)),
       display(flexBox),
       flexDirection(column),
       alignItems(flexEnd),
-      media(
-        "(max-width: 600px)",
-        [position(static), textAlign(center), flexDirection(row)],
-      ),
-      media("(max-width: 470px)", [marginBottom(px(16))]),
+      transform(translateY(pct(-50.))),
+      media("(max-width: 640px)", [top(px(32)), right(px(16))]),
     ]);
-  let showRecipesBox = style([marginLeft(px(16))]);
+  let showRecipesBox =
+    style([marginLeft(px(16)), firstChild([marginLeft(zero)])]);
   let showRecipesLabel = style([fontSize(px(16)), marginRight(px(8))]);
+  let showRecipesLabelDisabled = style([opacity(0.5)]);
   let showRecipesCheckbox =
     style([
       fontSize(px(24)),
@@ -190,11 +230,20 @@ module UserItemCardMini = {
   let make = (~itemId, ~variation) => {
     let item = Item.getItem(~itemId);
     <div className=Styles.cardMini>
-      <img
-        src={Item.getImageUrl(~item, ~variant=variation)}
-        title={item.name}
-        className=Styles.cardMiniImage
-      />
+      <ReactAtmosphere.Tooltip text={React.string(item.name)}>
+        {({onMouseEnter, onMouseLeave, onFocus, onBlur, ref}) =>
+           <div
+             onMouseEnter
+             onMouseLeave
+             onFocus
+             onBlur
+             ref={ReactDOMRe.Ref.domRef(ref)}>
+             <img
+               src={Item.getImageUrl(~item, ~variant=variation)}
+               className=Styles.cardMiniImage
+             />
+           </div>}
+      </ReactAtmosphere.Tooltip>
       {item.isRecipe
          ? <img
              src={Constants.cdnUrl ++ "/images/DIYRecipe.png"}
@@ -206,116 +255,97 @@ module UserItemCardMini = {
 };
 
 module Section = {
-  let numResultsPerPage = 60;
-
   let randomString = () => Js.Math.random()->Js.Float.toString;
+
+  let getMaxResults = (~viewportWidth) =>
+    if (viewportWidth >= 1440) {
+      14;
+    } else if (viewportWidth >= 1240) {
+      12;
+    } else if (viewportWidth >= 1040) {
+      10;
+    } else if (viewportWidth >= 860) {
+      12;
+    } else if (viewportWidth >= 640) {
+      9;
+    } else {
+      6;
+    };
 
   [@react.component]
   let make =
       (
+        ~username: string,
         ~status: User.itemStatus,
         ~userItems: array(((string, int), User.item)),
         ~editable,
       ) => {
     let id = React.useMemo0(() => randomString());
+    let viewportWidth = Utils.useViewportWidth();
+    let maxResults = getMaxResults(~viewportWidth);
     let (showRecipes, setShowRecipes) = React.useState(() => false);
     let (showMini, setShowMini) = React.useState(() => false);
-    let (filters, setFilters) =
-      React.useState(() =>
-        (
-          {text: "", mask: None, category: None, sort: Category}: ItemFilters.t
-        )
-      );
-    let (pageOffset, setPageOffset) = React.useState(() => 0);
     let filteredItems =
-      React.useMemo2(
+      React.useMemo1(
         () => {
-          let sortFn = ItemFilters.getSort(~filters);
-          userItems->Belt.Array.keep((((itemId, _), _)) =>
-            ItemFilters.doesItemMatchFilters(
-              ~item=Item.getItem(~itemId),
-              ~filters,
-            )
-          )
+          let sortFn = ItemFilters.getSort(~sort=ItemFilters.Category);
+          userItems
           |> Js.Array.sortInPlaceWith((((aId, _), _), ((bId, _), _)) =>
                sortFn(Item.getItem(~itemId=aId), Item.getItem(~itemId=bId))
              );
         },
-        (userItems, filters),
+        [|userItems|],
       );
-    let numResults = filteredItems->Belt.Array.length;
-    let showFilters = userItems->Belt.Array.length > numResultsPerPage;
-
-    let anchorId =
-      switch (status) {
-      | ForTrade => "for-trade"
-      | CanCraft => "can-craft"
-      | Wishlist => "wishlist"
-      };
-    let anchorRef = React.useRef(Js.Nullable.null);
-    React.useEffect0(() => {
-      let url = ReasonReactRouter.dangerouslyGetInitialUrl();
-      if (url.hash == anchorId) {
-        open Webapi.Dom;
-        let anchorElement = Utils.getElementForDomRef(anchorRef);
-        anchorElement->Element.scrollIntoView;
-      };
-      None;
-    });
+    let numResults = userItems |> Js.Array.length;
 
     <div
       className={Cn.make([
         Styles.root,
-        Cn.ifTrue(Styles.rootForTrade, status == ForTrade),
-        Cn.ifTrue(Styles.rootCanCraft, status == CanCraft),
         Cn.ifTrue(Styles.rootMini, showMini),
       ])}>
-      <div
-        className=Styles.anchor
-        id=anchorId
-        ref={ReactDOMRe.Ref.domRef(anchorRef)}
-      />
       <div className=Styles.sectionTitle>
-        {React.string(
-           switch (status) {
-           | Wishlist => {j|🙏 Wishlist|j}
-           | ForTrade => {j|✅ For Trade|j}
-           | CanCraft => {j|🔨 Can Craft|j}
-           },
-         )}
+        <Link
+          path={"/u/" ++ username ++ "/" ++ User.itemStatusToUrl(status)}
+          className=Styles.sectionTitleLink>
+          {React.string(User.itemStatusToEmoji(status))}
+          {React.string(" " ++ User.itemStatusToString(status))}
+          <span className=Styles.sectionTitleLinkIcon />
+        </Link>
       </div>
       <div className=Styles.sectionToggles>
-        {userItems->Array.length > 16
-           ? <div>
-               <label htmlFor=id className=Styles.showRecipesLabel>
-                 {React.string("Miniature")}
-               </label>
-               <input
-                 id
-                 type_="checkbox"
-                 checked=showMini
-                 onChange={e => {
-                   let checked = ReactEvent.Form.target(e)##checked;
-                   Analytics.Amplitude.logEventWithProperties(
-                     ~eventName="Miniature Mode Clicked",
-                     ~eventProperties={"checked": checked, "status": status},
-                   );
-                   setShowMini(_ => checked);
-                 }}
-                 className=Styles.showRecipesCheckbox
-               />
-             </div>
-           : React.null}
-        {if (status == CanCraft && !showMini) {
+        <div>
+          <label htmlFor=id className=Styles.showRecipesLabel>
+            {React.string("Thumbnails")}
+          </label>
+          <input
+            id
+            type_="checkbox"
+            checked=showMini
+            onChange={e => {
+              let checked = ReactEvent.Form.target(e)##checked;
+              Analytics.Amplitude.logEventWithProperties(
+                ~eventName="Miniature Mode Clicked",
+                ~eventProperties={"checked": checked, "status": status},
+              );
+              setShowMini(_ => checked);
+            }}
+            className=Styles.showRecipesCheckbox
+          />
+        </div>
+        {if (status == CanCraft) {
            <div className=Styles.showRecipesBox>
              <label
-               htmlFor="craftShowRecipe" className=Styles.showRecipesLabel>
+               htmlFor="craftShowRecipe"
+               className={Cn.make([
+                 Styles.showRecipesLabel,
+                 Cn.ifTrue(Styles.showRecipesLabelDisabled, showMini),
+               ])}>
                {React.string("Show Recipes")}
              </label>
              <input
                id="craftShowRecipe"
                type_="checkbox"
-               checked=showRecipes
+               checked={showRecipes && !showMini}
                onChange={e => {
                  let checked = ReactEvent.Form.target(e)##checked;
                  Analytics.Amplitude.logEventWithProperties(
@@ -324,6 +354,7 @@ module Section = {
                  );
                  setShowRecipes(_ => checked);
                }}
+               disabled=showMini
                className=Styles.showRecipesCheckbox
              />
            </div>;
@@ -331,30 +362,6 @@ module Section = {
            React.null;
          }}
       </div>
-      {showFilters
-         ? <div
-             className={Cn.make([
-               ItemBrowser.Styles.filterBar,
-               Styles.filterBar,
-             ])}>
-             <ItemFilters
-               filters
-               onChange={filters => {
-                 setFilters(_ => filters);
-                 setPageOffset(_ => 0);
-               }}
-               showCategorySort=true
-             />
-             {!showMini
-                ? <ItemFilters.Pager
-                    numResults
-                    pageOffset
-                    numResultsPerPage
-                    setPageOffset
-                  />
-                : React.null}
-           </div>
-         : React.null}
       <div
         className={Cn.make([
           ItemBrowser.Styles.cards,
@@ -366,8 +373,8 @@ module Section = {
              showMini
                ? x => x
                : Belt.Array.slice(
-                   ~offset=pageOffset * numResultsPerPage,
-                   ~len=numResultsPerPage,
+                   ~offset=0,
+                   ~len=numResults > maxResults ? maxResults - 1 : maxResults,
                  )
            )
          ->Belt.Array.mapU((. ((itemId, variation), userItem)) => {
@@ -386,54 +393,47 @@ module Section = {
                    key={itemId ++ string_of_int(variation)}
                  />
            })
+         ->(
+             !showMini && numResults > maxResults
+               ? Belt.Array.concat(
+                   _,
+                   [|
+                     <Link
+                       path={
+                         "/u/"
+                         ++ username
+                         ++ "/"
+                         ++ (
+                           switch (status) {
+                           | Wishlist => "wishlist"
+                           | CanCraft => "can-craft"
+                           | ForTrade => "for-trade"
+                           }
+                         )
+                       }
+                       className={Cn.make([Styles.card, Styles.cardSeeAll])}
+                       key="link">
+                       {React.string("See all")}
+                       <span
+                         className={Cn.make([
+                           Styles.sectionTitleLinkIcon,
+                           Styles.cardSeeAllLinkIcon,
+                         ])}
+                       />
+                     </Link>,
+                   |],
+                 )
+               : (x => x)
+           )
          ->React.array}
       </div>
-      {showFilters && !showMini
-         ? <div className=ItemBrowser.Styles.bottomFilterBar>
-             <ItemFilters.Pager
-               numResults
-               pageOffset
-               numResultsPerPage
-               setPageOffset
-             />
-           </div>
-         : React.null}
-    </div>;
-  };
-};
-
-module ListLinks = {
-  module Styles = {
-    open Css;
-    let root = style([textAlign(center)]);
-    let link = style([marginLeft(px(8))]);
-  };
-
-  [@react.component]
-  let make = (~hasForTrade, ~hasCanCraft, ~hasWishlist) => {
-    <div className=Styles.root>
-      {React.string("Lists:")}
-      {hasForTrade
-         ? <a href="#for-trade" className=Styles.link>
-             {React.string("For Trade")}
-           </a>
-         : React.null}
-      {hasCanCraft
-         ? <a href="#can-craft" className=Styles.link>
-             {React.string("Can Craft")}
-           </a>
-         : React.null}
-      {hasWishlist
-         ? <a href="#wishlist" className=Styles.link>
-             {React.string("Wishlist")}
-           </a>
-         : React.null}
     </div>;
   };
 };
 
 [@react.component]
-let make = (~userItems: array(((string, int), User.item)), ~editable) => {
+let make =
+    (~username, ~userItems: array(((string, int), User.item)), ~editable) => {
   let wishlist =
     userItems->Array.keepU((. (_, item: User.item)) =>
       item.status == Wishlist
@@ -449,27 +449,24 @@ let make = (~userItems: array(((string, int), User.item)), ~editable) => {
   let hasForTrade = forTradeList->Array.length > 0;
   let hasCanCraft = canCraftList->Array.length > 0;
   let hasWishlist = wishlist->Array.length > 0;
-  let showListLinks =
-    forTradeList->Array.length > 16
-    && hasCanCraft
-    || forTradeList->Array.length
-    + canCraftList->Array.length > 16
-    && hasWishlist;
+
+  React.useEffect0(() => {
+    Some(() => {TemporaryState.state := Some(FromProfileBrowser)})
+  });
+
   <div>
-    {showListLinks
-       ? <ListLinks hasForTrade hasCanCraft hasWishlist /> : React.null}
     {if (hasForTrade) {
-       <Section status=ForTrade userItems=forTradeList editable />;
+       <Section username status=ForTrade userItems=forTradeList editable />;
      } else {
        React.null;
      }}
     {if (hasCanCraft) {
-       <Section status=CanCraft userItems=canCraftList editable />;
+       <Section username status=CanCraft userItems=canCraftList editable />;
      } else {
        React.null;
      }}
     {if (hasWishlist) {
-       <Section status=Wishlist userItems=wishlist editable />;
+       <Section username status=Wishlist userItems=wishlist editable />;
      } else {
        React.null;
      }}

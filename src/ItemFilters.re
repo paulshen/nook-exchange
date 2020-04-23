@@ -29,7 +29,8 @@ module Styles = {
       lineHeight(px(37)),
       paddingRight(px(16)),
     ]);
-  let pager = style([fontSize(px(16)), marginBottom(px(8))]);
+  let pager =
+    style([fontSize(px(16)), lineHeight(px(32)), marginBottom(px(8))]);
   let pagerArrow =
     style([
       fontSize(px(24)),
@@ -125,6 +126,17 @@ let fromUrlSearch = (~urlSearch, ~defaultSort) => {
   );
 };
 
+let doesItemMatchCategory = (~item: Item.t, ~category: string) => {
+  switch (category) {
+  | "furniture" =>
+    Item.furnitureCategories |> Js.Array.includes(item.category)
+  | "clothing" => Item.clothingCategories |> Js.Array.includes(item.category)
+  | "other" => Item.otherCategories |> Js.Array.includes(item.category)
+  | "recipes" => item.isRecipe
+  | category => item.category == category
+  };
+};
+
 let doesItemMatchFilters = (~item: Item.t, ~filters: t) => {
   (
     switch (filters.text) {
@@ -150,22 +162,15 @@ let doesItemMatchFilters = (~item: Item.t, ~filters: t) => {
   )
   && (
     switch (filters.category) {
-    | Some("furniture") =>
-      Item.furnitureCategories |> Js.Array.includes(item.category)
-    | Some("clothing") =>
-      Item.clothingCategories |> Js.Array.includes(item.category)
-    | Some("other") =>
-      Item.otherCategories |> Js.Array.includes(item.category)
-    | Some("recipes") => item.isRecipe
-    | Some(category) => item.category == category
+    | Some(category) => doesItemMatchCategory(~item, ~category)
     | None => true
     }
   );
 };
 
-let getSort = (~filters: t) => {
+let getSort = (~sort) => {
   Belt.(
-    switch (filters.sort) {
+    switch (sort) {
     | ABC => (
         (a: Item.t, b: Item.t) =>
           int_of_float(Js.String.localeCompare(b.name, a.name))
@@ -246,6 +251,14 @@ module Pager = {
 external unsafeAsHtmlInputElement: 'a => Webapi.Dom.HtmlInputElement.t =
   "%identity";
 
+let getCategoryLabel = category => {
+  switch (category) {
+  | "furniture" => "All Furniture"
+  | "clothing" => "All Clothing"
+  | category => Utils.capitalizeFirstLetter(category)
+  };
+};
+
 module CategoryButtons = {
   module CategoryStyles = {
     open Css;
@@ -262,25 +275,38 @@ module CategoryButtons = {
   };
 
   [@react.component]
-  let make = (~filters: t, ~onChange) => {
-    let renderButton = (category, label) => {
-      let isSelected = filters.category == Some(category);
-      <Button
-        onClick={_ => {
-          onChange({
-            ...filters,
-            text: "",
-            category: isSelected ? None : Some(category),
-          })
-        }}
-        className={Cn.make([
-          CategoryStyles.button,
-          Cn.ifTrue(CategoryStyles.buttonNotSelected, !isSelected),
-        ])}
-        key=category>
-        {React.string(label)}
-      </Button>;
+  let make =
+      (~filters: t, ~onChange, ~userItemIds: option(array(string))=?, ()) => {
+    let shouldRenderCategory = category => {
+      switch (userItemIds) {
+      | Some(userItemIds) =>
+        userItemIds->Belt.Array.some(itemId =>
+          doesItemMatchCategory(~item=Item.getItem(~itemId), ~category)
+        )
+      | None => true
+      };
     };
+    let renderButton = category =>
+      if (shouldRenderCategory(category)) {
+        let isSelected = filters.category == Some(category);
+        <Button
+          onClick={_ => {
+            onChange({
+              ...filters,
+              text: "",
+              category: isSelected ? None : Some(category),
+            })
+          }}
+          className={Cn.make([
+            CategoryStyles.button,
+            Cn.ifTrue(CategoryStyles.buttonNotSelected, !isSelected),
+          ])}
+          key=category>
+          {React.string(getCategoryLabel(category))}
+        </Button>;
+      } else {
+        React.null;
+      };
 
     let selectCategories =
       Belt.Array.concatMany([|
@@ -301,12 +327,12 @@ module CategoryButtons = {
         ])}>
         {React.string("Everything!")}
       </Button>
-      {renderButton("furniture", "All Furniture")}
-      {renderButton("housewares", "Housewares")}
-      {renderButton("miscellaneous", "Miscellaneous")}
-      {renderButton("wall-mounted", "Wall-mounted")}
-      {renderButton("recipes", "Recipes")}
-      {renderButton("clothing", "All Clothing")}
+      {renderButton("furniture")}
+      {renderButton("housewares")}
+      {renderButton("miscellaneous")}
+      {renderButton("wall-mounted")}
+      {renderButton("recipes")}
+      {renderButton("clothing")}
       <select
         value={
           switch (filters.category) {
@@ -342,9 +368,11 @@ module CategoryButtons = {
         <option value=""> {React.string("-- Other Categories")} </option>
         {selectCategories
          ->Belt.Array.mapU((. category) =>
-             <option value=category key=category>
-               {React.string(Utils.capitalizeFirstLetter(category))}
-             </option>
+             shouldRenderCategory(category)
+               ? <option value=category key=category>
+                   {React.string(getCategoryLabel(category))}
+                 </option>
+               : React.null
            )
          ->React.array}
       </select>
@@ -352,8 +380,47 @@ module CategoryButtons = {
   };
 };
 
+module UserCategorySelector = {
+  module CategoryStyles = {
+    open Css;
+    let select = style([height(px(37))]);
+  };
+
+  [@react.component]
+  let make = (~filters: t, ~onChange, ~userItemIds: array(string)) => {
+    let shouldRenderCategory = category => {
+      userItemIds->Belt.Array.some(itemId =>
+        doesItemMatchCategory(~item=Item.getItem(~itemId), ~category)
+      );
+    };
+
+    <select
+      value={Belt.Option.getWithDefault(filters.category, "")}
+      onChange={e => {
+        let value = ReactEvent.Form.target(e)##value;
+        if (value == "") {
+          onChange({...filters, category: None});
+        } else {
+          onChange({...filters, text: "", category: Some(value)});
+        };
+      }}
+      className={Cn.make([Styles.select, CategoryStyles.select])}>
+      <option value=""> {React.string("All categories")} </option>
+      {Item.validCategoryStrings
+       ->Belt.Array.mapU((. category) =>
+           shouldRenderCategory(category)
+             ? <option value=category key=category>
+                 {React.string(Utils.capitalizeFirstLetter(category))}
+               </option>
+             : React.null
+         )
+       ->React.array}
+    </select>;
+  };
+};
+
 [@react.component]
-let make = (~filters, ~onChange, ~showCategorySort) => {
+let make = (~filters, ~onChange, ~userItemIds: option(array(string))=?, ()) => {
   let inputTextRef = React.useRef(Js.Nullable.null);
   let updateTextTimeoutRef = React.useRef(None);
   React.useEffect1(
@@ -419,6 +486,11 @@ let make = (~filters, ~onChange, ~showCategorySort) => {
       }}
       className=Styles.textInput
     />
+    {switch (userItemIds) {
+     | Some(userItemIds) =>
+       <UserCategorySelector userItemIds filters onChange />
+     | None => React.null
+     }}
     <select
       value={
         switch (filters.mask) {
@@ -469,7 +541,7 @@ let make = (~filters, ~onChange, ~showCategorySort) => {
         });
       }}
       className={Cn.make([Styles.select, Styles.selectSort])}>
-      {if (showCategorySort) {
+      {if (userItemIds !== None) {
          <option value="category"> {React.string("Sort: Category")} </option>;
        } else {
          React.null;

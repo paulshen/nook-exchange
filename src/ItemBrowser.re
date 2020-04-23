@@ -20,7 +20,8 @@ module Styles = {
       display(flexBox),
       flexWrap(wrap),
       marginRight(px(-32)),
-      justifyContent(center),
+      justifyContent(flexStart),
+      media("(max-width: 640px)", [justifyContent(center)]),
       media("(max-width: 600px)", [marginRight(px(-16))]),
     ]);
   let filterBar =
@@ -110,7 +111,7 @@ let make = (~showLogin, ~url: ReasonReactRouter.url) => {
         Item.all->Belt.Array.keep(item =>
           ItemFilters.doesItemMatchFilters(~item, ~filters)
         )
-        |> Js.Array.sortInPlaceWith(ItemFilters.getSort(~filters)),
+        |> Js.Array.sortInPlaceWith(ItemFilters.getSort(~sort=filters.sort)),
       [|filters|],
     );
   let numResults = filteredItems->Belt.Array.length;
@@ -124,11 +125,7 @@ let make = (~showLogin, ~url: ReasonReactRouter.url) => {
       onChange={filters => {setFilters(filters)}}
     />
     <div className=Styles.filterBar>
-      <ItemFilters
-        filters
-        onChange={filters => {setFilters(filters)}}
-        showCategorySort=false
-      />
+      <ItemFilters filters onChange={filters => {setFilters(filters)}} />
       <ItemFilters.Pager
         numResults
         pageOffset

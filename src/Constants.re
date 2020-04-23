@@ -7,9 +7,7 @@ let gitCommitRef =
   |> Js.String.slice(~from=0, ~to_=8);
 
 let apiUrl = "https://paulshen-animalcrossing.builtwithdark.com";
-let imageUrl =
-  nodeEnv === Some("production")
-    ? "https://s.nook.exchange/images" : "/images";
+let cdnUrl = nodeEnv === Some("production") ? "https://s.nook.exchange" : "";
 
 let gtagId = "UA-55966633-6";
 let amplitudeApiKey = "d91231e0b8a96baf38ba67eb36d25a48";

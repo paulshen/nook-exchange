@@ -82,6 +82,14 @@ let make = () => {
     },
     [|url.path|],
   );
+  let (_, forceUpdate) = React.useState(() => 1);
+  React.useEffect0(() => {
+    Item.loadVariants(json => {
+      Item.setVariantNames(json);
+      forceUpdate(x => x + 1);
+    });
+    None;
+  });
 
   <div className=Styles.root>
     <TooltipConfigContextProvider value=tooltipConfig>

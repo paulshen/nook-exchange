@@ -300,7 +300,7 @@ let make = (~item: Item.t, ~showLogin) => {
         />
         {item.isRecipe
            ? <img
-               src={Constants.imageUrl ++ "/DIYRecipe.png"}
+               src={Constants.cdnUrl ++ "/images/DIYRecipe.png"}
                className=Styles.recipeIcon
              />
            : React.null}
@@ -319,7 +319,6 @@ let make = (~item: Item.t, ~showLogin) => {
                     Cn.ifTrue(Styles.variationImageSelected, v == variation),
                   ])}
                 />;
-
               children
               |> Js.Array.push(
                    switch (Item.getVariantName(~item, ~variant=v)) {

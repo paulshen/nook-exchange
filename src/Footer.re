@@ -12,6 +12,7 @@ module Styles = {
   let contents =
     style([
       color(Colors.gray),
+      lineHeight(px(16)),
       maxWidth(px(512)),
       padding2(~v=zero, ~h=px(8)),
     ]);
@@ -38,6 +39,10 @@ let make = () => {
           target="_blank">
           {React.string("Images")}
         </a>
+        {React.string(" | ")}
+        <a href="/terms"> {React.string("Terms of Service")} </a>
+        {React.string(" | ")}
+        <a href="/privacy"> {React.string("Privacy Policy")} </a>
         {React.string(" | Thanks for visiting!")}
       </div>
       <div className=Styles.disclaimer>

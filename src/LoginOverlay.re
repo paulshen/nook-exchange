@@ -71,6 +71,8 @@ module Styles = {
       width(pct(100.)),
       margin2(~v=px(24), ~h=zero),
     ]);
+  let terms =
+    style([color(hex("a0a0a0")), fontSize(px(12)), marginTop(px(32))]);
   let registerTitle =
     style([fontSize(px(20)), textAlign(center), marginBottom(px(24))]);
   let blurb = style([marginBottom(px(16))]);
@@ -328,6 +330,19 @@ let make = (~onClose) => {
                            }>
                            {React.string("Register")}
                          </button>
+                       </div>
+                       <div className=Styles.terms>
+                         {React.string(
+                            "By registering, you agree to Nook Exchange's ",
+                          )}
+                         <a href="/terms" target="_blank">
+                           {React.string("Terms of Service")}
+                         </a>
+                         {React.string(" and ")}
+                         <a href="/privacy" target="_blank">
+                           {React.string("Privacy Policy")}
+                         </a>
+                         {React.string(".")}
                        </div>
                      </form>
                    </div>

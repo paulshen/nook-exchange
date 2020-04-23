@@ -98,6 +98,8 @@ let make = () => {
         {switch (url.path) {
          | ["u", username, ...urlRest] =>
            <UserPage username urlRest url key=username />
+         | ["privacy"] => <TextPages.PrivacyPolicy />
+         | ["terms"] => <TextPages.TermsOfService />
          | _ => <ItemBrowser showLogin={() => setShowLogin(_ => true)} url />
          }}
       </div>

@@ -41,7 +41,11 @@ module Styles = {
       hover([opacity(1.)]),
     ]);
   let profileLinkIcon =
-    style([marginLeft(px(8)), marginRight(px(8)), top(zero)]);
+    style([
+      margin2(~v=zero, ~h=px(16)),
+      top(zero),
+      media("(max-width: 640px)", [margin2(~v=zero, ~h=px(8))]),
+    ]);
   let listLinkEmoji =
     style([
       display(inlineBlock),
@@ -303,26 +307,31 @@ let make =
         Cn.ifTrue(Styles.rootMini, showMini),
       ])}>
       {Js.Array.length(userItems) > 8
-         ? <ItemFilters.CategoryButtons
-             userItemIds
-             filters
-             onChange={filters => setFilters(filters)}
-           />
+         ? <>
+             <ItemFilters.CategoryButtons
+               userItemIds
+               filters
+               onChange={filters => setFilters(filters)}
+             />
+             <div
+               className={Cn.make([
+                 ItemBrowser.Styles.filterBar,
+                 Styles.filterBar,
+               ])}>
+               <ItemFilters
+                 filters
+                 onChange={filters => setFilters(filters)}
+                 showCategorySort=true
+               />
+               <ItemFilters.Pager
+                 numResults
+                 pageOffset
+                 numResultsPerPage
+                 setPageOffset
+               />
+             </div>
+           </>
          : React.null}
-      <div
-        className={Cn.make([ItemBrowser.Styles.filterBar, Styles.filterBar])}>
-        <ItemFilters
-          filters
-          onChange={filters => setFilters(filters)}
-          showCategorySort=true
-        />
-        <ItemFilters.Pager
-          numResults
-          pageOffset
-          numResultsPerPage
-          setPageOffset
-        />
-      </div>
       <div className=Styles.sectionToggles>
         {userItems->Array.length > 16
            ? <div>

@@ -294,27 +294,25 @@ module Section = {
         </Link>
       </div>
       <div className=Styles.sectionToggles>
-        {userItems->Array.length > 16
-           ? <div>
-               <label htmlFor=id className=Styles.showRecipesLabel>
-                 {React.string("Miniature")}
-               </label>
-               <input
-                 id
-                 type_="checkbox"
-                 checked=showMini
-                 onChange={e => {
-                   let checked = ReactEvent.Form.target(e)##checked;
-                   Analytics.Amplitude.logEventWithProperties(
-                     ~eventName="Miniature Mode Clicked",
-                     ~eventProperties={"checked": checked, "status": status},
-                   );
-                   setShowMini(_ => checked);
-                 }}
-                 className=Styles.showRecipesCheckbox
-               />
-             </div>
-           : React.null}
+        <div>
+          <label htmlFor=id className=Styles.showRecipesLabel>
+            {React.string("Miniature")}
+          </label>
+          <input
+            id
+            type_="checkbox"
+            checked=showMini
+            onChange={e => {
+              let checked = ReactEvent.Form.target(e)##checked;
+              Analytics.Amplitude.logEventWithProperties(
+                ~eventName="Miniature Mode Clicked",
+                ~eventProperties={"checked": checked, "status": status},
+              );
+              setShowMini(_ => checked);
+            }}
+            className=Styles.showRecipesCheckbox
+          />
+        </div>
         {if (status == CanCraft) {
            <div className=Styles.showRecipesBox>
              <label

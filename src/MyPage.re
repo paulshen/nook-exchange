@@ -11,7 +11,7 @@ module Styles = {
       fontSize(px(36)),
       textAlign(center),
       marginTop(px(32)),
-      marginBottom(px(32)),
+      marginBottom(px(16)),
     ]);
   let userBody =
     style([

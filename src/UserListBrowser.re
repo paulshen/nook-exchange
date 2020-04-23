@@ -106,8 +106,6 @@ let getUrl =
   );
 };
 
-// TODO
-let numResultsPerPage = 20;
 let getNumResultsPerPage = (~viewportWidth) =>
   if (viewportWidth >= 1440) {
     35;

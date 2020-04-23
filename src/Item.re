@@ -21,6 +21,7 @@ type t = {
   orderable: bool,
   customizable: bool,
   category: string,
+  version: option(string),
 };
 
 let recipeIdRegex = [%bs.re {|/^(\d+)r$/|}];
@@ -54,6 +55,7 @@ let categories = [|
   "shoes",
   "bags",
   "umbrellas",
+  "art",
   "fossils",
   "photos",
   "posters",
@@ -87,6 +89,7 @@ let clothingCategories = [|
 |];
 
 let otherCategories = [|
+  "art",
   "fossils",
   "photos",
   "posters",
@@ -142,6 +145,7 @@ let jsonToItem = (json: Js.Json.t) => {
     orderable: flags land 2 !== 0,
     customizable: flags land (4 lor 8) !== 0,
     category: json |> field("category", string),
+    version: json |> optional(field("v", string)),
   };
 };
 
@@ -170,20 +174,27 @@ let hasItem = (~itemId) =>
 let getItem = (~itemId) =>
   all->Belt.Array.getByU((. item) => item.id == itemId)->Belt.Option.getExn;
 
+exception UnexpectedVersion(string);
 let getImageUrl = (~item, ~variant) => {
-  Constants.imageUrl
-  ++ "/"
-  ++ item.category
+  Constants.cdnUrl
+  ++ (
+    switch (item.version) {
+    | Some("1.2.0") => "/items"
+    | None => "/images/" ++ item.category
+    | Some(v) => raise(UnexpectedVersion(v))
+    }
+  )
   ++ "/"
   ++ (
     switch (item.image) {
     | Base(base) =>
       base
       ++ (
-        switch (item.variations) {
-        | Single => ""
-        | OneDimension(_) => string_of_int(variant)
-        | TwoDimensions(_a, b) =>
+        switch (item.category, item.variations) {
+        | ("art", _) => ""
+        | (_, Single) => ""
+        | (_, OneDimension(_)) => string_of_int(variant)
+        | (_, TwoDimensions(_a, b)) =>
           "_"
           ++ string_of_int(variant / b)
           ++ "_"
@@ -206,3 +217,64 @@ let getNumVariations = (~item) =>
     | TwoDimensions(a, b) => a * b
     };
   };
+
+let loadVariants: (Js.Json.t => unit) => unit = [%raw
+  {|function(callback) {
+    import(/* webpackChunkName variants */ './variants.json').then(j => callback(j.default))
+  }|}
+];
+type variantNames =
+  | NameOneDimension(array(string))
+  | NameTwoDimensions((array(string), array(string)));
+let variantNames: ref(option(Js.Dict.t(variantNames))) = ref(None);
+let setVariantNames = json => {
+  Json.Decode.(
+    variantNames :=
+      Some(
+        json
+        |> dict(
+             oneOf([
+               json =>
+                 NameTwoDimensions(
+                   json |> tuple2(array(string), array(string)),
+                 ),
+               json => NameOneDimension(json |> array(string)),
+             ]),
+           ),
+      )
+  );
+};
+
+let getVariantName = (~item: t, ~variant: int) => {
+  switch (item.variations) {
+  | Single => None
+  | OneDimension(_) =>
+    (variantNames^)
+    ->Belt.Option.flatMap(Js.Dict.get(_, item.id))
+    ->Belt.Option.flatMap(value =>
+        switch (value) {
+        | NameOneDimension(names) => Some(names[variant])
+        | _ => None
+        }
+      )
+  | TwoDimensions(_a, b) =>
+    (variantNames^)
+    ->Belt.Option.flatMap(Js.Dict.get(_, item.id))
+    ->Belt.Option.flatMap(value =>
+        switch (value) {
+        | NameTwoDimensions((nameA, nameB)) =>
+          Some(
+            nameA[variant / b]
+            ++ (
+              if (b > 1) {
+                " x " ++ nameB[variant mod b];
+              } else {
+                "";
+              }
+            ),
+          )
+        | _ => None
+        }
+      )
+  };
+};

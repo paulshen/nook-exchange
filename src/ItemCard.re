@@ -300,7 +300,7 @@ let make = (~item: Item.t, ~showLogin) => {
         />
         {item.isRecipe
            ? <img
-               src={Constants.imageUrl ++ "/DIYRecipe.png"}
+               src={Constants.cdnUrl ++ "/images/DIYRecipe.png"}
                className=Styles.recipeIcon
              />
            : React.null}
@@ -311,22 +311,41 @@ let make = (~item: Item.t, ~showLogin) => {
          <div className=Styles.variation>
            {let children = [||];
             for (v in 0 to numVariations - 1) {
+              let image =
+                <img
+                  src={Item.getImageUrl(~item, ~variant=v)}
+                  className={Cn.make([
+                    Styles.variationImage,
+                    Cn.ifTrue(Styles.variationImageSelected, v == variation),
+                  ])}
+                />;
               children
               |> Js.Array.push(
-                   <div
-                     onClick={_ => {setVariation(_ => v)}}
-                     key={string_of_int(v)}>
-                     <img
-                       src={Item.getImageUrl(~item, ~variant=v)}
-                       className={Cn.make([
-                         Styles.variationImage,
-                         Cn.ifTrue(
-                           Styles.variationImageSelected,
-                           v == variation,
-                         ),
-                       ])}
-                     />
-                   </div>,
+                   switch (Item.getVariantName(~item, ~variant=v)) {
+                   | Some(variantName) =>
+                     <ReactAtmosphere.Tooltip
+                       text={React.string(variantName)}
+                       key={string_of_int(v)}>
+                       {(
+                          ({onMouseEnter, onMouseLeave, onFocus, onBlur, ref}) =>
+                            <div
+                              onClick={_ => {setVariation(_ => v)}}
+                              onMouseEnter
+                              onMouseLeave
+                              onFocus
+                              onBlur
+                              ref={ReactDOMRe.Ref.domRef(ref)}>
+                              image
+                            </div>
+                        )}
+                     </ReactAtmosphere.Tooltip>
+                   | None =>
+                     <div
+                       onClick={_ => {setVariation(_ => v)}}
+                       key={string_of_int(v)}>
+                       image
+                     </div>
+                   },
                  )
               |> ignore;
             };

@@ -126,7 +126,7 @@ module UserItemCard = {
           />
           {item.isRecipe
              ? <img
-                 src={Constants.imageUrl ++ "/DIYRecipe.png"}
+                 src={Constants.cdnUrl ++ "/images/DIYRecipe.png"}
                  className=ItemCard.Styles.recipeIcon
                />
              : React.null}
@@ -197,7 +197,7 @@ module UserItemCardMini = {
       />
       {item.isRecipe
          ? <img
-             src={Constants.imageUrl ++ "/DIYRecipe.png"}
+             src={Constants.cdnUrl ++ "/images/DIYRecipe.png"}
              className=Styles.cardMiniRecipe
            />
          : React.null}

@@ -54,6 +54,7 @@ let categories = [|
   "shoes",
   "bags",
   "umbrellas",
+  "fossils",
   "photos",
   "posters",
   "fencing",
@@ -85,7 +86,14 @@ let clothingCategories = [|
   "umbrellas",
 |];
 
-let otherCategories = [|"photos", "posters", "fencing", "tools", "music"|];
+let otherCategories = [|
+  "fossils",
+  "photos",
+  "posters",
+  "fencing",
+  "tools",
+  "music",
+|];
 
 [@bs.val] [@bs.scope "window"] external itemsJson: Js.Json.t = "items";
 

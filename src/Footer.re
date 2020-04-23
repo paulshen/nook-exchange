@@ -29,15 +29,9 @@ let make = () => {
         </a>
         {React.string(" | ")}
         <a
-          href="https://docs.google.com/spreadsheets/d/1Hxrdp7oxtK-J5x9u1-rzChUpLtkv3t0_kNGdS6dtyWI/edit#gid=562907750"
+          href="https://docs.google.com/spreadsheets/d/13d_LAJPlxMa_DubPTuirkIV4DERBMXbrWQsmSh8ReK4/edit?usp=sharing"
           target="_blank">
           {React.string("Data Source")}
-        </a>
-        {React.string(" | ")}
-        <a
-          href="https://drive.google.com/open?id=1Ywj6etKAZe26niXDkXc-5ahjIyNdKUMB"
-          target="_blank">
-          {React.string("Images")}
         </a>
         {React.string(" | ")}
         <a href="/terms"> {React.string("Terms of Service")} </a>

@@ -11,14 +11,14 @@ module Styles = {
       fontSize(px(36)),
       textAlign(center),
       marginTop(px(32)),
-      marginBottom(px(16)),
+      marginBottom(px(32)),
     ]);
   let userBody =
     style([
       backgroundColor(hex("ffffffc0")),
       boxSizing(borderBox),
       lineHeight(px(20)),
-      margin3(~top=px(16), ~bottom=px(48), ~h=auto),
+      margin3(~top=zero, ~bottom=px(48), ~h=auto),
       maxWidth(px(512)),
       padding2(~v=px(16), ~h=px(24)),
       borderRadius(px(8)),

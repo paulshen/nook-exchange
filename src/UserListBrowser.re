@@ -308,12 +308,14 @@ let make =
                filters
                onChange={filters => setFilters(filters)}
              />
-             <ItemFilters.Pager
-               numResults
-               pageOffset
-               numResultsPerPage
-               setPageOffset
-             />
+             {!showMini
+                ? <ItemFilters.Pager
+                    numResults
+                    pageOffset
+                    numResultsPerPage
+                    setPageOffset
+                  />
+                : React.null}
            </div>
          : React.null}
       <div className=Styles.sectionToggles>

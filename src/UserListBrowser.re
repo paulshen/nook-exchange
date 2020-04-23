@@ -248,10 +248,7 @@ let make =
         | ForTrade => hasForTrade
         }) {
       <Link
-        path={
-          (me ? "/me/" : "/u/" ++ user.username ++ "/")
-          ++ User.itemStatusToUrl(status)
-        }
+        path={"/u/" ++ user.username ++ "/" ++ User.itemStatusToUrl(status)}
         className=Styles.listLink>
         <span className=Styles.listLinkEmoji>
           {React.string(User.itemStatusToEmoji(status))}
@@ -284,19 +281,15 @@ let make =
 
   <div className=Styles.root ref={ReactDOMRe.Ref.domRef(rootRef)}>
     <div className=Styles.listLinks>
-      {!me
-         ? <>
-             <Link path={"/u/" ++ user.username} className=Styles.profileLink>
-               {React.string(user.username)}
-             </Link>
-             <span
-               className={Cn.make([
-                 UserProfileBrowser.Styles.sectionTitleLinkIcon,
-                 Styles.profileLinkIcon,
-               ])}
-             />
-           </>
-         : React.null}
+      <Link path={"/u/" ++ user.username} className=Styles.profileLink>
+        {React.string(user.username)}
+      </Link>
+      <span
+        className={Cn.make([
+          UserProfileBrowser.Styles.sectionTitleLinkIcon,
+          Styles.profileLinkIcon,
+        ])}
+      />
       {renderListLink(ForTrade)}
       {renderListLink(CanCraft)}
       {renderListLink(Wishlist)}

@@ -171,27 +171,35 @@ module ProfileTextarea = {
   };
 };
 
-module Loaded = {
-  [@react.component]
-  let make = (~user: User.t, ~urlRest, ~url) => {
-    let list =
-      switch (urlRest) {
-      | [list, ..._] => Some(list)
-      | _ => None
-      };
-    <div>
-      <div className=Styles.username> {React.string(user.username)} </div>
-      <div className=Styles.userBody>
-        <ProfileTextarea user />
-        <div className=Styles.url>
-          {React.string("Preview and share your profile: ")}
-          <Link path={"/u/" ++ user.username}>
-            {React.string("https://nook.exchange/u/" ++ user.username)}
-          </Link>
-        </div>
+[@react.component]
+let make = (~user: User.t, ~urlRest, ~url) => {
+  <div>
+    <div className=Styles.username> {React.string(user.username)} </div>
+    <div className=Styles.userBody>
+      <ProfileTextarea user />
+      <div className=Styles.url>
+        {React.string("Share your profile: ")}
+        <Link path={"/u/" ++ user.username}>
+          {React.string("https://nook.exchange/u/" ++ user.username)}
+        </Link>
+        <div> {React.string("Only you can edit your profile.")} </div>
       </div>
-      {if (user.items->Js.Dict.keys->Array.length > 0) {
-         <UserListBrowser ?list user me=true url />;
+    </div>
+    {switch (urlRest) {
+     | [list] => <UserListBrowser user list url me=true />
+     | _ =>
+       if (user.items->Js.Dict.keys->Js.Array.length > 0) {
+         <UserProfileBrowser
+           username={user.username}
+           userItems={
+             user.items
+             ->Js.Dict.entries
+             ->Belt.Array.mapU((. (itemKey, item)) =>
+                 (User.fromItemKey(~key=itemKey), item)
+               )
+           }
+           editable=true
+         />;
        } else {
          <>
            <div className=Styles.emptyProfile>
@@ -202,16 +210,7 @@ module Loaded = {
            </div>
            <ItemBrowser showLogin={() => ()} url />
          </>;
-       }}
-    </div>;
-  };
-};
-
-[@react.component]
-let make = (~urlRest, ~url) => {
-  let me = UserStore.useMe();
-  switch (me) {
-  | Some(user) => <Loaded user urlRest url />
-  | None => React.null
-  };
+       }
+     }}
+  </div>;
 };

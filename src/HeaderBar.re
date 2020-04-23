@@ -37,7 +37,7 @@ module Styles = {
       textIndent(px(-9999)),
     ]);
   let nav = style([display(flexBox)]);
-  let navLink = style([marginLeft(px(16))]);
+  let navLink = style([color(Colors.gray), marginLeft(px(16))]);
   let requestFeatureLink =
     style([media("(max-width: 800px)", [display(none)])]);
 };
@@ -64,12 +64,17 @@ let make = (~onLogin) => {
        | Some(user) =>
          <>
            <div className=Styles.navLink>
-             <Link path="/me"> {React.string(user.username)} </Link>
+             <Link path="/me"> {React.string("My Profile")} </Link>
+             {React.string(" (")}
+             <Link path={"/u/" ++ user.username}>
+               {React.string(user.username)}
+             </Link>
+             {React.string(")")}
            </div>
            <div
              className={Cn.make([Styles.navLink, Styles.requestFeatureLink])}>
              <a href="https://twitter.com/nookexchange" target="_blank">
-               {React.string("Request feature")}
+               {React.string("Twitter")}
              </a>
            </div>
            <div className=Styles.navLink>

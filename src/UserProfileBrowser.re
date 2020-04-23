@@ -53,9 +53,9 @@ module Styles = {
   let cardsMini =
     style([
       justifyContent(flexStart),
-      paddingTop(px(32)),
       marginLeft(px(-8)),
       marginRight(px(-8)),
+      media("(max-width: 640px)", [justifyContent(center)]),
     ]);
   let metaIcons = style([opacity(0.), transition(~duration=200, "all")]);
   let card =
@@ -114,18 +114,16 @@ module Styles = {
     style([
       position(absolute),
       right(px(32)),
-      top(px(36)),
+      top(px(48)),
       display(flexBox),
       flexDirection(column),
       alignItems(flexEnd),
-      media(
-        "(max-width: 600px)",
-        [position(static), textAlign(center), flexDirection(row)],
-      ),
-      media("(max-width: 470px)", [marginBottom(px(16))]),
+      transform(translateY(pct(-50.))),
+      media("(max-width: 640px)", [top(px(32)), right(px(16))]),
     ]);
   let showRecipesBox = style([marginLeft(px(16))]);
   let showRecipesLabel = style([fontSize(px(16)), marginRight(px(8))]);
+  let showRecipesLabelDisabled = style([opacity(0.5)]);
   let showRecipesCheckbox =
     style([
       fontSize(px(24)),
@@ -251,7 +249,7 @@ module Section = {
     } else if (viewportWidth >= 640) {
       9;
     } else {
-      8;
+      6;
     };
 
   [@react.component]
@@ -317,16 +315,20 @@ module Section = {
                />
              </div>
            : React.null}
-        {if (status == CanCraft && !showMini) {
+        {if (status == CanCraft) {
            <div className=Styles.showRecipesBox>
              <label
-               htmlFor="craftShowRecipe" className=Styles.showRecipesLabel>
+               htmlFor="craftShowRecipe"
+               className={Cn.make([
+                 Styles.showRecipesLabel,
+                 Cn.ifTrue(Styles.showRecipesLabelDisabled, showMini),
+               ])}>
                {React.string("Show Recipes")}
              </label>
              <input
                id="craftShowRecipe"
                type_="checkbox"
-               checked=showRecipes
+               checked={showRecipes && !showMini}
                onChange={e => {
                  let checked = ReactEvent.Form.target(e)##checked;
                  Analytics.Amplitude.logEventWithProperties(
@@ -335,6 +337,7 @@ module Section = {
                  );
                  setShowRecipes(_ => checked);
                }}
+               disabled=showMini
                className=Styles.showRecipesCheckbox
              />
            </div>;
@@ -429,6 +432,11 @@ let make =
   let hasForTrade = forTradeList->Array.length > 0;
   let hasCanCraft = canCraftList->Array.length > 0;
   let hasWishlist = wishlist->Array.length > 0;
+
+  React.useEffect0(() => {
+    Some(() => {TemporaryState.state := Some(FromProfileBrowser)})
+  });
+
   <div>
     {if (hasForTrade) {
        <Section username status=ForTrade userItems=forTradeList editable />;

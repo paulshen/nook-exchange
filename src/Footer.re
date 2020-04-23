@@ -11,7 +11,7 @@ module Styles = {
     ]);
   let contents =
     style([
-      color(hex("808080")),
+      color(Colors.gray),
       maxWidth(px(512)),
       padding2(~v=zero, ~h=px(8)),
     ]);

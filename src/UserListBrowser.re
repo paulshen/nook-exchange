@@ -2,46 +2,72 @@ module Styles = {
   open Css;
   let root =
     style([
-      padding(px(32)),
       borderRadius(px(16)),
+      margin2(~v=zero, ~h=auto),
+      overflow(hidden),
+      media("(min-width: 640px)", [width(px(624))]),
+      media("(min-width: 860px)", [width(px(816))]),
+      media("(min-width: 1040px)", [width(px(1008))]),
+      media("(min-width: 1240px)", [width(px(1200))]),
+      media("(min-width: 1440px)", [width(px(1392))]),
+      media("(max-width: 640px)", [width(auto), borderRadius(zero)]),
+    ]);
+  let body =
+    style([
+      padding(px(32)),
       backgroundColor(hex("88c9a1a0")),
-      margin3(~top=px(16), ~bottom=zero, ~h=auto),
-      media("(min-width: 640px)", [width(px(560))]),
-      media("(min-width: 860px)", [width(px(752))]),
-      media("(min-width: 1040px)", [width(px(944))]),
-      media("(min-width: 1240px)", [width(px(1136))]),
-      media("(min-width: 1440px)", [width(px(1328))]),
       position(relative),
-      media(
-        "(max-width: 640px)",
-        [width(auto), padding(px(16)), borderRadius(zero)],
-      ),
+      media("(max-width: 640px)", [padding(px(16))]),
     ]);
   let listLinks =
     style([
       display(flexBox),
-      justifyContent(center),
-      marginTop(px(48)),
-      marginBottom(px(16)),
+      alignItems(center),
+      backgroundColor(hex("ffffff80")),
+      padding3(~top=px(18), ~bottom=px(16), ~h=px(32)),
+      media(
+        "(max-width: 640px)",
+        [paddingLeft(px(16)), paddingRight(px(16))],
+      ),
     ]);
-  let listLinkEmoji = style([display(inlineBlock), marginRight(px(6))]);
-  let listLinkName = "listLinkName";
-  let listLinkSelectedName =
-    style([borderBottom(px(2), solid, Colors.green)]);
-  let listLink =
+  let profileLink =
+    style([
+      color(Colors.charcoal),
+      display(inlineBlock),
+      fontSize(px(20)),
+      textDecoration(none),
+      opacity(0.8),
+      media("(max-width: 640px)", [fontSize(px(16))]),
+      hover([opacity(1.)]),
+    ]);
+  let profileLinkIcon =
+    style([marginLeft(px(8)), marginRight(px(8)), top(zero)]);
+  let listLinkEmoji =
     style([
       display(inlineBlock),
-      fontSize(px(16)),
+      lineHeight(zero),
+      marginRight(px(6)),
+      position(relative),
+      top(px(2)),
+      media("(max-width: 460px)", [display(none)]),
+    ]);
+  let listLinkName = "listLinkName";
+  let listLinkSelectedName =
+    style([borderBottom(px(2), solid, Colors.charcoal)]);
+  let listLink =
+    style([
+      color(Colors.charcoal),
+      display(inlineBlock),
+      fontSize(px(20)),
       textDecoration(none),
-      lineHeight(px(16)),
-      marginRight(px(24)),
-      marginBottom(px(16)),
+      marginRight(px(28)),
+      media("(max-width: 640px)", [fontSize(px(16))]),
       media("(max-width: 400px)", [marginRight(px(16))]),
       lastChild([marginRight(zero)]),
       hover([
         selector(
           "& ." ++ listLinkName,
-          [borderBottom(px(2), solid, Colors.green)],
+          [borderBottom(px(2), solid, Colors.charcoal)],
         ),
       ]),
     ]);
@@ -51,7 +77,7 @@ module Styles = {
     style([
       position(absolute),
       right(px(32)),
-      top(px(-32)),
+      top(px(-40)),
       display(flexBox),
       media(
         "(max-width: 860px)",
@@ -59,7 +85,6 @@ module Styles = {
       ),
       media("(max-width: 470px)", [marginBottom(px(16))]),
     ]);
-  let showRecipesLabelDisabled = style([opacity(0.5)]);
 };
 
 let getUrl =
@@ -81,17 +106,17 @@ let getUrl =
 let numResultsPerPage = 20;
 let getNumResultsPerPage = (~viewportWidth) =>
   if (viewportWidth >= 1440) {
-    28;
+    35;
   } else if (viewportWidth >= 1240) {
-    24;
+    30;
   } else if (viewportWidth >= 1040) {
     25;
   } else if (viewportWidth >= 860) {
-    20;
+    24;
   } else if (viewportWidth >= 640) {
-    18;
+    21;
   } else {
-    12;
+    20;
   };
 
 let userItemsHasOneWithStatus = (~userItems, ~status) => {
@@ -101,10 +126,16 @@ let userItemsHasOneWithStatus = (~userItems, ~status) => {
 };
 
 [@react.component]
-let make = (~user: User.t, ~list: string, ~url: ReasonReactRouter.url) => {
+let make =
+    (
+      ~user: User.t,
+      ~list: option(string)=?,
+      ~url: ReasonReactRouter.url,
+      ~me=false,
+      (),
+    ) => {
   let viewportWidth = Utils.useViewportWidth();
   let numResultsPerPage = getNumResultsPerPage(~viewportWidth);
-  let listStatus = User.urlToItemStatus(list);
   let hasForTrade =
     React.useMemo1(
       () =>
@@ -123,6 +154,18 @@ let make = (~user: User.t, ~list: string, ~url: ReasonReactRouter.url) => {
         userItemsHasOneWithStatus(~userItems=user.items, ~status=Wishlist),
       [|user|],
     );
+  let listStatus =
+    switch (list) {
+    | Some(list) => User.urlToItemStatus(list)
+    | None =>
+      if (hasForTrade) {
+        ForTrade;
+      } else if (hasCanCraft) {
+        CanCraft;
+      } else {
+        Wishlist;
+      }
+    };
   let userItems =
     React.useMemo2(
       () =>
@@ -132,7 +175,7 @@ let make = (~user: User.t, ~list: string, ~url: ReasonReactRouter.url) => {
             item.status == listStatus
               ? Some((User.fromItemKey(~key=itemKey), item)) : None
           ),
-      (user, list),
+      (user, listStatus),
     );
   let userItemIds =
     userItems->Belt.Array.mapU((. ((itemId, _variant), _)) => itemId);
@@ -144,7 +187,7 @@ let make = (~user: User.t, ~list: string, ~url: ReasonReactRouter.url) => {
       () =>
         ItemFilters.fromUrlSearch(
           ~urlSearch=url.search,
-          ~defaultSort=SellPriceDesc,
+          ~defaultSort=Category,
         ),
       [|url.search|],
     );
@@ -160,11 +203,7 @@ let make = (~user: User.t, ~list: string, ~url: ReasonReactRouter.url) => {
     );
     let urlSearchParams =
       Webapi.Url.URLSearchParams.makeWithArray(
-        ItemFilters.serialize(
-          ~filters,
-          ~defaultSort=SellPriceDesc,
-          ~pageOffset=0,
-        ),
+        ItemFilters.serialize(~filters, ~defaultSort=Category, ~pageOffset=0),
       );
     ReasonReactRouter.push(getUrl(~url, ~urlSearchParams));
   };
@@ -205,7 +244,10 @@ let make = (~user: User.t, ~list: string, ~url: ReasonReactRouter.url) => {
         | ForTrade => hasForTrade
         }) {
       <Link
-        path={"/u/" ++ user.username ++ "/" ++ User.itemStatusToUrl(status)}
+        path={
+          (me ? "/me/" : "/u/" ++ user.username ++ "/")
+          ++ User.itemStatusToUrl(status)
+        }
         className=Styles.listLink>
         <span className=Styles.listLinkEmoji>
           {React.string(User.itemStatusToEmoji(status))}
@@ -222,27 +264,51 @@ let make = (~user: User.t, ~list: string, ~url: ReasonReactRouter.url) => {
       React.null;
     };
 
+  let rootRef = React.useRef(Js.Nullable.null);
   React.useEffect0(() => {
-    Webapi.Dom.(window |> Window.scrollTo(0., 0.));
+    if (TemporaryState.state^ == Some(FromProfileBrowser) && list != None) {
+      TemporaryState.state := None;
+      let rootElement = Utils.getElementForDomRef(rootRef);
+      open Webapi.Dom;
+      let boundingRect = Element.getBoundingClientRect(rootElement);
+      window |> Window.scrollBy(0., DomRect.top(boundingRect) -. 32.);
+    } else {
+      Webapi.Dom.(window |> Window.scrollTo(0., 0.));
+    };
     None;
   });
 
-  <>
+  <div className=Styles.root ref={ReactDOMRe.Ref.domRef(rootRef)}>
     <div className=Styles.listLinks>
+      {!me
+         ? <>
+             <Link path={"/u/" ++ user.username} className=Styles.profileLink>
+               {React.string(user.username)}
+             </Link>
+             <span
+               className={Cn.make([
+                 UserProfileBrowser.Styles.sectionTitleLinkIcon,
+                 Styles.profileLinkIcon,
+               ])}
+             />
+           </>
+         : React.null}
       {renderListLink(ForTrade)}
       {renderListLink(CanCraft)}
       {renderListLink(Wishlist)}
     </div>
     <div
       className={Cn.make([
-        Styles.root,
+        Styles.body,
         Cn.ifTrue(Styles.rootMini, showMini),
       ])}>
-      <ItemFilters.CategoryButtons
-        userItemIds
-        filters
-        onChange={filters => setFilters(filters)}
-      />
+      {Js.Array.length(userItems) > 8
+         ? <ItemFilters.CategoryButtons
+             userItemIds
+             filters
+             onChange={filters => setFilters(filters)}
+           />
+         : React.null}
       <div
         className={Cn.make([ItemBrowser.Styles.filterBar, Styles.filterBar])}>
         <ItemFilters
@@ -262,7 +328,7 @@ let make = (~user: User.t, ~list: string, ~url: ReasonReactRouter.url) => {
            ? <div>
                <label
                  htmlFor="show-mini"
-                 className=UserItemBrowser.Styles.showRecipesLabel>
+                 className=UserProfileBrowser.Styles.showRecipesLabel>
                  {React.string("Miniature")}
                </label>
                <input
@@ -280,18 +346,21 @@ let make = (~user: User.t, ~list: string, ~url: ReasonReactRouter.url) => {
                    );
                    setShowMini(_ => checked);
                  }}
-                 className=UserItemBrowser.Styles.showRecipesCheckbox
+                 className=UserProfileBrowser.Styles.showRecipesCheckbox
                />
              </div>
            : React.null}
-        <div className=UserItemBrowser.Styles.showRecipesBox>
+        <div className=UserProfileBrowser.Styles.showRecipesBox>
           <label
             htmlFor="craftShowRecipe"
             className={Cn.make([
-              UserItemBrowser.Styles.showRecipesLabel,
-              Cn.ifTrue(Styles.showRecipesLabelDisabled, showMini),
+              UserProfileBrowser.Styles.showRecipesLabel,
+              Cn.ifTrue(
+                UserProfileBrowser.Styles.showRecipesLabelDisabled,
+                showMini,
+              ),
             ])}>
-            {React.string("Recipes")}
+            {React.string("Show Recipes")}
           </label>
           <input
             id="craftShowRecipe"
@@ -306,15 +375,15 @@ let make = (~user: User.t, ~list: string, ~url: ReasonReactRouter.url) => {
               setShowRecipes(_ => checked);
             }}
             disabled=showMini
-            className=UserItemBrowser.Styles.showRecipesCheckbox
+            className=UserProfileBrowser.Styles.showRecipesCheckbox
           />
         </div>
       </div>
       <div
         className={Cn.make([
           ItemBrowser.Styles.cards,
-          UserItemBrowser.Styles.cards,
-          Cn.ifTrue(UserItemBrowser.Styles.cardsMini, showMini),
+          UserProfileBrowser.Styles.cards,
+          Cn.ifTrue(UserProfileBrowser.Styles.cardsMini, showMini),
         ])}>
         {filteredItems
          ->(
@@ -327,16 +396,16 @@ let make = (~user: User.t, ~list: string, ~url: ReasonReactRouter.url) => {
            )
          ->Belt.Array.mapU((. ((itemId, variation), userItem)) => {
              showMini
-               ? <UserItemBrowser.UserItemCardMini
+               ? <UserProfileBrowser.UserItemCardMini
                    itemId
                    variation
                    key={itemId ++ string_of_int(variation)}
                  />
-               : <UserItemBrowser.UserItemCard
+               : <UserProfileBrowser.UserItemCard
                    itemId
                    variation
                    userItem
-                   editable=false
+                   editable=me
                    showRecipe=showRecipes
                    key={itemId ++ string_of_int(variation)}
                  />
@@ -357,5 +426,5 @@ let make = (~user: User.t, ~list: string, ~url: ReasonReactRouter.url) => {
            </div>
          : React.null}
     </div>
-  </>;
+  </div>;
 };

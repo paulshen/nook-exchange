@@ -18,7 +18,7 @@ module Styles = {
       backgroundColor(hex("ffffffc0")),
       boxSizing(borderBox),
       lineHeight(px(20)),
-      margin2(~v=px(16), ~h=auto),
+      margin3(~top=zero, ~bottom=px(48), ~h=auto),
       maxWidth(px(512)),
       padding2(~v=px(16), ~h=px(24)),
       borderRadius(px(8)),
@@ -173,30 +173,25 @@ module ProfileTextarea = {
 
 module Loaded = {
   [@react.component]
-  let make = (~user: User.t, ~url) =>
+  let make = (~user: User.t, ~urlRest, ~url) => {
+    let list =
+      switch (urlRest) {
+      | [list, ..._] => Some(list)
+      | _ => None
+      };
     <div>
       <div className=Styles.username> {React.string(user.username)} </div>
       <div className=Styles.userBody>
         <ProfileTextarea user />
         <div className=Styles.url>
-          {React.string("Preview your profile: ")}
+          {React.string("Preview and share your profile: ")}
           <Link path={"/u/" ++ user.username}>
             {React.string("https://nook.exchange/u/" ++ user.username)}
           </Link>
         </div>
       </div>
       {if (user.items->Js.Dict.keys->Array.length > 0) {
-         <UserItemBrowser
-           username={user.username}
-           userItems={
-             user.items
-             ->Js.Dict.entries
-             ->Belt.Array.mapU((. (itemKey, item)) =>
-                 (User.fromItemKey(~key=itemKey), item)
-               )
-           }
-           editable=true
-         />;
+         <UserListBrowser ?list user me=true url />;
        } else {
          <>
            <div className=Styles.emptyProfile>
@@ -209,13 +204,14 @@ module Loaded = {
          </>;
        }}
     </div>;
+  };
 };
 
 [@react.component]
-let make = (~url) => {
+let make = (~urlRest, ~url) => {
   let me = UserStore.useMe();
   switch (me) {
-  | Some(user) => <Loaded user url />
+  | Some(user) => <Loaded user urlRest url />
   | None => React.null
   };
 };

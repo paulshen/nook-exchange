@@ -320,6 +320,7 @@ let logout = () => {
   Dom.Storage.localStorage |> Dom.Storage.removeItem("sessionId");
   Analytics.Amplitude.setUserId(~userId=None);
   updateSessionId(None);
+  ReasonReactRouter.push("/");
   let%Repromise.JsExn response =
     Fetch.fetchWithInit(
       Constants.apiUrl ++ "/logout",

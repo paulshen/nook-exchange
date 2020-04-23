@@ -18,7 +18,7 @@ module Styles = {
       backgroundColor(hex("ffffffc0")),
       boxSizing(borderBox),
       lineHeight(px(20)),
-      margin3(~top=px(16), ~bottom=px(32), ~h=auto),
+      margin3(~top=px(16), ~bottom=px(48), ~h=auto),
       maxWidth(px(512)),
       padding2(~v=px(16), ~h=px(24)),
       borderRadius(px(8)),
@@ -80,7 +80,7 @@ let make = (~username, ~urlRest, ~url) => {
           | [list] => <UserListBrowser user list url />
           | _ =>
             if (user.items->Js.Dict.keys->Js.Array.length > 0) {
-              <UserItemBrowser
+              <UserProfileBrowser
                 username
                 userItems={
                   user.items

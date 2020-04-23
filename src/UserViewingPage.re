@@ -37,7 +37,7 @@ module Styles = {
 };
 
 [@react.component]
-let make = (~username, ~urlRest, ~url) => {
+let make = (~username, ~urlRest, ~url: ReasonReactRouter.url) => {
   let (user, setUser) = React.useState(() => None);
   let isMountedRef = React.useRef(true);
   React.useEffect0(() => {
@@ -72,6 +72,23 @@ let make = (~username, ~urlRest, ~url) => {
     },
     [|username|],
   );
+  React.useEffect0(() => {
+    switch (url.hash) {
+    | "for-trade"
+    | "can-craft"
+    | "wishlist" =>
+      if (urlRest == []) {
+        ReasonReactRouter.replace(
+          "/"
+          ++ Js.Array.joinWith("/", Belt.List.toArray(url.path))
+          ++ "/"
+          ++ url.hash,
+        );
+      }
+    | _ => ()
+    };
+    None;
+  });
   <div>
     <div className=Styles.username> {React.string(username)} </div>
     {switch (user) {
@@ -85,7 +102,9 @@ let make = (~username, ~urlRest, ~url) => {
             </div>
           }}
          {switch (urlRest) {
-          | [list] => <UserListBrowser user list url />
+          | ["wishlist" as list]
+          | ["for-trade" as list]
+          | ["can-craft" as list] => <UserListBrowser user list url />
           | _ =>
             if (user.items->Js.Dict.keys->Js.Array.length > 0) {
               <UserProfileBrowser

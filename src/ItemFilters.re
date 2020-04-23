@@ -29,7 +29,8 @@ module Styles = {
       lineHeight(px(37)),
       paddingRight(px(16)),
     ]);
-  let pager = style([fontSize(px(16)), marginBottom(px(8))]);
+  let pager =
+    style([fontSize(px(16)), lineHeight(px(32)), marginBottom(px(8))]);
   let pagerArrow =
     style([
       fontSize(px(24)),

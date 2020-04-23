@@ -193,7 +193,9 @@ let make = (~user: User.t, ~urlRest, ~url) => {
       </div>
     </div>
     {switch (urlRest) {
-     | [list] => <UserListBrowser user list url me=true />
+     | ["wishlist" as list]
+     | ["for-trade" as list]
+     | ["can-craft" as list] => <UserListBrowser user list url me=true />
      | _ =>
        if (user.items->Js.Dict.keys->Js.Array.length > 0) {
          <UserProfileBrowser

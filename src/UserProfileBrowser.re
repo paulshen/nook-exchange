@@ -11,7 +11,7 @@ module Styles = {
       media("(min-width: 1440px)", [width(px(1328))]),
       padding(px(32)),
       borderRadius(px(16)),
-      backgroundColor(hex("3aa56360")),
+      backgroundColor(hex("3aa56340")),
       position(relative),
       media(
         "(max-width: 640px)",

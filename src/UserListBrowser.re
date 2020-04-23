@@ -15,7 +15,7 @@ module Styles = {
   let body =
     style([
       padding(px(32)),
-      backgroundColor(hex("3aa56360")),
+      backgroundColor(hex("3aa56340")),
       position(relative),
       media("(max-width: 640px)", [padding(px(16))]),
     ]);
@@ -298,53 +298,46 @@ let make =
         Cn.ifTrue(Styles.rootMini, showMini),
       ])}>
       {Js.Array.length(userItems) > 8
-         ? <>
-             <div
-               className={Cn.make([
-                 ItemBrowser.Styles.filterBar,
-                 Styles.filterBar,
-               ])}>
-               <ItemFilters
-                 userItemIds
-                 filters
-                 onChange={filters => setFilters(filters)}
-               />
-               <ItemFilters.Pager
-                 numResults
-                 pageOffset
-                 numResultsPerPage
-                 setPageOffset
-               />
-             </div>
-           </>
+         ? <div
+             className={Cn.make([
+               ItemBrowser.Styles.filterBar,
+               Styles.filterBar,
+             ])}>
+             <ItemFilters
+               userItemIds
+               filters
+               onChange={filters => setFilters(filters)}
+             />
+             <ItemFilters.Pager
+               numResults
+               pageOffset
+               numResultsPerPage
+               setPageOffset
+             />
+           </div>
          : React.null}
       <div className=Styles.sectionToggles>
-        {userItems->Array.length > 16
-           ? <div>
-               <label
-                 htmlFor="show-mini"
-                 className=UserProfileBrowser.Styles.showRecipesLabel>
-                 {React.string("Thumbnails")}
-               </label>
-               <input
-                 id="show-mini"
-                 type_="checkbox"
-                 checked=showMini
-                 onChange={e => {
-                   let checked = ReactEvent.Form.target(e)##checked;
-                   Analytics.Amplitude.logEventWithProperties(
-                     ~eventName="Miniature Mode Clicked",
-                     ~eventProperties={
-                       "checked": checked,
-                       "status": listStatus,
-                     },
-                   );
-                   setShowMini(_ => checked);
-                 }}
-                 className=UserProfileBrowser.Styles.showRecipesCheckbox
-               />
-             </div>
-           : React.null}
+        <div>
+          <label
+            htmlFor="show-mini"
+            className=UserProfileBrowser.Styles.showRecipesLabel>
+            {React.string("Thumbnails")}
+          </label>
+          <input
+            id="show-mini"
+            type_="checkbox"
+            checked=showMini
+            onChange={e => {
+              let checked = ReactEvent.Form.target(e)##checked;
+              Analytics.Amplitude.logEventWithProperties(
+                ~eventName="Miniature Mode Clicked",
+                ~eventProperties={"checked": checked, "status": listStatus},
+              );
+              setShowMini(_ => checked);
+            }}
+            className=UserProfileBrowser.Styles.showRecipesCheckbox
+          />
+        </div>
         <div className=UserProfileBrowser.Styles.showRecipesBox>
           <label
             htmlFor="craftShowRecipe"
@@ -407,7 +400,7 @@ let make =
            })
          ->React.array}
       </div>
-      {!showMini
+      {!showMini && Js.Array.length(filteredItems) > numResultsPerPage
          ? <div className=ItemBrowser.Styles.bottomFilterBar>
              <ItemFilters.Pager
                numResults

@@ -301,20 +301,15 @@ let make =
       ])}>
       {Js.Array.length(userItems) > 8
          ? <>
-             <ItemFilters.CategoryButtons
-               userItemIds
-               filters
-               onChange={filters => setFilters(filters)}
-             />
              <div
                className={Cn.make([
                  ItemBrowser.Styles.filterBar,
                  Styles.filterBar,
                ])}>
                <ItemFilters
+                 userItemIds
                  filters
                  onChange={filters => setFilters(filters)}
-                 showCategorySort=true
                />
                <ItemFilters.Pager
                  numResults

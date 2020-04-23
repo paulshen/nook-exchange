@@ -250,6 +250,14 @@ module Pager = {
 external unsafeAsHtmlInputElement: 'a => Webapi.Dom.HtmlInputElement.t =
   "%identity";
 
+let getCategoryLabel = category => {
+  switch (category) {
+  | "furniture" => "All Furniture"
+  | "clothing" => "All Clothing"
+  | category => Utils.capitalizeFirstLetter(category)
+  };
+};
+
 module CategoryButtons = {
   module CategoryStyles = {
     open Css;
@@ -277,7 +285,7 @@ module CategoryButtons = {
       | None => true
       };
     };
-    let renderButton = (category, label) =>
+    let renderButton = category =>
       if (shouldRenderCategory(category)) {
         let isSelected = filters.category == Some(category);
         <Button
@@ -293,7 +301,7 @@ module CategoryButtons = {
             Cn.ifTrue(CategoryStyles.buttonNotSelected, !isSelected),
           ])}
           key=category>
-          {React.string(label)}
+          {React.string(getCategoryLabel(category))}
         </Button>;
       } else {
         React.null;
@@ -318,12 +326,12 @@ module CategoryButtons = {
         ])}>
         {React.string("Everything!")}
       </Button>
-      {renderButton("furniture", "All Furniture")}
-      {renderButton("housewares", "Housewares")}
-      {renderButton("miscellaneous", "Miscellaneous")}
-      {renderButton("wall-mounted", "Wall-mounted")}
-      {renderButton("recipes", "Recipes")}
-      {renderButton("clothing", "All Clothing")}
+      {renderButton("furniture")}
+      {renderButton("housewares")}
+      {renderButton("miscellaneous")}
+      {renderButton("wall-mounted")}
+      {renderButton("recipes")}
+      {renderButton("clothing")}
       <select
         value={
           switch (filters.category) {
@@ -361,7 +369,7 @@ module CategoryButtons = {
          ->Belt.Array.mapU((. category) =>
              shouldRenderCategory(category)
                ? <option value=category key=category>
-                   {React.string(Utils.capitalizeFirstLetter(category))}
+                   {React.string(getCategoryLabel(category))}
                  </option>
                : React.null
            )
@@ -371,8 +379,47 @@ module CategoryButtons = {
   };
 };
 
+module UserCategorySelector = {
+  module CategoryStyles = {
+    open Css;
+    let select = style([height(px(37))]);
+  };
+
+  [@react.component]
+  let make = (~filters: t, ~onChange, ~userItemIds: array(string)) => {
+    let shouldRenderCategory = category => {
+      userItemIds->Belt.Array.some(itemId =>
+        doesItemMatchCategory(~item=Item.getItem(~itemId), ~category)
+      );
+    };
+
+    <select
+      value={Belt.Option.getWithDefault(filters.category, "")}
+      onChange={e => {
+        let value = ReactEvent.Form.target(e)##value;
+        if (value == "") {
+          onChange({...filters, category: None});
+        } else {
+          onChange({...filters, text: "", category: Some(value)});
+        };
+      }}
+      className={Cn.make([Styles.select, CategoryStyles.select])}>
+      <option value=""> {React.string("All categories")} </option>
+      {Item.validCategoryStrings
+       ->Belt.Array.mapU((. category) =>
+           shouldRenderCategory(category)
+             ? <option value=category key=category>
+                 {React.string(Utils.capitalizeFirstLetter(category))}
+               </option>
+             : React.null
+         )
+       ->React.array}
+    </select>;
+  };
+};
+
 [@react.component]
-let make = (~filters, ~onChange, ~showCategorySort) => {
+let make = (~filters, ~onChange, ~userItemIds: option(array(string))=?, ()) => {
   let inputTextRef = React.useRef(Js.Nullable.null);
   let updateTextTimeoutRef = React.useRef(None);
   React.useEffect1(
@@ -438,6 +485,11 @@ let make = (~filters, ~onChange, ~showCategorySort) => {
       }}
       className=Styles.textInput
     />
+    {switch (userItemIds) {
+     | Some(userItemIds) =>
+       <UserCategorySelector userItemIds filters onChange />
+     | None => React.null
+     }}
     <select
       value={
         switch (filters.mask) {
@@ -488,7 +540,7 @@ let make = (~filters, ~onChange, ~showCategorySort) => {
         });
       }}
       className={Cn.make([Styles.select, Styles.selectSort])}>
-      {if (showCategorySort) {
+      {if (userItemIds !== None) {
          <option value="category"> {React.string("Sort: Category")} </option>;
        } else {
          React.null;

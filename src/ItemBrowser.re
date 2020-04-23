@@ -125,11 +125,7 @@ let make = (~showLogin, ~url: ReasonReactRouter.url) => {
       onChange={filters => {setFilters(filters)}}
     />
     <div className=Styles.filterBar>
-      <ItemFilters
-        filters
-        onChange={filters => {setFilters(filters)}}
-        showCategorySort=false
-      />
+      <ItemFilters filters onChange={filters => {setFilters(filters)}} />
       <ItemFilters.Pager
         numResults
         pageOffset

@@ -16,11 +16,18 @@ let urlToItemStatus = url =>
   | "wishlist"
   | _ => Wishlist
   };
+let itemStatusToEmoji = itemStatus => {
+  switch (itemStatus) {
+  | Wishlist => {j|🙏|j}
+  | ForTrade => {j|✅|j}
+  | CanCraft => {j|🔨|j}
+  };
+};
 let itemStatusToString = itemStatus =>
   switch (itemStatus) {
-  | Wishlist => {j|🙏 Wishlist|j}
-  | ForTrade => {j|✅ For Trade|j}
-  | CanCraft => {j|🔨 Can Craft|j}
+  | Wishlist => "Wishlist"
+  | ForTrade => "For Trade"
+  | CanCraft => "Can Craft"
   };
 type item = {
   status: itemStatus,

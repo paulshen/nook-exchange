@@ -10,19 +10,38 @@ module Styles = {
       media("(min-width: 1240px)", [width(px(1136))]),
       media("(min-width: 1440px)", [width(px(1328))]),
       padding(px(32)),
-      backgroundColor(Colors.green),
       borderRadius(px(16)),
       backgroundColor(hex("88c9a1a0")),
       position(relative),
       media(
-        "(max-width: 470px)",
+        "(max-width: 640px)",
         [width(auto), padding(px(16)), borderRadius(zero)],
       ),
     ]);
   let rootForTrade = style([backgroundColor(hex("8FCDE0a0"))]);
   let rootCanCraft = style([backgroundColor(hex("f1e26fa0"))]);
   let rootMini = style([backgroundColor(hex("fffffff0"))]);
-  let sectionTitle = style([fontSize(px(24)), marginBottom(px(16))]);
+  let sectionTitle = style([marginBottom(px(16))]);
+  [@bs.module "./assets/link.png"] external linkIcon: string = "default";
+  let sectionTitleLinkIcon =
+    style([
+      backgroundImage(url(linkIcon)),
+      display(inlineBlock),
+      backgroundSize(cover),
+      width(px(24)),
+      height(px(24)),
+      opacity(0.5),
+      position(relative),
+      top(px(4)),
+      transition(~duration=200, "all"),
+    ]);
+  let sectionTitleLink =
+    style([
+      color(Colors.charcoal),
+      fontSize(px(24)),
+      textDecoration(none),
+      hover([selector("& ." ++ sectionTitleLinkIcon, [opacity(1.)])]),
+    ]);
   let filterBar = style([marginTop(px(32)), marginBottom(zero)]);
   let cards =
     style([
@@ -55,6 +74,18 @@ module Styles = {
       media("(max-width: 430px)", [width(pct(100.)), marginRight(zero)]),
       hover([selector("& ." ++ metaIcons, [opacity(1.)])]),
     ]);
+  let cardSeeAll =
+    style([
+      flexDirection(row),
+      justifyContent(center),
+      fontSize(px(20)),
+      color(Colors.charcoal),
+      paddingTop(px(36)),
+      paddingBottom(px(36)),
+      textDecoration(none),
+      hover([boxShadow(Shadow.box(~blur=px(16), hex("808080c0")))]),
+    ]);
+  let cardSeeAllLinkIcon = style([opacity(0.8), top(zero)]);
   let mainImageWrapperWithRecipe = style([marginBottom(px(16))]);
   let name =
     style([fontSize(px(16)), marginBottom(px(4)), textAlign(center)]);
@@ -206,8 +237,6 @@ module UserItemCardMini = {
 };
 
 module Section = {
-  let numResultsPerPage = 14;
-
   let randomString = () => Js.Math.random()->Js.Float.toString;
 
   let getMaxResults = (~viewportWidth) =>
@@ -259,13 +288,12 @@ module Section = {
         Cn.ifTrue(Styles.rootMini, showMini),
       ])}>
       <div className=Styles.sectionTitle>
-        {React.string(
-           switch (status) {
-           | Wishlist => {j|🙏 Wishlist|j}
-           | ForTrade => {j|✅ For Trade|j}
-           | CanCraft => {j|🔨 Can Craft|j}
-           },
-         )}
+        <Link
+          path={"/u/" ++ username ++ "/" ++ User.itemStatusToUrl(status)}
+          className=Styles.sectionTitleLink>
+          {React.string(User.itemStatusToString(status))}
+          <span className=Styles.sectionTitleLinkIcon />
+        </Link>
       </div>
       <div className=Styles.sectionToggles>
         {userItems->Array.length > 16
@@ -363,11 +391,15 @@ module Section = {
                            }
                          )
                        }
-                       className=Styles.card
+                       className={Cn.make([Styles.card, Styles.cardSeeAll])}
                        key="link">
-                       <div className=Styles.name>
-                         {React.string("See all")}
-                       </div>
+                       {React.string("See all")}
+                       <span
+                         className={Cn.make([
+                           Styles.sectionTitleLinkIcon,
+                           Styles.cardSeeAllLinkIcon,
+                         ])}
+                       />
                      </Link>,
                    |],
                  )

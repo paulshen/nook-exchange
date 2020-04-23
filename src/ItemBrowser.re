@@ -20,7 +20,8 @@ module Styles = {
       display(flexBox),
       flexWrap(wrap),
       marginRight(px(-32)),
-      justifyContent(center),
+      justifyContent(flexStart),
+      media("(max-width: 640px)", [justifyContent(center)]),
       media("(max-width: 600px)", [marginRight(px(-16))]),
     ]);
   let filterBar =

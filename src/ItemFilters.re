@@ -125,6 +125,17 @@ let fromUrlSearch = (~urlSearch, ~defaultSort) => {
   );
 };
 
+let doesItemMatchCategory = (~item: Item.t, ~category: string) => {
+  switch (category) {
+  | "furniture" =>
+    Item.furnitureCategories |> Js.Array.includes(item.category)
+  | "clothing" => Item.clothingCategories |> Js.Array.includes(item.category)
+  | "other" => Item.otherCategories |> Js.Array.includes(item.category)
+  | "recipes" => item.isRecipe
+  | category => item.category == category
+  };
+};
+
 let doesItemMatchFilters = (~item: Item.t, ~filters: t) => {
   (
     switch (filters.text) {
@@ -150,14 +161,7 @@ let doesItemMatchFilters = (~item: Item.t, ~filters: t) => {
   )
   && (
     switch (filters.category) {
-    | Some("furniture") =>
-      Item.furnitureCategories |> Js.Array.includes(item.category)
-    | Some("clothing") =>
-      Item.clothingCategories |> Js.Array.includes(item.category)
-    | Some("other") =>
-      Item.otherCategories |> Js.Array.includes(item.category)
-    | Some("recipes") => item.isRecipe
-    | Some(category) => item.category == category
+    | Some(category) => doesItemMatchCategory(~item, ~category)
     | None => true
     }
   );
@@ -262,25 +266,38 @@ module CategoryButtons = {
   };
 
   [@react.component]
-  let make = (~filters: t, ~onChange) => {
-    let renderButton = (category, label) => {
-      let isSelected = filters.category == Some(category);
-      <Button
-        onClick={_ => {
-          onChange({
-            ...filters,
-            text: "",
-            category: isSelected ? None : Some(category),
-          })
-        }}
-        className={Cn.make([
-          CategoryStyles.button,
-          Cn.ifTrue(CategoryStyles.buttonNotSelected, !isSelected),
-        ])}
-        key=category>
-        {React.string(label)}
-      </Button>;
+  let make =
+      (~filters: t, ~onChange, ~userItemIds: option(array(string))=?, ()) => {
+    let shouldRenderCategory = category => {
+      switch (userItemIds) {
+      | Some(userItemIds) =>
+        userItemIds->Belt.Array.some(itemId =>
+          doesItemMatchCategory(~item=Item.getItem(~itemId), ~category)
+        )
+      | None => true
+      };
     };
+    let renderButton = (category, label) =>
+      if (shouldRenderCategory(category)) {
+        let isSelected = filters.category == Some(category);
+        <Button
+          onClick={_ => {
+            onChange({
+              ...filters,
+              text: "",
+              category: isSelected ? None : Some(category),
+            })
+          }}
+          className={Cn.make([
+            CategoryStyles.button,
+            Cn.ifTrue(CategoryStyles.buttonNotSelected, !isSelected),
+          ])}
+          key=category>
+          {React.string(label)}
+        </Button>;
+      } else {
+        React.null;
+      };
 
     let selectCategories =
       Belt.Array.concatMany([|
@@ -342,9 +359,11 @@ module CategoryButtons = {
         <option value=""> {React.string("-- Other Categories")} </option>
         {selectCategories
          ->Belt.Array.mapU((. category) =>
-             <option value=category key=category>
-               {React.string(Utils.capitalizeFirstLetter(category))}
-             </option>
+             shouldRenderCategory(category)
+               ? <option value=category key=category>
+                   {React.string(Utils.capitalizeFirstLetter(category))}
+                 </option>
+               : React.null
            )
          ->React.array}
       </select>

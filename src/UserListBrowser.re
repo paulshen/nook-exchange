@@ -15,7 +15,7 @@ module Styles = {
   let body =
     style([
       padding(px(32)),
-      backgroundColor(hex("3aa56340")),
+      backgroundColor(hex("b0dec1c0")),
       position(relative),
       media("(max-width: 640px)", [padding(px(16))]),
     ]);

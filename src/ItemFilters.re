@@ -22,6 +22,8 @@ module Styles = {
       height(px(35)),
       width(px(180)),
     ]);
+  let inputWithValue =
+    style([boxShadow(Shadow.box(~spread=px(2), hex("3aa56380")))]);
   let clearFilters =
     style([
       alignSelf(flexStart),
@@ -404,7 +406,11 @@ module UserCategorySelector = {
           onChange({...filters, text: "", category: Some(value)});
         };
       }}
-      className={Cn.make([Styles.select, CategoryStyles.select])}>
+      className={Cn.make([
+        Styles.select,
+        CategoryStyles.select,
+        Cn.ifTrue(Styles.inputWithValue, filters.category != None),
+      ])}>
       <option value=""> {React.string("All categories")} </option>
       {Item.validCategoryStrings
        ->Belt.Array.mapU((. category) =>
@@ -464,6 +470,7 @@ let make = (~filters, ~onChange, ~userItemIds: option(array(string))=?, ()) => {
       type_="text"
       ref={ReactDOMRe.Ref.domRef(inputTextRef)}
       placeholder="Search.. Esc to clear"
+      defaultValue={filters.text}
       onChange={e => {
         let value = ReactEvent.Form.target(e)##value;
         switch (React.Ref.current(updateTextTimeoutRef)) {
@@ -484,7 +491,10 @@ let make = (~filters, ~onChange, ~userItemIds: option(array(string))=?, ()) => {
           ),
         );
       }}
-      className=Styles.textInput
+      className={Cn.make([
+        Styles.textInput,
+        Cn.ifTrue(Styles.inputWithValue, filters.text != ""),
+      ])}
     />
     {switch (userItemIds) {
      | Some(userItemIds) =>
@@ -512,7 +522,10 @@ let make = (~filters, ~onChange, ~userItemIds: option(array(string))=?, ()) => {
             },
         });
       }}
-      className=Styles.select>
+      className={Cn.make([
+        Styles.select,
+        Cn.ifTrue(Styles.inputWithValue, filters.mask != None),
+      ])}>
       <option value="none"> {React.string("No Filter")} </option>
       <option value="orderable"> {React.string("Orderable")} </option>
       <option value="has-recipe"> {React.string("Has Recipe")} </option>

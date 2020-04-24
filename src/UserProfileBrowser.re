@@ -61,7 +61,14 @@ module Styles = {
       marginRight(px(-8)),
       media("(max-width: 640px)", [justifyContent(center)]),
     ]);
-  let metaIcons = style([opacity(0.), transition(~duration=200, "all")]);
+  let metaIcons =
+    style([
+      position(absolute),
+      top(px(6)),
+      left(px(6)),
+      opacity(0.),
+      transition(~duration=200, "all"),
+    ]);
   let card =
     style([
       backgroundColor(hex("fffffff0")),
@@ -108,6 +115,20 @@ module Styles = {
       padding3(~top=px(8), ~bottom=zero, ~h=px(4)),
     ]);
   let removeButton = style([top(px(9)), bottom(initial)]);
+  let topRightButton =
+    style([
+      position(absolute),
+      top(px(8)),
+      right(px(8)),
+      fontSize(px(12)),
+      cursor(pointer),
+      borderWidth(zero),
+      backgroundColor(transparent),
+      boxSizing(borderBox),
+      width(px(20)),
+      height(px(20)),
+      padding(zero),
+    ]);
   let cardMini = style([position(relative)]);
   let cardMiniImage =
     style([display(block), width(px(64)), height(px(64))]);
@@ -153,6 +174,7 @@ module UserItemCard = {
   let make =
       (~itemId, ~variation, ~userItem: User.item, ~editable, ~showRecipe) => {
     let item = Item.getItem(~itemId);
+    let viewerItem = UserStore.useItem(~itemId, ~variation);
     <div className={Cn.make([Styles.card])}>
       <div className=ItemCard.Styles.body>
         <div
@@ -186,7 +208,7 @@ module UserItemCard = {
          | _ => React.null
          }}
       </div>
-      <div className={Cn.make([ItemCard.Styles.metaIcons, Styles.metaIcons])}>
+      <div className=Styles.metaIcons>
         {switch (item.recipe) {
          | Some(recipe) => <ItemCard.RecipeIcon recipe />
          | None => React.null
@@ -212,15 +234,36 @@ module UserItemCard = {
                {React.string({j|❌|j})}
              </button>
            </>
-         : (
-           if (userItem.note->Js.String.length > 0) {
-             <div className=Styles.userNote>
-               {Emoji.parseText(userItem.note)}
-             </div>;
-           } else {
-             React.null;
-           }
-         )}
+         : <>
+             {if (userItem.note->Js.String.length > 0) {
+                <div className=Styles.userNote>
+                  {Emoji.parseText(userItem.note)}
+                </div>;
+              } else {
+                React.null;
+              }}
+             {switch (viewerItem) {
+              | Some(viewerItem) =>
+                <ReactAtmosphere.Tooltip
+                  text={React.string(
+                    "In your " ++ User.itemStatusToString(viewerItem.status),
+                  )}>
+                  {(
+                     ({onMouseEnter, onMouseLeave, ref}) =>
+                       <button
+                         onMouseEnter
+                         onMouseLeave
+                         className=Styles.topRightButton
+                         ref={ReactDOMRe.Ref.domRef(ref)}>
+                         {React.string(
+                            User.itemStatusToEmoji(viewerItem.status),
+                          )}
+                       </button>
+                   )}
+                </ReactAtmosphere.Tooltip>
+              | None => React.null
+              }}
+           </>}
     </div>;
   };
 };

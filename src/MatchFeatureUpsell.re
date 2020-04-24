@@ -1,5 +1,5 @@
 module PersistConfig = {
-  let key = "dismiss_match_upsell";
+  let key = "dismiss_match_list_notice";
   let value = ref(Dom.Storage.localStorage |> Dom.Storage.getItem(key));
   let dismiss = () => {
     let nowString = Js.Date.now()->Js.Float.toString;
@@ -45,7 +45,7 @@ module Component = {
   let make = (~username, ~showLogin, ~onDismiss) => {
     React.useEffect0(() => {
       Analytics.Amplitude.logEventWithProperties(
-        ~eventName="Match Upsell Shown",
+        ~eventName="Match List Notice Shown",
         ~eventProperties={"username": username},
       );
       None;
@@ -65,7 +65,7 @@ module Component = {
             ReactEvent.Mouse.preventDefault(e);
             onDismiss();
             Analytics.Amplitude.logEventWithProperties(
-              ~eventName="Match Upsell Dismissed",
+              ~eventName="Match List Notice Dismissed",
               ~eventProperties={"username": username},
             );
           }}
@@ -77,7 +77,7 @@ module Component = {
             showLogin();
             onDismiss();
             Analytics.Amplitude.logEventWithProperties(
-              ~eventName="Match Upsell Accepted",
+              ~eventName="Match List Notice Accepted",
               ~eventProperties={"username": username},
             );
           }}
@@ -89,6 +89,28 @@ module Component = {
   };
 };
 
+module WrappedComponent = {
+  [@react.component]
+  let make = (~username, ~showLogin, ~onDismiss) => {
+    let bucketId =
+      Experiment.getBucketIdForExperiment(
+        ~experimentId=Experiment.ExperimentIds.matchListNotice,
+      );
+    React.useEffect0(() => {
+      Experiment.trigger(
+        ~experimentId=Experiment.ExperimentIds.matchListNotice,
+        ~bucketId,
+      );
+      None;
+    });
+    if (bucketId === "1") {
+      <Component username showLogin onDismiss />;
+    } else {
+      React.null;
+    };
+  };
+};
+
 [@react.component]
 let make = (~username, ~showLogin) => {
   let userState = UserStore.useStore();
@@ -96,7 +118,7 @@ let make = (~username, ~showLogin) => {
     React.useState(() => PersistConfig.value^ !== None);
   switch (dismissed, userState) {
   | (false, NotLoggedIn) =>
-    <Component
+    <WrappedComponent
       username
       showLogin
       onDismiss={() => {

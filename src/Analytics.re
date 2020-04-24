@@ -16,6 +16,8 @@ module Amplitude = {
     external getIdentify: unit => identify = "Identify";
     [@bs.send]
     external identifySet: (identify, string, string) => identify = "set";
+    [@bs.send]
+    external identifyAppend: (identify, string, string) => identify = "append";
 
     [@bs.send] external identify: (t, identify) => unit = "identify";
   };
@@ -51,6 +53,13 @@ module Amplitude = {
   let setUsername = (~username) => {
     let identifyInstance =
       API.getIdentify()->API.identifySet("username", username);
+    getInstance()->API.identify(identifyInstance);
+  };
+
+  let addExperimentBucket = (~experimentId, ~bucketId) => {
+    let identifyInstance =
+      API.getIdentify()
+      ->API.identifyAppend("experiments", experimentId ++ "__" ++ bucketId);
     getInstance()->API.identify(identifyInstance);
   };
 };

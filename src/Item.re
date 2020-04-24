@@ -176,14 +176,7 @@ let getItem = (~itemId) =>
 exception UnexpectedVersion(string);
 let getImageUrl = (~item, ~variant) => {
   Constants.cdnUrl
-  ++ (
-    switch (item.version) {
-    | Some("1.2.0") => "/items"
-    | None => "/images/" ++ item.category
-    | Some(v) => raise(UnexpectedVersion(v))
-    }
-  )
-  ++ "/"
+  ++ "/items/"
   ++ (
     switch (item.image) {
     | Base(base) =>

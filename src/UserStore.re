@@ -113,14 +113,16 @@ let setItem = (~itemId: string, ~variation: int, ~item: User.item) => {
   api.dispatch(UpdateUser(updatedUser));
   let userItemJson = User.itemToJson(item);
   let item = Item.getItem(~itemId);
-  Analytics.Amplitude.logEventWithProperties(
-    ~eventName="Item Updated",
-    ~eventProperties={
-      "itemId": item.id,
-      "variant": variation,
-      "data": userItemJson,
-    },
-  );
+  if (updatedUser.items->Js.Dict.keys->Js.Array.length < 50) {
+    Analytics.Amplitude.logEventWithProperties(
+      ~eventName="Item Updated",
+      ~eventProperties={
+        "itemId": item.id,
+        "variant": variation,
+        "data": userItemJson,
+      },
+    );
+  };
   {
     let url =
       Constants.apiUrl
@@ -171,10 +173,12 @@ let removeItem = (~itemId, ~variation) => {
     };
     api.dispatch(UpdateUser(updatedUser));
     let item = Item.getItem(~itemId);
-    Analytics.Amplitude.logEventWithProperties(
-      ~eventName="Item Removed",
-      ~eventProperties={"itemId": item.id, "variant": variation},
-    );
+    if (updatedUser.items->Js.Dict.keys->Js.Array.length < 50) {
+      Analytics.Amplitude.logEventWithProperties(
+        ~eventName="Item Removed",
+        ~eventProperties={"itemId": item.id, "variant": variation},
+      );
+    };
     {
       let url =
         Constants.apiUrl

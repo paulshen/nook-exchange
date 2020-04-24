@@ -181,16 +181,8 @@ let make =
         ),
       [|url.search|],
     );
+  let numFiltersChangeLogged = React.useRef(0);
   let setFilters = (filters: ItemFilters.t) => {
-    Analytics.Amplitude.logEventWithProperties(
-      ~eventName="Filters Changed",
-      ~eventProperties={
-        "filterText": filters.text,
-        "filterMask": filters.mask,
-        "filterCategory": filters.category,
-        "filterSort": filters.sort,
-      },
-    );
     let urlSearchParams =
       Webapi.Url.URLSearchParams.makeWithArray(
         ItemFilters.serialize(
@@ -200,6 +192,21 @@ let make =
         ),
       );
     ReasonReactRouter.push(getUrl(~url, ~urlSearchParams));
+    if (React.Ref.current(numFiltersChangeLogged) < 5) {
+      Analytics.Amplitude.logEventWithProperties(
+        ~eventName="Filters Changed",
+        ~eventProperties={
+          "filterText": filters.text,
+          "filterMask": filters.mask,
+          "filterCategory": filters.category,
+          "filterSort": filters.sort,
+        },
+      );
+      React.Ref.setCurrent(
+        numFiltersChangeLogged,
+        React.Ref.current(numFiltersChangeLogged) + 1,
+      );
+    };
   };
   let setPageOffset = f => {
     let nextPageOffset = f(pageOffset);

@@ -401,6 +401,7 @@ let make =
                    itemId
                    variation
                    userItem
+                   listStatus
                    editable=me
                    showRecipe=showRecipes
                    key={itemId ++ string_of_int(variation)}

@@ -69,6 +69,21 @@ module Styles = {
       opacity(0.),
       transition(~duration=200, "all"),
     ]);
+  let topRightIcon =
+    style([
+      position(absolute),
+      top(px(7)),
+      right(px(10)),
+      fontSize(px(13)),
+      boxSizing(borderBox),
+      cursor(`default),
+      width(px(20)),
+      height(px(20)),
+      textAlign(center),
+      opacity(0.5),
+      transition(~duration=200, "all"),
+    ]);
+  let topRightIconSelected = style([opacity(1.)]);
   let card =
     style([
       backgroundColor(hex("fffffff0")),
@@ -83,7 +98,10 @@ module Styles = {
       width(px(160)),
       transition(~duration=200, "all"),
       media("(max-width: 430px)", [width(pct(100.)), marginRight(zero)]),
-      hover([selector("& ." ++ metaIcons, [opacity(1.)])]),
+      hover([
+        selector("& ." ++ metaIcons, [opacity(1.)]),
+        selector("& ." ++ topRightIcon, [opacity(1.)]),
+      ]),
     ]);
   let cardSeeAllLinkIcon = style([opacity(0.8), top(px(-1))]);
   let cardSeeAll =
@@ -115,17 +133,6 @@ module Styles = {
       padding3(~top=px(8), ~bottom=zero, ~h=px(4)),
     ]);
   let removeButton = style([top(px(9)), bottom(initial)]);
-  let topRightIcon =
-    style([
-      position(absolute),
-      top(px(8)),
-      right(px(10)),
-      fontSize(px(12)),
-      boxSizing(borderBox),
-      cursor(`default),
-      width(px(20)),
-      height(px(20)),
-    ]);
   let cardMini = style([position(relative)]);
   let cardMiniImage =
     style([display(block), width(px(64)), height(px(64))]);
@@ -169,7 +176,14 @@ open Belt;
 module UserItemCard = {
   [@react.component]
   let make =
-      (~itemId, ~variation, ~userItem: User.item, ~editable, ~showRecipe) => {
+      (
+        ~itemId,
+        ~variation,
+        ~userItem: User.item,
+        ~listStatus,
+        ~editable,
+        ~showRecipe,
+      ) => {
     let item = Item.getItem(~itemId);
     let viewerItem = UserStore.useItem(~itemId, ~variation);
     <div className={Cn.make([Styles.card])}>
@@ -250,7 +264,21 @@ module UserItemCard = {
                        <div
                          onMouseEnter
                          onMouseLeave
-                         className=Styles.topRightIcon
+                         className={Cn.make([
+                           Styles.topRightIcon,
+                           Cn.ifTrue(
+                             Styles.topRightIconSelected,
+                             User.(
+                               switch (listStatus, viewerItem.status) {
+                               | (ForTrade, Wishlist)
+                               | (CanCraft, Wishlist)
+                               | (Wishlist, ForTrade)
+                               | (Wishlist, CanCraft) => true
+                               | _ => false
+                               }
+                             ),
+                           ),
+                         ])}
                          ref={ReactDOMRe.Ref.domRef(ref)}>
                          {React.string(
                             User.itemStatusToEmoji(viewerItem.status),
@@ -442,6 +470,7 @@ module Section = {
                    variation
                    userItem
                    editable
+                   listStatus=status
                    showRecipe=showRecipes
                    key={itemId ++ string_of_int(variation)}
                  />

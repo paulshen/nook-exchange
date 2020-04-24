@@ -23,12 +23,19 @@ module Styles = {
   let root =
     style([
       backgroundColor(hex("ffffff")),
-      padding2(~v=px(32), ~h=zero),
+      padding2(~v=px(32), ~h=px(12)),
       borderRadius(px(4)),
       position(relative),
       maxWidth(px(448)),
+      boxSizing(borderBox),
       width(pct(90.)),
       boxShadow(Shadow.box(~spread=px(12), rgba(0, 0, 0, 0.1))),
+      overflow(auto),
+      maxHeight(vh(100.)),
+      media(
+        "(max-width: 540px)",
+        [paddingTop(px(24)), paddingBottom(px(24))],
+      ),
     ]);
   let body = style([maxWidth(px(320)), margin2(~v=zero, ~h=auto)]);
   let input =

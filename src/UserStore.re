@@ -1,40 +1,58 @@
 open Belt;
 
-type state = option(User.t);
+type state =
+  | Loading
+  | NotLoggedIn
+  | LoggedIn(User.t);
 type action =
   | Login(User.t)
   | UpdateUser(User.t)
-  | Logout;
+  | Logout
+  | FetchMeFailed;
 
 let api =
-  Restorative.createStore(None, (state, action) => {
+  Restorative.createStore(Loading, (state, action) => {
     switch (action) {
-    | Login(user) => Some(user)
-    | UpdateUser(user) => Some(user)
-    | Logout => None
+    | Login(user) => LoggedIn(user)
+    | UpdateUser(user) => LoggedIn(user)
+    | Logout => NotLoggedIn
+    | FetchMeFailed => NotLoggedIn
     }
   });
 
-let useMe = () => api.useStore();
+let useStore = api.useStore;
+let useMe = () =>
+  switch (api.useStore()) {
+  | LoggedIn(user) => Some(user)
+  | _ => None
+  };
 let useItem = (~itemId, ~variation) => {
   let selector =
     React.useCallback2(
       (state: state) => {
-        Option.flatMap(state, user =>
+        switch (state) {
+        | LoggedIn(user) =>
           user.items->Js.Dict.get(User.getItemKey(~itemId, ~variation))
-        )
+        | _ => None
+        }
       },
       (itemId, variation),
     );
   api.useStoreWithSelector(selector, ());
 };
 let getItem = (~itemId, ~variation) => {
-  Option.flatMap(api.getState(), user =>
+  switch (api.getState()) {
+  | LoggedIn(user) =>
     user.items->Js.Dict.get(User.getItemKey(~itemId, ~variation))
-  );
+  | _ => None
+  };
 };
 
-let isLoggedIn = () => api.getState() != None;
+let isLoggedIn = () =>
+  switch (api.getState()) {
+  | LoggedIn(_) => true
+  | _ => false
+  };
 
 let sessionId =
   ref(Dom.Storage.localStorage |> Dom.Storage.getItem("sessionId"));
@@ -76,8 +94,14 @@ let handleServerResponse = (url, responseResult) =>
     );
   };
 
+exception Unexpected;
+let getUserExn = () =>
+  switch (api.getState()) {
+  | LoggedIn(user) => user
+  | _ => raise(Unexpected)
+  };
 let setItem = (~itemId: string, ~variation: int, ~item: User.item) => {
-  let user = Option.getExn(api.getState());
+  let user = getUserExn();
   let updatedUser = {
     ...user,
     items: {
@@ -134,7 +158,7 @@ let setItem = (~itemId: string, ~variation: int, ~item: User.item) => {
 };
 
 let removeItem = (~itemId, ~variation) => {
-  let user = Option.getExn(api.getState());
+  let user = getUserExn();
   let key = User.getItemKey(~itemId, ~variation);
   if (user.items->Js.Dict.get(key)->Option.isSome) {
     let updatedUser = {
@@ -183,7 +207,7 @@ let removeItem = (~itemId, ~variation) => {
 };
 
 let updateProfileText = (~profileText) => {
-  let user = Option.getExn(api.getState());
+  let user = getUserExn();
   let updatedUser = {...user, profileText};
   api.dispatch(UpdateUser(updatedUser));
   Analytics.Amplitude.logEventWithProperties(
@@ -375,7 +399,9 @@ let init = () => {
       api.dispatch(Login(user));
       Analytics.Amplitude.setUserId(~userId=Some(user.id));
       Promise.resolved();
-    | _ => Promise.resolved()
+    | _ =>
+      api.dispatch(FetchMeFailed);
+      Promise.resolved();
     };
   }
   |> ignore;

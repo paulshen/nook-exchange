@@ -37,7 +37,7 @@ module Styles = {
 };
 
 [@react.component]
-let make = (~username, ~urlRest, ~url: ReasonReactRouter.url) => {
+let make = (~username, ~urlRest, ~url: ReasonReactRouter.url, ~showLogin) => {
   let listStatus =
     switch (urlRest) {
     | [url] => User.urlToItemStatus(url)
@@ -132,5 +132,6 @@ let make = (~username, ~urlRest, ~url: ReasonReactRouter.url) => {
        </div>
      | None => React.null
      }}
+    <MatchFeatureUpsell username showLogin />
   </div>;
 };

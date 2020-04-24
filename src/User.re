@@ -11,10 +11,10 @@ let itemStatusToUrl = itemStatus =>
   };
 let urlToItemStatus = url =>
   switch (url) {
-  | "for-trade" => ForTrade
-  | "can-craft" => CanCraft
-  | "wishlist"
-  | _ => Wishlist
+  | "for-trade" => Some(ForTrade)
+  | "can-craft" => Some(CanCraft)
+  | "wishlist" => Some(Wishlist)
+  | _ => None
   };
 let itemStatusToEmoji = itemStatus => {
   switch (itemStatus) {

@@ -181,6 +181,11 @@ module ProfileTextarea = {
 
 [@react.component]
 let make = (~user: User.t, ~urlRest, ~url) => {
+  let listStatus =
+    switch (urlRest) {
+    | [url] => User.urlToItemStatus(url)
+    | _ => None
+    };
   <div>
     <div className=Styles.username> {React.string(user.username)} </div>
     <div className=Styles.userBody>
@@ -192,11 +197,9 @@ let make = (~user: User.t, ~urlRest, ~url) => {
         </Link>
       </div>
     </div>
-    {switch (urlRest) {
-     | ["wishlist" as list]
-     | ["for-trade" as list]
-     | ["can-craft" as list] => <UserListBrowser user list url me=true />
-     | _ =>
+    {switch (listStatus) {
+     | Some(listStatus) => <UserListBrowser user listStatus url me=true />
+     | None =>
        if (user.items->Js.Dict.keys->Js.Array.length > 0) {
          <UserProfileBrowser
            username={user.username}

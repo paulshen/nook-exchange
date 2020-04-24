@@ -28,6 +28,11 @@ let useItem = (~itemId, ~variation) => {
     );
   api.useStoreWithSelector(selector, ());
 };
+let getItem = (~itemId, ~variation) => {
+  Option.flatMap(api.getState(), user =>
+    user.items->Js.Dict.get(User.getItemKey(~itemId, ~variation))
+  );
+};
 
 let isLoggedIn = () => api.getState() != None;
 

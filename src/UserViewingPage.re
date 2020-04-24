@@ -38,6 +38,11 @@ module Styles = {
 
 [@react.component]
 let make = (~username, ~urlRest, ~url: ReasonReactRouter.url) => {
+  let listStatus =
+    switch (urlRest) {
+    | [url] => User.urlToItemStatus(url)
+    | _ => None
+    };
   let (user, setUser) = React.useState(() => None);
   let isMountedRef = React.useRef(true);
   React.useEffect0(() => {
@@ -101,11 +106,9 @@ let make = (~username, ~urlRest, ~url: ReasonReactRouter.url) => {
               {Emoji.parseText(profileText)}
             </div>
           }}
-         {switch (urlRest) {
-          | ["wishlist" as list]
-          | ["for-trade" as list]
-          | ["can-craft" as list] => <UserListBrowser user list url />
-          | _ =>
+         {switch (listStatus) {
+          | Some(listStatus) => <UserListBrowser user listStatus url />
+          | None =>
             if (user.items->Js.Dict.keys->Js.Array.length > 0) {
               <UserProfileBrowser
                 username

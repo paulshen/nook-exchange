@@ -115,19 +115,16 @@ module Styles = {
       padding3(~top=px(8), ~bottom=zero, ~h=px(4)),
     ]);
   let removeButton = style([top(px(9)), bottom(initial)]);
-  let topRightButton =
+  let topRightIcon =
     style([
       position(absolute),
       top(px(8)),
-      right(px(8)),
+      right(px(10)),
       fontSize(px(12)),
-      cursor(pointer),
-      borderWidth(zero),
-      backgroundColor(transparent),
       boxSizing(borderBox),
+      cursor(`default),
       width(px(20)),
       height(px(20)),
-      padding(zero),
     ]);
   let cardMini = style([position(relative)]);
   let cardMiniImage =
@@ -250,15 +247,15 @@ module UserItemCard = {
                   )}>
                   {(
                      ({onMouseEnter, onMouseLeave, ref}) =>
-                       <button
+                       <div
                          onMouseEnter
                          onMouseLeave
-                         className=Styles.topRightButton
+                         className=Styles.topRightIcon
                          ref={ReactDOMRe.Ref.domRef(ref)}>
                          {React.string(
                             User.itemStatusToEmoji(viewerItem.status),
                           )}
-                       </button>
+                       </div>
                    )}
                 </ReactAtmosphere.Tooltip>
               | None => React.null
@@ -331,10 +328,23 @@ module Section = {
     let filteredItems =
       React.useMemo1(
         () => {
-          let sortFn = ItemFilters.getSort(~sort=ItemFilters.Category);
+          let sortFn =
+            ItemFilters.getUserItemSort(
+              ~prioritizeViewerStatuses=?
+                !editable
+                  ? Some(
+                      switch (status) {
+                      | Wishlist => [|User.ForTrade, User.CanCraft|]
+                      | ForTrade
+                      | CanCraft => [|User.Wishlist|]
+                      },
+                    )
+                  : None,
+              ~sort=ItemFilters.UserDefault,
+            );
           userItems
-          |> Js.Array.sortInPlaceWith((((aId, _), _), ((bId, _), _)) =>
-               sortFn(Item.getItem(~itemId=aId), Item.getItem(~itemId=bId))
+          |> Js.Array.sortInPlaceWith(((aItemKey, _), (bItemKey, _)) =>
+               sortFn(aItemKey, bItemKey)
              );
         },
         [|userItems|],

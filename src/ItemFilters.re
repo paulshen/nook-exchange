@@ -49,7 +49,7 @@ type sort =
   | ABC
   | SellPriceDesc
   | SellPriceAsc
-  | Category;
+  | UserDefault;
 
 type mask =
   | Orderable
@@ -64,7 +64,7 @@ type t = {
 
 let serialize = (~filters, ~defaultSort, ~pageOffset) => {
   let p = [||];
-  if (filters.sort != defaultSort) {
+  if (filters.sort != defaultSort && filters.sort != UserDefault) {
     p
     |> Js.Array.push((
          "s",
@@ -72,7 +72,7 @@ let serialize = (~filters, ~defaultSort, ~pageOffset) => {
          | ABC => "abc"
          | SellPriceDesc => "pd"
          | SellPriceAsc => "pa"
-         | Category => "cat"
+         | UserDefault => ""
          },
        ))
     |> ignore;
@@ -119,7 +119,6 @@ let fromUrlSearch = (~urlSearch, ~defaultSort) => {
         | Some("abc") => ABC
         | Some("pd") => SellPriceDesc
         | Some("pa") => SellPriceAsc
-        | Some("cat") => Category
         | _ => defaultSort
         },
     },
@@ -170,34 +169,90 @@ let doesItemMatchFilters = (~item: Item.t, ~filters: t) => {
   );
 };
 
+let compareArrays = (a, b) => {
+  let rv = ref(None);
+  let i = ref(0);
+  while (i^ < Js.Array.length(a) && rv^ === None) {
+    if (a[i^] < b[i^]) {
+      rv := Some(-1);
+    } else if (a[i^] > b[i^]) {
+      rv := Some(1);
+    };
+    i := i^ + 1;
+  };
+  Belt.Option.getWithDefault(rv^, 0);
+};
+
+let compareItemsABC = (a: Item.t, b: Item.t) =>
+  int_of_float(Js.String.localeCompare(b.name, a.name));
+let compareItemsSellPriceDesc = (a: Item.t, b: Item.t) =>
+  Belt.Option.getWithDefault(b.sellPrice, 0)
+  - Belt.Option.getWithDefault(a.sellPrice, 0);
+let compareItemsSellPriceAsc = (a: Item.t, b: Item.t) =>
+  Belt.Option.getWithDefault(a.sellPrice, 0)
+  - Belt.Option.getWithDefault(b.sellPrice, 0);
+exception UnexpectedSort(sort);
 let getSort = (~sort) => {
+  switch (sort) {
+  | ABC => compareItemsABC
+  | SellPriceDesc => compareItemsSellPriceDesc
+  | SellPriceAsc => compareItemsSellPriceAsc
+  | UserDefault => raise(UnexpectedSort(sort))
+  };
+};
+let getUserItemSort =
+    (~prioritizeViewerStatuses: array(User.itemStatus)=[||], ~sort) => {
   Belt.(
     switch (sort) {
     | ABC => (
-        (a: Item.t, b: Item.t) =>
-          int_of_float(Js.String.localeCompare(b.name, a.name))
+        ((aId, _), (bId, _)) =>
+          compareItemsABC(
+            Item.getItem(~itemId=aId),
+            Item.getItem(~itemId=bId),
+          )
       )
     | SellPriceDesc => (
-        (a: Item.t, b: Item.t) =>
-          Option.getWithDefault(b.sellPrice, 0)
-          - Option.getWithDefault(a.sellPrice, 0)
+        ((aId, _), (bId, _)) =>
+          compareItemsSellPriceDesc(
+            Item.getItem(~itemId=aId),
+            Item.getItem(~itemId=bId),
+          )
       )
     | SellPriceAsc => (
-        (a: Item.t, b: Item.t) =>
-          Option.getWithDefault(a.sellPrice, 0)
-          - Option.getWithDefault(b.sellPrice, 0)
+        ((aId, _), (bId, _)) =>
+          compareItemsSellPriceAsc(
+            Item.getItem(~itemId=aId),
+            Item.getItem(~itemId=bId),
+          )
       )
-    | Category => (
-        (a: Item.t, b: Item.t) => {
-          let categorySort =
-            (Item.categories |> Js.Array.indexOf(a.category))
-            - (Item.categories |> Js.Array.indexOf(b.category));
-          if (categorySort != 0) {
-            categorySort;
-          } else {
-            Option.getWithDefault(b.sellPrice, 0)
-            - Option.getWithDefault(a.sellPrice, 0);
-          };
+    | UserDefault => (
+        ((aId, aVariant), (bId, bVariant)) => {
+          let aItem = Item.getItem(~itemId=aId);
+          let bItem = Item.getItem(~itemId=bId);
+          compareArrays(
+            [|
+              switch (UserStore.getItem(~itemId=aId, ~variation=aVariant)) {
+              | Some(aUserItem) =>
+                prioritizeViewerStatuses
+                |> Js.Array.includes(aUserItem.status)
+                  ? (-1) : 0
+              | None => 0
+              },
+              Item.categories |> Js.Array.indexOf(aItem.category),
+              - Option.getWithDefault(aItem.sellPrice, 0),
+            |],
+            [|
+              switch (UserStore.getItem(~itemId=bId, ~variation=bVariant)) {
+              | Some(bUserItem) =>
+                prioritizeViewerStatuses
+                |> Js.Array.includes(bUserItem.status)
+                  ? (-1) : 0
+              | None => 0
+              },
+              Item.categories |> Js.Array.indexOf(bItem.category),
+              - Option.getWithDefault(bItem.sellPrice, 0),
+            |],
+          );
         }
       )
     }
@@ -426,7 +481,14 @@ module UserCategorySelector = {
 };
 
 [@react.component]
-let make = (~filters, ~onChange, ~userItemIds: option(array(string))=?, ()) => {
+let make =
+    (
+      ~filters,
+      ~onChange,
+      ~userItemIds: option(array(string))=?,
+      ~isViewingSelf=false,
+      (),
+    ) => {
   let inputTextRef = React.useRef(Js.Nullable.null);
   let updateTextTimeoutRef = React.useRef(None);
   React.useEffect1(
@@ -536,7 +598,7 @@ let make = (~filters, ~onChange, ~userItemIds: option(array(string))=?, ()) => {
         | ABC => "abc"
         | SellPriceDesc => "sell-desc"
         | SellPriceAsc => "sell-asc"
-        | Category => "category"
+        | UserDefault => "user-default"
         }
       }
       onChange={e => {
@@ -548,14 +610,16 @@ let make = (~filters, ~onChange, ~userItemIds: option(array(string))=?, ()) => {
             | "abc" => ABC
             | "sell-desc" => SellPriceDesc
             | "sell-asc" => SellPriceAsc
-            | "category" => Category
-            | _ => Category
+            | "user-default" => UserDefault
+            | _ => SellPriceDesc
             },
         });
       }}
       className={Cn.make([Styles.select, Styles.selectSort])}>
       {if (userItemIds !== None) {
-         <option value="category"> {React.string("Sort: Category")} </option>;
+         <option value="user-default">
+           {React.string(isViewingSelf ? "Sort: Category" : "Sort: Default")}
+         </option>;
        } else {
          React.null;
        }}

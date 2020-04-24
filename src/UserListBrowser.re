@@ -131,7 +131,7 @@ let userItemsHasOneWithStatus = (~userItems, ~status) => {
 let make =
     (
       ~user: User.t,
-      ~list: option(string)=?,
+      ~listStatus: User.itemStatus,
       ~url: ReasonReactRouter.url,
       ~me=false,
       (),
@@ -156,18 +156,6 @@ let make =
         userItemsHasOneWithStatus(~userItems=user.items, ~status=Wishlist),
       [|user|],
     );
-  let listStatus =
-    switch (list) {
-    | Some(list) => User.urlToItemStatus(list)
-    | None =>
-      if (hasForTrade) {
-        ForTrade;
-      } else if (hasCanCraft) {
-        CanCraft;
-      } else {
-        Wishlist;
-      }
-    };
   let userItems =
     React.useMemo2(
       () =>
@@ -189,7 +177,7 @@ let make =
       () =>
         ItemFilters.fromUrlSearch(
           ~urlSearch=url.search,
-          ~defaultSort=Category,
+          ~defaultSort=UserDefault,
         ),
       [|url.search|],
     );
@@ -205,7 +193,11 @@ let make =
     );
     let urlSearchParams =
       Webapi.Url.URLSearchParams.makeWithArray(
-        ItemFilters.serialize(~filters, ~defaultSort=Category, ~pageOffset=0),
+        ItemFilters.serialize(
+          ~filters,
+          ~defaultSort=UserDefault,
+          ~pageOffset=0,
+        ),
       );
     ReasonReactRouter.push(getUrl(~url, ~urlSearchParams));
   };
@@ -224,15 +216,28 @@ let make =
   let filteredItems =
     React.useMemo2(
       () => {
-        let sortFn = ItemFilters.getSort(~sort=filters.sort);
+        let sortFn =
+          ItemFilters.getUserItemSort(
+            ~prioritizeViewerStatuses=?
+              !me
+                ? Some(
+                    switch (listStatus) {
+                    | Wishlist => [|User.ForTrade, User.CanCraft|]
+                    | ForTrade
+                    | CanCraft => [|User.Wishlist|]
+                    },
+                  )
+                : None,
+            ~sort=filters.sort,
+          );
         userItems->Belt.Array.keep((((itemId, _), _)) =>
           ItemFilters.doesItemMatchFilters(
             ~item=Item.getItem(~itemId),
             ~filters,
           )
         )
-        |> Js.Array.sortInPlaceWith((((aId, _), _), ((bId, _), _)) =>
-             sortFn(Item.getItem(~itemId=aId), Item.getItem(~itemId=bId))
+        |> Js.Array.sortInPlaceWith(((aItemKey, _), (bItemKey, _)) =>
+             sortFn(aItemKey, bItemKey)
            );
       },
       (userItems, filters),
@@ -265,7 +270,7 @@ let make =
 
   let rootRef = React.useRef(Js.Nullable.null);
   React.useEffect0(() => {
-    if (TemporaryState.state^ == Some(FromProfileBrowser) && list != None) {
+    if (TemporaryState.state^ == Some(FromProfileBrowser)) {
       TemporaryState.state := None;
       let rootElement = Utils.getElementForDomRef(rootRef);
       open Webapi.Dom;
@@ -306,6 +311,7 @@ let make =
              <ItemFilters
                userItemIds
                filters
+               isViewingSelf=me
                onChange={filters => setFilters(filters)}
              />
              {!showMini

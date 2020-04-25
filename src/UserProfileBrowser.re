@@ -495,7 +495,10 @@ module Section = {
                        }
                        className={Cn.make([Styles.card, Styles.cardSeeAll])}
                        key="link">
-                       {React.string("See all")}
+                       {React.string(
+                          "See all "
+                          ++ string_of_int(Js.Array.length(userItems)),
+                        )}
                        <span
                          className={Cn.make([
                            Styles.sectionTitleLinkIcon,

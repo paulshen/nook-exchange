@@ -22,6 +22,7 @@ type t = {
   customizable: bool,
   category: string,
   version: option(string),
+  tags: option(array(string)),
 };
 
 let recipeIdRegex = [%bs.re {|/^(\d+)r$/|}];
@@ -145,6 +146,8 @@ let jsonToItem = (json: Js.Json.t) => {
     customizable: flags land (4 lor 8) !== 0,
     category: json |> field("category", string),
     version: json |> optional(field("v", string)),
+    tags:
+      json |> optional(field("tags", array(string)))
   };
 };
 

@@ -22,7 +22,7 @@ type t = {
   customizable: bool,
   category: string,
   version: option(string),
-  tags: option(array(string)),
+  tags: array(string),
 };
 
 let recipeIdRegex = [%bs.re {|/^(\d+)r$/|}];
@@ -147,7 +147,8 @@ let jsonToItem = (json: Js.Json.t) => {
     category: json |> field("category", string),
     version: json |> optional(field("v", string)),
     tags:
-      json |> optional(field("tags", array(string)))
+      (json |> optional(field("tags", array(string))))
+      ->Belt.Option.getWithDefault([||]),
   };
 };
 

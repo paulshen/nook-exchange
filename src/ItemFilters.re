@@ -149,15 +149,14 @@ let doesItemMatchFilters = (~item: Item.t, ~filters: t) => {
           |> Js.String.splitByRe([%bs.re {|/[\s-]+/|}])
         )
         ->Belt.Array.keepMap(x => x);
-      let tags = item.tags->Belt.Option.getWithDefault([||]);
       fragments->Belt.Array.every(fragment =>
-        Js.String.toLowerCase(item.name) |> Js.String.includes(fragment)
-      )
-      || fragments->Belt.Array.every(fragment =>
-           tags->Belt.Array.some(tag =>
-             Js.String.toLowerCase(tag) |> Js.String.includes(fragment)
-           )
-         );
+        Js.String.toLowerCase(item.name)
+        |> Js.String.includes(fragment)
+        || item.tags
+           ->Belt.Array.some(tag =>
+               Js.String.toLowerCase(tag) |> Js.String.includes(fragment)
+             )
+      );
     }
   )
   && (

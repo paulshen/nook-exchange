@@ -36,7 +36,7 @@ module Styles = {
       transition(~duration=200, "all"),
       hover([borderColor(hex("808080"))]),
     ]);
-  [@bs.module] external checkImage: string = "./assets/check.png";
+  [@bs.module "./assets/check.png"] external checkImage: string = "default";
   let catalogCheckboxChecked =
     style([
       borderColor(Colors.white),
@@ -375,9 +375,9 @@ let make = (~item: Item.t, ~showLogin) => {
             switch (userItem->Option.map(userItem => userItem.status)) {
             | None => "Add to catalog"
             | Some(Wishlist) => "Move to catalog from Wishlist"
-            | Some(InCatalog) => "Remove from catalog"
-            | Some(ForTrade) => "Remove from catalog and For Trade"
-            | Some(CanCraft) => "Remove from catalog and Can Craft"
+            | Some(ForTrade)
+            | Some(CanCraft)
+            | Some(InCatalog) => "In your catalog"
             },
           )}>
           {({onMouseEnter, onMouseLeave, ref}) =>

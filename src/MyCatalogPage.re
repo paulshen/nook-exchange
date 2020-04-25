@@ -116,9 +116,10 @@ module Catalog = {
              )
            )
          ->Belt.Array.mapU((. ((itemId, variation), userItem)) => {
-             <UserItemBrowser.UserItemCard
+             <UserProfileBrowser.UserItemCard
                itemId
                variation
+               listStatus=User.InCatalog
                userItem
                editable=true
                showRecipe=false

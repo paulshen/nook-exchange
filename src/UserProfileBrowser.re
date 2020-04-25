@@ -83,6 +83,19 @@ module Styles = {
       transition(~duration=200, "all"),
     ]);
   let topRightIconSelected = style([opacity(1.)]);
+  let catalogStatusButton =
+    style([
+      position(absolute),
+      top(px(4)),
+      right(px(26)),
+      backgroundColor(transparent),
+      borderWidth(zero),
+      fontSize(px(16)),
+      opacity(0.),
+      transition(~duration=200, "all"),
+      cursor(pointer),
+      hover([opacity(1.)]),
+    ]);
   let card =
     style([
       backgroundColor(hex("fffffff0")),
@@ -101,6 +114,7 @@ module Styles = {
       hover([
         selector("& ." ++ metaIcons, [opacity(1.)]),
         selector("& ." ++ topRightIcon, [opacity(1.)]),
+        selector("& ." ++ catalogStatusButton, [opacity(0.8)]),
       ]),
     ]);
   let cardSeeAllLinkIcon = style([opacity(0.8), top(px(-1))]);
@@ -169,19 +183,6 @@ module Styles = {
     ]);
   let recipe =
     style([marginTop(px(6)), textAlign(center), fontSize(px(12))]);
-  let catalogStatusButton =
-    style([
-      position(absolute),
-      top(px(4)),
-      right(px(26)),
-      backgroundColor(transparent),
-      borderWidth(zero),
-      fontSize(px(16)),
-      opacity(0.8),
-      transition(~duration=200, "all"),
-      cursor(pointer),
-      hover([opacity(1.)]),
-    ]);
 };
 
 open Belt;

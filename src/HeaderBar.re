@@ -38,8 +38,7 @@ module Styles = {
     ]);
   let nav = style([display(flexBox)]);
   let navLink = style([color(Colors.gray), marginLeft(px(16))]);
-  let requestFeatureLink =
-    style([media("(max-width: 800px)", [display(none)])]);
+  let twitterLink = style([]);
 };
 
 [@react.component]
@@ -68,8 +67,7 @@ let make = (~onLogin) => {
                {React.string(user.username)}
              </Link>
            </div>
-           <div
-             className={Cn.make([Styles.navLink, Styles.requestFeatureLink])}>
+           <div className={Cn.make([Styles.navLink, Styles.twitterLink])}>
              <a href="https://twitter.com/nookexchange" target="_blank">
                {React.string("Twitter")}
              </a>
@@ -86,16 +84,23 @@ let make = (~onLogin) => {
            </div>
          </>
        | None =>
-         <div className=Styles.navLink>
-           <a
-             href="#"
-             onClick={e => {
-               onLogin();
-               ReactEvent.Mouse.preventDefault(e);
-             }}>
-             {React.string("Login")}
-           </a>
-         </div>
+         <>
+           <div className=Styles.navLink>
+             <a
+               href="#"
+               onClick={e => {
+                 onLogin();
+                 ReactEvent.Mouse.preventDefault(e);
+               }}>
+               {React.string("Login")}
+             </a>
+           </div>
+           <div className=Styles.navLink>
+             <a href="https://twitter.com/nookexchange" target="_blank">
+               {React.string("Twitter")}
+             </a>
+           </div>
+         </>
        }}
     </div>
   </div>;

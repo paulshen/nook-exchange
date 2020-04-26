@@ -132,6 +132,5 @@ let make = (~username, ~urlRest, ~url: ReasonReactRouter.url, ~showLogin) => {
        </div>
      | None => React.null
      }}
-    <MatchFeatureUpsell username showLogin />
   </div>;
 };

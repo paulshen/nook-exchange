@@ -3759,10 +3759,10 @@ resolve@^1.12.0:
   dependencies:
     path-parse "^1.0.6"
 
-restorative@^0.3.2:
-  version "0.3.2"
-  resolved "https://registry.yarnpkg.com/restorative/-/restorative-0.3.2.tgz#5331a07bc77ec2fa0337ca18a57fdb1fc54b8860"
-  integrity sha512-kT6745RXgjfXMBU1R/ZyZvZ5IS9REWbcUp5/zQVgdqiqQAyyWoRyIovQXpd/X9eLONhiiVdvy7rast/IUZN7BA==
+restorative@0.4.0-beta.1:
+  version "0.4.0-beta.1"
+  resolved "https://registry.yarnpkg.com/restorative/-/restorative-0.4.0-beta.1.tgz#d18f229955bbcf0c4bfbce67cbaa0b95c4d3a18b"
+  integrity sha512-4wb8LPCP+oLcMf3yrOjbtPzFmDjzOSs4TWwWOrs3in6q7H0HjsRV72DJFZ0IBw/DnamveD+n/kW5idNaZ03rSg==
 
 ret@~0.1.10:
   version "0.1.15"

@@ -51,7 +51,6 @@ module Styles = {
     style([
       paddingTop(px(16)),
       marginRight(px(-16)),
-      media("(max-width: 430px)", [marginRight(zero)]),
       media("(max-width: 470px)", [paddingTop(zero)]),
     ]);
   let cardsMini =
@@ -95,9 +94,10 @@ module Styles = {
       marginBottom(px(16)),
       padding3(~top=px(24), ~bottom=px(8), ~h=px(8)),
       position(relative),
-      width(px(160)),
+      boxSizing(borderBox),
+      width(Calc.(pct(50.) - px(16))),
       transition(~duration=200, "all"),
-      media("(max-width: 430px)", [width(pct(100.)), marginRight(zero)]),
+      media("(min-width: 660px)", [width(px(176))]),
       hover([
         selector("& ." ++ metaIcons, [opacity(1.)]),
         selector("& ." ++ topRightIcon, [opacity(1.)]),
@@ -335,9 +335,9 @@ module Section = {
     } else if (viewportWidth >= 860) {
       12;
     } else if (viewportWidth >= 640) {
-      9;
+      12;
     } else {
-      6;
+      10;
     };
 
   [@react.component]

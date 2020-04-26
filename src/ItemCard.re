@@ -32,7 +32,8 @@ module Styles = {
       marginBottom(px(32)),
       padding3(~top=px(24), ~bottom=px(8), ~h=px(8)),
       position(relative),
-      width(px(240)),
+      boxSizing(borderBox),
+      width(px(256)),
       transition(~duration=200, "all"),
       hover([
         selector(
@@ -42,7 +43,11 @@ module Styles = {
       ]),
       media(
         "(max-width: 600px)",
-        [marginRight(px(16)), marginBottom(px(16)), width(px(160))],
+        [
+          marginRight(px(16)),
+          marginBottom(px(16)),
+          width(Calc.(pct(50.) - px(16))),
+        ],
       ),
       media("(max-width: 430px)", [width(pct(100.))]),
     ]);

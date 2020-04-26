@@ -101,30 +101,34 @@ let getUserExn = () =>
   | _ => raise(Unexpected)
   };
 let numItemUpdatesLogged = ref(0);
-let setItem = (~itemId: string, ~variation: int, ~item: User.item) => {
+let setItemStatus =
+    (~itemId: string, ~variation: int, ~status: User.itemStatus) => {
   let user = getUserExn();
-  let userItem = item;
+  let itemKey = User.getItemKey(~itemId, ~variation);
+  let userItem =
+    switch (user.items->Js.Dict.get(itemKey)) {
+    | Some(item) => {...item, status}
+    | None => {status, note: ""}
+    };
   let updatedUser = {
     ...user,
     items: {
       let clone = Utils.cloneJsDict(user.items);
-      clone->Js.Dict.set(User.getItemKey(~itemId, ~variation), userItem);
+      clone->Js.Dict.set(itemKey, userItem);
       clone;
     },
   };
   api.dispatch(UpdateUser(updatedUser));
-  let userItemJson = User.itemToJson(userItem);
   let item = Item.getItem(~itemId);
-  if (userItem.status == InCatalog
+  if (status == InCatalog
       || numItemUpdatesLogged^ < 5
       || updatedUser.items->Js.Dict.keys->Js.Array.length < 10) {
     Analytics.Amplitude.logEventWithProperties(
-      ~eventName="Item Updated",
+      ~eventName="Item Status Updated",
       ~eventProperties={
         "itemId": item.id,
         "variant": variation,
-        "status": User.itemStatusToJs(userItem.status),
-        "data": userItemJson,
+        "status": User.itemStatusToJs(status),
       },
     );
     numItemUpdatesLogged := numItemUpdatesLogged^ + 1;
@@ -132,10 +136,11 @@ let setItem = (~itemId: string, ~variation: int, ~item: User.item) => {
   {
     let url =
       Constants.apiUrl
-      ++ "/@me3/items/"
+      ++ "/@me4/items/"
       ++ item.id
       ++ "/"
-      ++ string_of_int(variation);
+      ++ string_of_int(variation)
+      ++ "/status";
     let%Repromise.Js responseResult =
       Fetch.fetchWithInit(
         url,
@@ -144,7 +149,75 @@ let setItem = (~itemId: string, ~variation: int, ~item: User.item) => {
           ~body=
             Fetch.BodyInit.make(
               Js.Json.stringify(
-                Json.Encode.object_([("data", userItemJson)]),
+                Json.Encode.object_([
+                  ("status", Json.Encode.int(User.itemStatusToJs(status))),
+                ]),
+              ),
+            ),
+          ~headers=
+            Fetch.HeadersInit.make({
+              "X-Client-Version": Constants.gitCommitRef,
+              "Content-Type": "application/json",
+              "Authorization":
+                "Bearer " ++ Option.getWithDefault(sessionId^, ""),
+            }),
+          ~credentials=Include,
+          ~mode=CORS,
+          (),
+        ),
+      );
+    handleServerResponse(url, responseResult);
+    Promise.resolved();
+  }
+  |> ignore;
+};
+
+let setItemNote = (~itemId: string, ~variation: int, ~note: string) => {
+  let user = getUserExn();
+  let itemKey = User.getItemKey(~itemId, ~variation);
+  let userItem = {
+    ...Belt.Option.getExn(user.items->Js.Dict.get(itemKey)),
+    note,
+  };
+  let updatedUser = {
+    ...user,
+    items: {
+      let clone = Utils.cloneJsDict(user.items);
+      clone->Js.Dict.set(itemKey, userItem);
+      clone;
+    },
+  };
+  api.dispatch(UpdateUser(updatedUser));
+  let item = Item.getItem(~itemId);
+  if (numItemUpdatesLogged^ < 5
+      || updatedUser.items->Js.Dict.keys->Js.Array.length < 10) {
+    Analytics.Amplitude.logEventWithProperties(
+      ~eventName="Item Note Updated",
+      ~eventProperties={
+        "itemId": item.id,
+        "variant": variation,
+        "note": note,
+      },
+    );
+    numItemUpdatesLogged := numItemUpdatesLogged^ + 1;
+  };
+  {
+    let url =
+      Constants.apiUrl
+      ++ "/@me4/items/"
+      ++ item.id
+      ++ "/"
+      ++ string_of_int(variation)
+      ++ "/note";
+    let%Repromise.Js responseResult =
+      Fetch.fetchWithInit(
+        url,
+        Fetch.RequestInit.make(
+          ~method_=Post,
+          ~body=
+            Fetch.BodyInit.make(
+              Js.Json.stringify(
+                Json.Encode.object_([("note", Json.Encode.string(note))]),
               ),
             ),
           ~headers=

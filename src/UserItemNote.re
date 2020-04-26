@@ -54,11 +54,7 @@ let make = (~itemId, ~variation, ~userItem: User.item) => {
            <Button
              small=true
              onClick={_ => {
-               UserStore.setItem(
-                 ~itemId,
-                 ~variation,
-                 ~item={...userItem, note: userItemNote},
-               )
+               UserStore.setItemNote(~itemId, ~variation, ~note=userItemNote)
              }}>
              {React.string("Save")}
            </Button>

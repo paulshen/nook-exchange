@@ -167,7 +167,12 @@ let make =
     {editable
        ? <>
            {!onCatalogPage
-              ? <UserItemNote itemId={item.id} variation userItem />
+              ? <UserItemNote
+                  itemId={item.id}
+                  variation
+                  userItem
+                  key={string_of_int(variation)}
+                />
               : React.null}
            <ReactAtmosphere.Tooltip text={React.string("Remove item")}>
              {({onMouseEnter, onMouseLeave, onFocus, onBlur, ref}) =>

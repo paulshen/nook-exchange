@@ -247,18 +247,7 @@ let renderStatusButton =
   <button
     onClick={_ =>
       if (UserStore.isLoggedIn()) {
-        UserStore.setItem(
-          ~itemId,
-          ~variation,
-          ~item={
-            status,
-            note:
-              switch (userItem) {
-              | Some(userItem) => userItem.note
-              | None => ""
-              },
-          },
-        );
+        UserStore.setItemStatus(~itemId, ~variation, ~status);
       } else {
         Option.map(showLogin, showLogin => showLogin()) |> ignore;
       }
@@ -419,15 +408,10 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
                       switch (status) {
                       | Some(status) =>
                         let updateItem = () => {
-                          let note =
-                            switch (userItem) {
-                            | Some(userItem) => userItem.note
-                            | None => ""
-                            };
-                          UserStore.setItem(
+                          UserStore.setItemStatus(
                             ~itemId=item.id,
                             ~variation,
-                            ~item={status, note},
+                            ~status,
                           );
                         };
                         if (Option.map(userItem, userItem => userItem.status)
@@ -459,7 +443,12 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
      | (Some(userItem), Some(ForTrade))
      | (Some(userItem), Some(CanCraft)) =>
        <>
-         <UserItemNote itemId={item.id} variation userItem />
+         <UserItemNote
+           itemId={item.id}
+           variation
+           userItem
+           key={string_of_int(variation)}
+         />
          <div className={Cn.make([Styles.bottomBar, Styles.bottomBarStatus])}>
            {React.string(
               {
@@ -486,11 +475,7 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
                };
              switch (status) {
              | Some(status) =>
-               UserStore.setItem(
-                 ~itemId=item.id,
-                 ~variation,
-                 ~item={status, note: userItem.note},
-               )
+               UserStore.setItemStatus(~itemId=item.id, ~variation, ~status)
              | None => UserStore.removeItem(~itemId=item.id, ~variation)
              };
            }}>

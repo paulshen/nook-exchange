@@ -166,6 +166,11 @@ let make = (~user: User.t) => {
            "This is the list of all items in your catalog, including your For Trade and Can Craft items.",
          )}
       </div>
+      <div>
+        {React.string(
+           "This view is only visible to you. Let us know if you want to share it!",
+         )}
+      </div>
     </div>
     <Catalog userItems=catalog />
   </div>;

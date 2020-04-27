@@ -84,7 +84,6 @@ module Styles = {
       display(flexBox),
       flexDirection(column),
       alignItems(center),
-      marginBottom(px(16)),
     ]);
   let name =
     style([
@@ -109,7 +108,12 @@ module Styles = {
       hover([opacity(1.)]),
     ]);
   let variation =
-    style([display(flexBox), flexWrap(wrap), justifyContent(center)]);
+    style([
+      display(flexBox),
+      flexWrap(wrap),
+      justifyContent(center),
+      marginBottom(px(8)),
+    ]);
   let variationImage =
     style([
       display(block),

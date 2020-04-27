@@ -86,15 +86,12 @@ module Styles = {
   let catalogStatusButton =
     style([
       position(absolute),
-      top(px(4)),
-      right(px(26)),
-      backgroundColor(transparent),
-      borderWidth(zero),
-      fontSize(px(16)),
-      opacity(0.),
+      top(px(8)),
+      left(px(8)),
+      fontSize(px(14)),
+      opacity(0.5),
+      cursor(`default),
       transition(~duration=200, "all"),
-      cursor(pointer),
-      hover([opacity(1.)]),
     ]);
   let card =
     style([
@@ -114,9 +111,10 @@ module Styles = {
       hover([
         selector("& ." ++ metaIcons, [opacity(1.)]),
         selector("& ." ++ topRightIcon, [opacity(1.)]),
-        selector("& ." ++ catalogStatusButton, [opacity(0.8)]),
+        selector("& ." ++ catalogStatusButton, [opacity(1.)]),
       ]),
     ]);
+  let cardOnCatalogPage = style([paddingBottom(px(16))]);
   let cardSeeAllLinkIcon = style([opacity(0.8), top(px(-1))]);
   let cardSeeAll =
     style([
@@ -143,7 +141,7 @@ module Styles = {
       borderTop(px(1), solid, hex("f0f0f0")),
       unsafe("alignSelf", "stretch"),
       lineHeight(px(18)),
-      marginTop(px(-8)),
+      marginTop(px(8)),
       padding3(~top=px(8), ~bottom=zero, ~h=px(4)),
     ]);
   let removeButton = style([top(px(9)), bottom(initial)]);
@@ -202,7 +200,11 @@ module UserItemCard = {
       ) => {
     let item = Item.getItem(~itemId);
     let viewerItem = UserStore.useItem(~itemId, ~variation);
-    <div className={Cn.make([Styles.card])}>
+    <div
+      className={Cn.make([
+        Styles.card,
+        Cn.ifTrue(Styles.cardOnCatalogPage, onCatalogPage),
+      ])}>
       <div className=ItemCard.Styles.body>
         <div
           className={Cn.make([
@@ -235,59 +237,52 @@ module UserItemCard = {
          | _ => React.null
          }}
       </div>
-      <div className=Styles.metaIcons>
-        {switch (item.recipe) {
-         | Some(recipe) => <ItemCard.RecipeIcon recipe />
-         | None => React.null
-         }}
-        {if (item.orderable) {
-           <ItemCard.OrderableIcon />;
-         } else {
-           React.null;
-         }}
-      </div>
+      {!onCatalogPage
+         ? <div className=Styles.metaIcons>
+             {switch (item.recipe) {
+              | Some(recipe) => <ItemCard.RecipeIcon recipe />
+              | None => React.null
+              }}
+             {if (item.orderable) {
+                <ItemCard.OrderableIcon />;
+              } else {
+                React.null;
+              }}
+           </div>
+         : (
+           switch (userItem.status) {
+           | CanCraft
+           | ForTrade =>
+             <ReactAtmosphere.Tooltip
+               text={React.string(
+                 "In "
+                 ++ (userItem.status == ForTrade ? "For Trade" : "Can Craft"),
+               )}
+               options={Obj.magic({"modifiers": None})}>
+               {(
+                  ({onMouseEnter, onMouseLeave, onFocus, onBlur, ref}) =>
+                    <div
+                      onMouseEnter
+                      onMouseLeave
+                      onFocus
+                      onBlur
+                      className=Styles.catalogStatusButton
+                      ref={ReactDOMRe.Ref.domRef(ref)}>
+                      {React.string(
+                         userItem.status == ForTrade ? {j|🤝|j} : {j|🔨|j},
+                       )}
+                    </div>
+                )}
+             </ReactAtmosphere.Tooltip>
+           | InCatalog => React.null
+           | Wishlist => raise(Constants.Uhoh)
+           }
+         )}
       {editable
          ? <>
-             {onCatalogPage
-                ? switch (userItem.status) {
-                  | CanCraft
-                  | ForTrade =>
-                    <ReactAtmosphere.Tooltip
-                      text={React.string(
-                        "Remove from "
-                        ++ (
-                          userItem.status == ForTrade
-                            ? "For Trade" : "Can Craft"
-                        ),
-                      )}
-                      options={Obj.magic({"modifiers": None})}>
-                      {(
-                         ({onMouseEnter, onMouseLeave, onFocus, onBlur, ref}) =>
-                           <button
-                             onMouseEnter
-                             onMouseLeave
-                             onClick={_ => {
-                               UserStore.setItem(
-                                 ~itemId=item.id,
-                                 ~variation,
-                                 ~item={...userItem, status: InCatalog},
-                               )
-                             }}
-                             onFocus
-                             onBlur
-                             className=Styles.catalogStatusButton
-                             ref={ReactDOMRe.Ref.domRef(ref)}>
-                             {React.string(
-                                userItem.status == ForTrade
-                                  ? {j|🤝|j} : {j|🔨|j},
-                              )}
-                           </button>
-                       )}
-                    </ReactAtmosphere.Tooltip>
-                  | InCatalog => React.null
-                  | Wishlist => raise(Constants.Uhoh)
-                  }
-                : <UserItemNote itemId={item.id} variation userItem />}
+             {!onCatalogPage
+                ? <UserItemNote itemId={item.id} variation userItem />
+                : React.null}
              <ReactAtmosphere.Tooltip
                text={React.string("Remove item")}
                options={Obj.magic({
@@ -312,7 +307,16 @@ module UserItemCard = {
                     onFocus
                     onBlur
                     onClick={_ => {
-                      UserStore.removeItem(~itemId=item.id, ~variation)
+                      switch (userItem.status) {
+                      | CanCraft
+                      | ForTrade =>
+                        DeleteFromCatalog.confirm(~onConfirm=() =>
+                          UserStore.removeItem(~itemId=item.id, ~variation)
+                        )
+                      | InCatalog =>
+                        UserStore.removeItem(~itemId=item.id, ~variation)
+                      | Wishlist => raise(Constants.Uhoh)
+                      }
                     }}
                     ref={ReactDOMRe.Ref.domRef(ref)}>
                     {React.string({j|❌|j})}

@@ -55,7 +55,7 @@ let make = (~item: Item.t, ~variation, ~className) => {
         Cn.ifTrue(Styles.ellipsisButtonOpen, showEllipsisMenu),
         className,
       ])}
-      onClick={_ => setShowEllipsisMenu(_ => true)}
+      onClick={_ => setShowEllipsisMenu(show => !show)}
       ref={ReactDOMRe.Ref.domRef(ellipsisButtonRef)}
     />
     {showEllipsisMenu
@@ -76,28 +76,43 @@ let make = (~item: Item.t, ~variation, ~className) => {
            }
            render={_renderArgs =>
              <div className=Styles.menu>
-               <button
-                 onClick={_ => {
-                   UserStore.setItemStatus(
-                     ~itemId=item.id,
-                     ~variation,
-                     ~status=ForTrade,
-                   )
-                 }}
-                 className=Styles.menuItem>
-                 {React.string("Move to For Trade")}
-               </button>
-               <button
-                 onClick={_ => {
-                   UserStore.setItemStatus(
-                     ~itemId=item.id,
-                     ~variation,
-                     ~status=CanCraft,
-                   )
-                 }}
-                 className=Styles.menuItem>
-                 {React.string("Move to Can Craft")}
-               </button>
+               {!item.isRecipe
+                  ? <button
+                      onClick={_ => {
+                        UserStore.setItemStatus(
+                          ~itemId=item.id,
+                          ~variation,
+                          ~status=ForTrade,
+                        )
+                      }}
+                      className=Styles.menuItem>
+                      {React.string("Move to For Trade")}
+                    </button>
+                  : React.null}
+               {item.recipe !== None
+                  ? <button
+                      onClick={_ =>
+                        if (item.isRecipe) {
+                          UserStore.setItemStatus(
+                            ~itemId=
+                              Item.getItemIdForRecipeId(~recipeId=item.id)
+                              ->Belt.Option.getExn,
+                            ~variation=0,
+                            ~status=CanCraft,
+                          );
+                          UserStore.removeItem(~itemId=item.id, ~variation);
+                        } else {
+                          UserStore.setItemStatus(
+                            ~itemId=item.id,
+                            ~variation,
+                            ~status=CanCraft,
+                          );
+                        }
+                      }
+                      className=Styles.menuItem>
+                      {React.string("Move to Can Craft")}
+                    </button>
+                  : React.null}
                {me.enableCatalogCheckbox
                   ? <button
                       onClick={_ => {
@@ -108,7 +123,10 @@ let make = (~item: Item.t, ~variation, ~className) => {
                         )
                       }}
                       className=Styles.menuItem>
-                      {React.string("Move to Catalog")}
+                      {React.string(
+                         item.isRecipe
+                           ? "Move DIY to Catalog" : "Move to Catalog",
+                       )}
                     </button>
                   : React.null}
                <button

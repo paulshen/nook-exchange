@@ -101,6 +101,7 @@ module Styles = {
       textAlign(center),
     ]);
   let mainImageWrapper = style([marginBottom(px(8)), position(relative)]);
+  let mainImageWrapperRecipe = style([marginBottom(px(16))]);
   let mainImage =
     style([display(block), height(px(128)), width(px(128))]);
   let recipeIcon =
@@ -289,7 +290,11 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
     ])}>
     <div className=Styles.body>
       <div className=Styles.name> {React.string(item.name)} </div>
-      <div className=Styles.mainImageWrapper>
+      <div
+        className={Cn.make([
+          Styles.mainImageWrapper,
+          Cn.ifTrue(Styles.mainImageWrapperRecipe, item.isRecipe),
+        ])}>
         <img
           src={Item.getImageUrl(~item, ~variant=variation)}
           className=Styles.mainImage

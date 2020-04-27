@@ -23,6 +23,8 @@ module Styles = {
       transition(~duration=200, "all"),
     ]);
   let topRightIconSelected = style([opacity(1.)]);
+  let wishlistEllipsisButton =
+    style([position(absolute), top(px(8)), right(px(8))]);
   let catalogStatusButton =
     style([
       position(absolute),
@@ -67,7 +69,13 @@ module Styles = {
       marginTop(px(8)),
       padding3(~top=px(8), ~bottom=zero, ~h=px(4)),
     ]);
-  let removeButton = style([top(px(8)), bottom(initial)]);
+  let removeButton =
+    style([
+      position(absolute),
+      top(px(10)),
+      right(px(10)),
+      selector("." ++ card ++ ":hover &", [opacity(0.8)]),
+    ]);
   let recipe =
     style([marginTop(px(6)), textAlign(center), fontSize(px(12))]);
 };
@@ -86,6 +94,7 @@ let make =
     ) => {
   let item = Item.getItem(~itemId);
   let viewerItem = UserStore.useItem(~itemId, ~variation);
+
   <div
     className={Cn.make([
       Styles.card,
@@ -160,7 +169,7 @@ let make =
                   </div>
               )}
            </ReactAtmosphere.Tooltip>
-         | InCatalog => React.null
+         | CatalogOnly => React.null
          | Wishlist => raise(Constants.Uhoh)
          }
        )}
@@ -174,37 +183,42 @@ let make =
                   key={string_of_int(variation)}
                 />
               : React.null}
-           <ReactAtmosphere.Tooltip text={React.string("Remove item")}>
-             {({onMouseEnter, onMouseLeave, onFocus, onBlur, ref}) =>
-                <button
-                  className={Cn.make([
-                    ItemCard.Styles.removeButton,
-                    Styles.removeButton,
-                  ])}
-                  onMouseEnter
-                  onMouseLeave
-                  onFocus
-                  onBlur
-                  onClick={_ =>
-                    if (onCatalogPage) {
-                      switch (userItem.status) {
-                      | CanCraft
-                      | ForTrade =>
-                        DeleteFromCatalog.confirm(~onConfirm=() =>
-                          UserStore.removeItem(~itemId=item.id, ~variation)
-                        )
-                      | InCatalog =>
-                        UserStore.removeItem(~itemId=item.id, ~variation)
-                      | Wishlist => raise(Constants.Uhoh)
-                      };
-                    } else {
-                      UserStore.removeItem(~itemId=item.id, ~variation);
-                    }
-                  }
-                  ref={ReactDOMRe.Ref.domRef(ref)}>
-                  {React.string({j|❌|j})}
-                </button>}
-           </ReactAtmosphere.Tooltip>
+           {userItem.status == Wishlist
+              ? <WishlistEllipsisButton
+                  item
+                  variation
+                  className=Styles.wishlistEllipsisButton
+                />
+              : <ReactAtmosphere.Tooltip text={React.string("Remove item")}>
+                  {({onMouseEnter, onMouseLeave, onFocus, onBlur, ref}) =>
+                     <RemoveButton
+                       className=Styles.removeButton
+                       onMouseEnter
+                       onMouseLeave
+                       onFocus
+                       onBlur
+                       onClick={_ =>
+                         if (onCatalogPage) {
+                           switch (userItem.status) {
+                           | CanCraft
+                           | ForTrade =>
+                             DeleteFromCatalog.confirm(~onConfirm=() =>
+                               UserStore.removeItem(
+                                 ~itemId=item.id,
+                                 ~variation,
+                               )
+                             )
+                           | CatalogOnly =>
+                             UserStore.removeItem(~itemId=item.id, ~variation)
+                           | Wishlist => raise(Constants.Uhoh)
+                           };
+                         } else {
+                           UserStore.removeItem(~itemId=item.id, ~variation);
+                         }
+                       }
+                       ref
+                     />}
+                </ReactAtmosphere.Tooltip>}
          </>
        : <>
            {if (userItem.note->Js.String.length > 0) {

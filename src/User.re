@@ -3,21 +3,21 @@ type itemStatus =
   | [@bs.as 1] Wishlist
   | [@bs.as 2] ForTrade
   | [@bs.as 3] CanCraft
-  | [@bs.as 4] InCatalog;
+  | [@bs.as 4] CatalogOnly;
 
 let itemStatusToUrl = itemStatus =>
   switch (itemStatus) {
   | Wishlist => "wishlist"
   | ForTrade => "for-trade"
   | CanCraft => "can-craft"
-  | InCatalog => "catalog"
+  | CatalogOnly => "catalog"
   };
 let urlToItemStatus = url =>
   switch (url) {
   | "for-trade" => Some(ForTrade)
   | "can-craft" => Some(CanCraft)
   | "wishlist" => Some(Wishlist)
-  | "catalog" => Some(InCatalog)
+  | "catalog" => Some(CatalogOnly)
   | _ => None
   };
 let itemStatusToEmoji = itemStatus => {
@@ -25,7 +25,7 @@ let itemStatusToEmoji = itemStatus => {
   | Wishlist => {j|🙏|j}
   | ForTrade => {j|🤝|j}
   | CanCraft => {j|🔨|j}
-  | InCatalog => {j|🔨|j}
+  | CatalogOnly => {j|🔨|j}
   };
 };
 let itemStatusToString = itemStatus =>
@@ -33,7 +33,7 @@ let itemStatusToString = itemStatus =>
   | Wishlist => "Wishlist"
   | ForTrade => "For Trade"
   | CanCraft => "Can Craft"
-  | InCatalog => "Catalog"
+  | CatalogOnly => "Catalog"
   };
 
 type item = {

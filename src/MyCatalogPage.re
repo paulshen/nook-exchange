@@ -179,6 +179,10 @@ module Loaded = {
                  onClick={e => {
                    ReactEvent.Mouse.preventDefault(e);
                    UserStore.toggleCatalogCheckboxSetting(~enabled=false);
+                   Analytics.Amplitude.logEventWithProperties(
+                     ~eventName="Catalog Checkbox Setting Toggled",
+                     ~eventProperties={"enabled": false},
+                   );
                  }}>
                  {React.string("Hide catalog checkboxes")}
                </a>
@@ -191,6 +195,10 @@ module Loaded = {
                  onClick={e => {
                    ReactEvent.Mouse.preventDefault(e);
                    UserStore.toggleCatalogCheckboxSetting(~enabled=true);
+                   Analytics.Amplitude.logEventWithProperties(
+                     ~eventName="Catalog Checkbox Setting Toggled",
+                     ~eventProperties={"enabled": true},
+                   );
                  }}>
                  {React.string("enable catalog checkboxes")}
                </a>

@@ -12,6 +12,10 @@ let confirm = (~onConfirm) =>
   if (Belt.Option.isSome(PersistConfig.value^)) {
     onConfirm();
   } else {
+    Analytics.Amplitude.logEventWithProperties(
+      ~eventName="Confirm Dialog Shown",
+      ~eventProperties={"id": "deleteFromCatalog"},
+    );
     ConfirmDialog.confirm(
       ~bodyText=
         "Removing an item from your catalog will also remove it from your For Trade and Can Craft lists. Do you want to continue?",
@@ -20,6 +24,10 @@ let confirm = (~onConfirm) =>
       ~onConfirm=() => {
         PersistConfig.confirm();
         onConfirm();
+        Analytics.Amplitude.logEventWithProperties(
+          ~eventName="Confirm Dialog Confirmed",
+          ~eventProperties={"id": "deleteFromCatalog"},
+        );
       },
     );
   };

@@ -12,6 +12,10 @@ let confirm = (~onConfirm) =>
   if (Belt.Option.isSome(PersistConfig.value^)) {
     onConfirm();
   } else {
+    Analytics.Amplitude.logEventWithProperties(
+      ~eventName="Confirm Dialog Shown",
+      ~eventProperties={"id": "wishlistToCatalog"},
+    );
     ConfirmDialog.confirm(
       ~bodyText=
         "Adding an item to your catalog will remove it from your Wishlist. Do you want to continue?",
@@ -20,6 +24,10 @@ let confirm = (~onConfirm) =>
       ~onConfirm=() => {
         PersistConfig.confirm();
         onConfirm();
+        Analytics.Amplitude.logEventWithProperties(
+          ~eventName="Confirm Dialog Confirmed",
+          ~eventProperties={"id": "wishlistToCatalog"},
+        );
       },
     );
   };

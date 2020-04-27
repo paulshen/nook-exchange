@@ -24,7 +24,12 @@ module Styles = {
       borderRadius(px(8)),
       media("(max-width: 512px)", [borderRadius(zero), padding(px(16))]),
     ]);
-  let userBodyParagraph = style([marginBottom(px(8))]);
+  let userBodyParagraph =
+    style([
+      marginBottom(px(12)),
+      whiteSpace(`preLine),
+      media("(max-width: 450px)", [whiteSpace(normal)]),
+    ]);
 };
 
 module Catalog = {
@@ -58,8 +63,27 @@ module Catalog = {
 
   let numResultsPerPage = 60;
 
+  let getNumResultsPerPage = (~viewportWidth) =>
+    if (viewportWidth >= 1620) {
+      40;
+    } else if (viewportWidth >= 1400) {
+      35;
+    } else if (viewportWidth >= 1200) {
+      30;
+    } else if (viewportWidth >= 1000) {
+      25;
+    } else if (viewportWidth >= 800) {
+      24;
+    } else if (viewportWidth >= 600) {
+      21;
+    } else {
+      20;
+    };
+
   [@react.component]
   let make = (~userItems: array(((string, int), User.item))) => {
+    let viewportWidth = Utils.useViewportWidth();
+    let numResultsPerPage = getNumResultsPerPage(~viewportWidth);
     let (filters, setFilters) =
       React.useState(() =>
         (
@@ -162,18 +186,16 @@ module Loaded = {
       <div className=Styles.userBody>
         <div className=Styles.userBodyParagraph>
           {React.string(
-             {j|You are getting a sneak preview of your catalog 🤫. This is a list of items in your For Trade and Can Craft. If you are a completionist, you can add items only to your catalog.|j},
+             {j|You are getting a sneak preview of your catalog 🤫. This is a list of items in your For Trade and Can Craft. You can also have catalog-only items.|j},
            )}
         </div>
         {user.enableCatalogCheckbox
            ? <div className=Styles.userBodyParagraph>
                {React.string(
-                  "Add catalog-only items using the checkboxes in the ",
+                  "Catalog checkboxes are enabled! Add items in the ",
                 )}
                <Link path="/"> {React.string("item browser")} </Link>
-               {React.string(
-                  ". Don't want to see catalog checkmarks anymore? ",
-                )}
+               {React.string(".\nDon't want to see checkmarks anymore? ")}
                <a
                  href="#"
                  onClick={e => {
@@ -189,7 +211,7 @@ module Loaded = {
                {React.string(".")}
              </div>
            : <div className=Styles.userBodyParagraph>
-               {React.string("To do so, ")}
+               {React.string("To add catalog-only items, ")}
                <a
                  href="#"
                  onClick={e => {
@@ -205,11 +227,10 @@ module Loaded = {
                {React.string(".")}
              </div>}
         <div>
-          {React.string("You cannot share this view with others. ")}
+          {React.string("Do you like it? How can it be better? ")}
           <a href="https://twitter.com/nookexchange" target="_blank">
-            {React.string("Let us know")}
+            {React.string("Let us know!")}
           </a>
-          {React.string(" if you'd like to share it!")}
         </div>
       </div>
       <Catalog userItems=catalog />

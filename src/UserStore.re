@@ -103,24 +103,27 @@ let getUserExn = () =>
 let numItemUpdatesLogged = ref(0);
 let setItem = (~itemId: string, ~variation: int, ~item: User.item) => {
   let user = getUserExn();
+  let userItem = item;
   let updatedUser = {
     ...user,
     items: {
       let clone = Utils.cloneJsDict(user.items);
-      clone->Js.Dict.set(User.getItemKey(~itemId, ~variation), item);
+      clone->Js.Dict.set(User.getItemKey(~itemId, ~variation), userItem);
       clone;
     },
   };
   api.dispatch(UpdateUser(updatedUser));
-  let userItemJson = User.itemToJson(item);
+  let userItemJson = User.itemToJson(userItem);
   let item = Item.getItem(~itemId);
-  if (numItemUpdatesLogged^ < 5
+  if (userItem.status == InCatalog
+      || numItemUpdatesLogged^ < 5
       || updatedUser.items->Js.Dict.keys->Js.Array.length < 10) {
     Analytics.Amplitude.logEventWithProperties(
       ~eventName="Item Updated",
       ~eventProperties={
         "itemId": item.id,
         "variant": variation,
+        "status": User.itemStatusToJs(userItem.status),
         "data": userItemJson,
       },
     );
@@ -236,6 +239,49 @@ let updateProfileText = (~profileText) => {
                 Js.Json.object_(
                   Js.Dict.fromArray([|
                     ("text", Js.Json.string(profileText)),
+                  |]),
+                ),
+              ),
+            ),
+          ~headers=
+            Fetch.HeadersInit.make({
+              "X-Client-Version": Constants.gitCommitRef,
+              "Content-Type": "application/json",
+              "Authorization":
+                "Bearer " ++ Option.getWithDefault(sessionId^, ""),
+            }),
+          ~credentials=Include,
+          ~mode=CORS,
+          (),
+        ),
+      );
+    handleServerResponse(url, responseResult);
+    Promise.resolved();
+  }
+  |> ignore;
+};
+
+let toggleCatalogCheckboxSetting = (~enabled) => {
+  let user = getUserExn();
+  let updatedUser = {...user, enableCatalogCheckbox: enabled};
+  api.dispatch(UpdateUser(updatedUser));
+  Analytics.Amplitude.logEventWithProperties(
+    ~eventName="Catalog Checkbox Setting Toggled",
+    ~eventProperties={"enabled": enabled},
+  );
+  {
+    let url = Constants.apiUrl ++ "/@me/toggleCatalogCheckboxSetting";
+    let%Repromise.Js responseResult =
+      Fetch.fetchWithInit(
+        url,
+        Fetch.RequestInit.make(
+          ~method_=Post,
+          ~body=
+            Fetch.BodyInit.make(
+              Js.Json.stringify(
+                Js.Json.object_(
+                  Js.Dict.fromArray([|
+                    ("enabled", Js.Json.boolean(enabled)),
                   |]),
                 ),
               ),

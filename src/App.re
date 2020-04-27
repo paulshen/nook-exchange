@@ -5,12 +5,14 @@ module Styles = {
   let body = style([flexGrow(1.)]);
   let tooltip =
     style([
-      backgroundColor(Colors.charcoal),
+      backgroundColor(Colors.darkLayerBackground),
       borderRadius(px(4)),
       color(Colors.white),
-      fontSize(px(12)),
+      fontSize(px(14)),
       padding3(~top=px(5), ~bottom=px(3), ~h=px(10)),
       position(relative),
+      whiteSpace(`preLine),
+      Colors.darkLayerShadow,
     ]);
 };
 
@@ -53,7 +55,7 @@ let tooltipConfig:
         Some([|{
                  "name": "offset",
                  "options": {
-                   "offset": [|0, 4|],
+                   "offset": [|0, 2|],
                  },
                }|]),
     }),
@@ -96,6 +98,7 @@ let make = () => {
       <HeaderBar onLogin={_ => setShowLogin(_ => true)} />
       <div className=Styles.body>
         {switch (url.path) {
+         | ["catalog"] => <MyCatalogPage />
          | ["u", username, ...urlRest] =>
            <UserPage
              username

@@ -1,19 +1,23 @@
 [@bs.deriving jsConverter]
 type itemStatus =
   | [@bs.as 1] Wishlist
-  | ForTrade
-  | CanCraft;
+  | [@bs.as 2] ForTrade
+  | [@bs.as 3] CanCraft
+  | [@bs.as 4] InCatalog;
+
 let itemStatusToUrl = itemStatus =>
   switch (itemStatus) {
   | Wishlist => "wishlist"
   | ForTrade => "for-trade"
   | CanCraft => "can-craft"
+  | InCatalog => "catalog"
   };
 let urlToItemStatus = url =>
   switch (url) {
   | "for-trade" => Some(ForTrade)
   | "can-craft" => Some(CanCraft)
   | "wishlist" => Some(Wishlist)
+  | "catalog" => Some(InCatalog)
   | _ => None
   };
 let itemStatusToEmoji = itemStatus => {
@@ -21,6 +25,7 @@ let itemStatusToEmoji = itemStatus => {
   | Wishlist => {j|🙏|j}
   | ForTrade => {j|🤝|j}
   | CanCraft => {j|🔨|j}
+  | InCatalog => {j|🔨|j}
   };
 };
 let itemStatusToString = itemStatus =>
@@ -28,7 +33,9 @@ let itemStatusToString = itemStatus =>
   | Wishlist => "Wishlist"
   | ForTrade => "For Trade"
   | CanCraft => "Can Craft"
+  | InCatalog => "Catalog"
   };
+
 type item = {
   status: itemStatus,
   note: string,
@@ -81,6 +88,7 @@ type t = {
   username: string,
   items: Js.Dict.t(item),
   profileText: string,
+  enableCatalogCheckbox: bool,
 };
 
 let fromAPI = (json: Js.Json.t) => {
@@ -108,5 +116,13 @@ let fromAPI = (json: Js.Json.t) => {
            )
       )
       ->Belt.Option.getWithDefault(""),
+    enableCatalogCheckbox:
+      (
+        json
+        |> field("metadata", json =>
+             json |> optional(field("enableCatalogCheckbox", bool))
+           )
+      )
+      ->Belt.Option.getWithDefault(false),
   };
 };

@@ -21,6 +21,33 @@ module Styles = {
       ]),
       media("(max-width: 430px)", [fontSize(px(14))]),
     ]);
+  let catalogCheckbox =
+    style([
+      backgroundColor(Colors.white),
+      height(px(20)),
+      width(px(20)),
+      borderRadius(px(3)),
+      border(px(2), solid, hex("c0c0c0")),
+      padding(zero),
+      transition(~duration=200, "all"),
+      margin(zero),
+      cursor(pointer),
+      outlineStyle(none),
+      opacity(0.),
+      transition(~duration=200, "all"),
+      media("(hover: none)", [opacity(0.5)]),
+      hover([borderColor(hex("808080"))]),
+    ]);
+  [@bs.module "./assets/check.png"] external checkImage: string = "default";
+  let catalogCheckboxChecked =
+    style([
+      borderColor(Colors.white),
+      backgroundImage(url(checkImage)),
+      backgroundSize(size(px(16), px(16))),
+      backgroundRepeat(noRepeat),
+      backgroundPosition(center),
+      opacity(0.5),
+    ]);
   let card =
     style([
       backgroundColor(hex("fffffff0")),
@@ -40,6 +67,13 @@ module Styles = {
           "& ." ++ statusButton,
           [backgroundColor(hex("3aa56320")), color(Colors.green)],
         ),
+        selector(
+          "& ." ++ catalogCheckbox,
+          [
+            opacity(1.),
+            media("(hover: none)", [borderColor(hex("c0c0c0"))]),
+          ],
+        ),
       ]),
       media(
         "(max-width: 600px)",
@@ -58,7 +92,6 @@ module Styles = {
       display(flexBox),
       flexDirection(column),
       alignItems(center),
-      marginBottom(px(16)),
     ]);
   let name =
     style([
@@ -83,7 +116,12 @@ module Styles = {
       hover([opacity(1.)]),
     ]);
   let variation =
-    style([display(flexBox), flexWrap(wrap), justifyContent(center)]);
+    style([
+      display(flexBox),
+      flexWrap(wrap),
+      justifyContent(center),
+      marginBottom(px(8)),
+    ]);
   let variationImage =
     style([
       display(block),
@@ -95,8 +133,10 @@ module Styles = {
     ]);
   let variationImageSelected = style([backgroundColor(hex("3aa56320"))]);
   let metaIcons = style([position(absolute), top(px(8)), left(px(6))]);
+  let topRightIcons =
+    style([position(absolute), top(px(10)), right(px(10))]);
   let bottomBar = style([fontSize(px(12))]);
-  let bottomBarStatus = style([alignSelf(flexStart), paddingTop(px(8))]);
+  let bottomBarStatus = style([alignSelf(flexStart), paddingTop(px(4))]);
   let statusButtons = style([]);
   let statusButtonSelected =
     style([backgroundColor(Colors.green), color(Colors.white)]);
@@ -124,14 +164,7 @@ module MetaIconStyles = {
       height(px(24)),
       marginRight(px(8)),
     ]);
-  let layer =
-    style([
-      backgroundColor(hex("404040f8")),
-      color(Colors.white),
-      borderRadius(px(8)),
-      padding2(~v=px(12), ~h=px(16)),
-      boxShadow(Shadow.box(~blur=px(16), hex("00000040"))),
-    ]);
+  let layer = style([padding2(~v=px(4), ~h=px(4))]);
 };
 
 module RecipeIcon = {
@@ -155,35 +188,18 @@ module RecipeIcon = {
 
   [@react.component]
   let make = (~recipe: Item.recipe) => {
-    let (showLayer, setShowLayer) = React.useState(() => false);
-    let iconRef = React.useRef(Js.Nullable.null);
-    <>
-      <img
-        src=recipeIcon
-        className=MetaIconStyles.icon
-        onMouseEnter={_ => setShowLayer(_ => true)}
-        onMouseLeave={_ => setShowLayer(_ => false)}
-        ref={ReactDOMRe.Ref.domRef(iconRef)}
-      />
-      {showLayer
-         ? <ReactAtmosphere.PopperLayer
-             reference=iconRef
-             render={_ => <RecipeLayer recipe />}
-             options={
-               placement: Some("bottom-start"),
-               modifiers:
-                 Some([|
-                   {
-                     "name": "offset",
-                     "options": {
-                       "offset": [|0, 4|],
-                     },
-                   },
-                 |]),
-             }
-           />
-         : React.null}
-    </>;
+    <ReactAtmosphere.Tooltip
+      text={<RecipeLayer recipe />}
+      options={Obj.magic({"placement": "bottom-start"})}>
+      {({onMouseEnter, onMouseLeave, ref}) =>
+         <img
+           src=recipeIcon
+           className=MetaIconStyles.icon
+           onMouseEnter
+           onMouseLeave
+           ref={ReactDOMRe.Ref.domRef(ref)}
+         />}
+    </ReactAtmosphere.Tooltip>;
   };
 };
 
@@ -203,35 +219,18 @@ module OrderableIcon = {
 
   [@react.component]
   let make = () => {
-    let (showLayer, setShowLayer) = React.useState(() => false);
-    let iconRef = React.useRef(Js.Nullable.null);
-    <>
-      <img
-        src=orderableIcon
-        className=MetaIconStyles.icon
-        onMouseEnter={_ => setShowLayer(_ => true)}
-        onMouseLeave={_ => setShowLayer(_ => false)}
-        ref={ReactDOMRe.Ref.domRef(iconRef)}
-      />
-      {showLayer
-         ? <ReactAtmosphere.PopperLayer
-             reference=iconRef
-             render={_ => <OrderableLayer />}
-             options={
-               placement: Some("bottom-start"),
-               modifiers:
-                 Some([|
-                   {
-                     "name": "offset",
-                     "options": {
-                       "offset": [|0, 4|],
-                     },
-                   },
-                 |]),
-             }
-           />
-         : React.null}
-    </>;
+    <ReactAtmosphere.Tooltip
+      text={<OrderableLayer />}
+      options={Obj.magic({"placement": "bottom-start"})}>
+      {({onMouseEnter, onMouseLeave, ref}) =>
+         <img
+           src=orderableIcon
+           className=MetaIconStyles.icon
+           onMouseEnter
+           onMouseLeave
+           ref={ReactDOMRe.Ref.domRef(ref)}
+         />}
+    </ReactAtmosphere.Tooltip>;
   };
 };
 
@@ -273,6 +272,7 @@ let renderStatusButton =
       | Wishlist => "Add to Wishlist"
       | ForTrade => "Add to For Trade list"
       | CanCraft => "Add to Can Craft list"
+      | InCatalog => raise(Constants.Uhoh)
       }
     }>
     {React.string(
@@ -280,13 +280,14 @@ let renderStatusButton =
        | Wishlist => {j|+ Wishlist|j}
        | ForTrade => {j|+ For Trade|j}
        | CanCraft => {j|+ Can Craft|j}
+       | InCatalog => raise(Constants.Uhoh)
        },
      )}
   </button>;
 };
 
 [@react.component]
-let make = (~item: Item.t, ~showLogin) => {
+let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
   let (variation, setVariation) = React.useState(() => 0);
   let userItem = UserStore.useItem(~itemId=item.id, ~variation);
 
@@ -368,9 +369,95 @@ let make = (~item: Item.t, ~showLogin) => {
            React.null;
          }}
       </div>
+      {showCatalogCheckbox
+         ? <div className=Styles.topRightIcons>
+             <ReactAtmosphere.Tooltip
+               options={
+                 placement: Some("top"),
+                 modifiers:
+                   Some([|
+                     {
+                       "name": "offset",
+                       "options": {
+                         "offset": [|0, 4|],
+                       },
+                     },
+                   |]),
+               }
+               text={React.string(
+                 switch (userItem->Option.map(userItem => userItem.status)) {
+                 | None => "Not in catalog"
+                 | Some(Wishlist) => "Move to catalog from Wishlist"
+                 | Some(ForTrade)
+                 | Some(CanCraft)
+                 | Some(InCatalog) => "In your catalog"
+                 },
+               )}>
+               {({onMouseEnter, onMouseLeave, ref}) =>
+                  <button
+                    className={Cn.make([
+                      Styles.catalogCheckbox,
+                      Cn.ifTrue(
+                        Styles.catalogCheckboxChecked,
+                        switch (userItem) {
+                        | Some(userItem) => userItem.status !== Wishlist
+                        | None => false
+                        },
+                      ),
+                    ])}
+                    onClick={e => {
+                      let status =
+                        switch (
+                          Option.map(userItem, userItem => userItem.status)
+                        ) {
+                        | None
+                        | Some(Wishlist) => Some(User.InCatalog)
+                        | Some(CanCraft)
+                        | Some(ForTrade)
+                        | Some(InCatalog) => None
+                        };
+                      switch (status) {
+                      | Some(status) =>
+                        let updateItem = () => {
+                          let note =
+                            switch (userItem) {
+                            | Some(userItem) => userItem.note
+                            | None => ""
+                            };
+                          UserStore.setItem(
+                            ~itemId=item.id,
+                            ~variation,
+                            ~item={status, note},
+                          );
+                        };
+                        if (Option.map(userItem, userItem => userItem.status)
+                            == Some(Wishlist)) {
+                          WishlistToCatalog.confirm(~onConfirm=updateItem);
+                        } else {
+                          updateItem();
+                        };
+                      | None =>
+                        if (Belt.Option.getExn(userItem).status == InCatalog) {
+                          UserStore.removeItem(~itemId=item.id, ~variation);
+                        } else {
+                          DeleteFromCatalog.confirm(~onConfirm=() =>
+                            UserStore.removeItem(~itemId=item.id, ~variation)
+                          );
+                        }
+                      };
+                    }}
+                    onMouseEnter
+                    onMouseLeave
+                    ref={ReactDOMRe.Ref.domRef(ref)}
+                  />}
+             </ReactAtmosphere.Tooltip>
+           </div>
+         : React.null}
     </div>
-    {switch (userItem) {
-     | Some(userItem) =>
+    {switch (userItem, userItem->Option.map(userItem => userItem.status)) {
+     | (Some(userItem), Some(Wishlist))
+     | (Some(userItem), Some(ForTrade))
+     | (Some(userItem), Some(CanCraft)) =>
        <>
          <UserItemNote itemId={item.id} variation userItem />
          <div className={Cn.make([Styles.bottomBar, Styles.bottomBarStatus])}>
@@ -378,8 +465,9 @@ let make = (~item: Item.t, ~showLogin) => {
               {
                 switch (userItem.status) {
                 | Wishlist => {j|🙏 In your Wishlist|j}
-                | ForTrade => {j|✅ In your For Trade list|j}
+                | ForTrade => {j|🤝 In your For Trade list|j}
                 | CanCraft => {j|🔨 In your Can Craft list|j}
+                | _ => raise(Constants.Uhoh)
                 };
               },
             )}
@@ -387,11 +475,29 @@ let make = (~item: Item.t, ~showLogin) => {
          <button
            className=Styles.removeButton
            title="Remove"
-           onClick={_ => {UserStore.removeItem(~itemId=item.id, ~variation)}}>
+           onClick={_ => {
+             let status =
+               switch (showCatalogCheckbox, userItem.status) {
+               | (_, InCatalog) => raise(Constants.Uhoh)
+               | (false, _) => None
+               | (true, CanCraft)
+               | (true, ForTrade) => Some(User.InCatalog)
+               | (true, Wishlist) => None
+               };
+             switch (status) {
+             | Some(status) =>
+               UserStore.setItem(
+                 ~itemId=item.id,
+                 ~variation,
+                 ~item={status, note: userItem.note},
+               )
+             | None => UserStore.removeItem(~itemId=item.id, ~variation)
+             };
+           }}>
            {React.string({j|❌|j})}
          </button>
        </>
-     | None =>
+     | _ =>
        <div className={Cn.make([Styles.bottomBar, Styles.statusButtons])}>
          {renderStatusButton(
             ~itemId=item.id,

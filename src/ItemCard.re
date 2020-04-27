@@ -35,6 +35,7 @@ module Styles = {
       outlineStyle(none),
       opacity(0.),
       transition(~duration=200, "all"),
+      media("(hover: none)", [opacity(0.5)]),
       hover([borderColor(hex("808080"))]),
     ]);
   [@bs.module "./assets/check.png"] external checkImage: string = "default";
@@ -286,7 +287,7 @@ let renderStatusButton =
 };
 
 [@react.component]
-let make = (~item: Item.t, ~isLoggedIn, ~showLogin) => {
+let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
   let (variation, setVariation) = React.useState(() => 0);
   let userItem = UserStore.useItem(~itemId=item.id, ~variation);
 
@@ -368,7 +369,7 @@ let make = (~item: Item.t, ~isLoggedIn, ~showLogin) => {
            React.null;
          }}
       </div>
-      {isLoggedIn
+      {showCatalogCheckbox
          ? <div className=Styles.topRightIcons>
              <ReactAtmosphere.Tooltip
                options={
@@ -436,7 +437,13 @@ let make = (~item: Item.t, ~isLoggedIn, ~showLogin) => {
                           updateItem();
                         };
                       | None =>
-                        UserStore.removeItem(~itemId=item.id, ~variation)
+                        if (Belt.Option.getExn(userItem).status == InCatalog) {
+                          UserStore.removeItem(~itemId=item.id, ~variation);
+                        } else {
+                          DeleteFromCatalog.confirm(~onConfirm=() =>
+                            UserStore.removeItem(~itemId=item.id, ~variation)
+                          );
+                        }
                       };
                     }}
                     onMouseEnter
@@ -470,11 +477,12 @@ let make = (~item: Item.t, ~isLoggedIn, ~showLogin) => {
            title="Remove"
            onClick={_ => {
              let status =
-               switch (userItem.status) {
-               | CanCraft
-               | ForTrade => Some(User.InCatalog)
-               | Wishlist => None
-               | InCatalog => raise(Constants.Uhoh)
+               switch (showCatalogCheckbox, userItem.status) {
+               | (_, InCatalog) => raise(Constants.Uhoh)
+               | (false, _) => None
+               | (true, CanCraft)
+               | (true, ForTrade) => Some(User.InCatalog)
+               | (true, Wishlist) => None
                };
              switch (status) {
              | Some(status) =>

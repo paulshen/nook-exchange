@@ -45,7 +45,7 @@ module Styles = {
       marginLeft(px(16)),
       firstChild([marginLeft(zero)]),
     ]);
-  let logoutLink = style([media("(max-width: 400px)", [display(none)])]);
+  let logoutLink = style([media("(max-width: 420px)", [display(none)])]);
   let twitterLink = style([]);
 };
 

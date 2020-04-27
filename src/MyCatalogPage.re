@@ -162,15 +162,46 @@ module Loaded = {
       <div className=Styles.userBody>
         <div className=Styles.userBodyParagraph>
           {React.string(
-             "This is the list of all items in your catalog, including For Trade and Can Craft.",
+             {j|You are getting a sneak preview of your catalog 🤫. This is a list of items in your For Trade and Can Craft. If you are a completionist, you can add items only to your catalog.|j},
            )}
         </div>
+        {user.enableCatalogCheckbox
+           ? <div className=Styles.userBodyParagraph>
+               {React.string(
+                  "Add catalog-only items using the checkboxes in the ",
+                )}
+               <Link path="/"> {React.string("item browser")} </Link>
+               {React.string(
+                  ". Don't want to see catalog checkmarks anymore? ",
+                )}
+               <a
+                 href="#"
+                 onClick={e => {
+                   ReactEvent.Mouse.preventDefault(e);
+                   UserStore.toggleCatalogCheckboxSetting(~enabled=false);
+                 }}>
+                 {React.string("Hide catalog checkboxes")}
+               </a>
+               {React.string(".")}
+             </div>
+           : <div className=Styles.userBodyParagraph>
+               {React.string("To do so, ")}
+               <a
+                 href="#"
+                 onClick={e => {
+                   ReactEvent.Mouse.preventDefault(e);
+                   UserStore.toggleCatalogCheckboxSetting(~enabled=true);
+                 }}>
+                 {React.string("enable catalog checkboxes")}
+               </a>
+               {React.string(".")}
+             </div>}
         <div>
-          {React.string("Only you can see this. ")}
+          {React.string("You cannot share this view with others. ")}
           <a href="https://twitter.com/nookexchange" target="_blank">
             {React.string("Let us know")}
           </a>
-          {React.string(" if you want to share it!")}
+          {React.string(" if you'd like to share it!")}
         </div>
       </div>
       <Catalog userItems=catalog />

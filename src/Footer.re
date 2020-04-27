@@ -19,7 +19,7 @@ module Styles = {
   let logoutLink =
     style([
       display(none),
-      media("(max-width: 400px)", [display(inline)]),
+      media("(max-width: 420px)", [display(inline)]),
     ]);
   let disclaimer = style([marginTop(px(8))]);
 };

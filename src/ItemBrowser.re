@@ -61,7 +61,11 @@ let getUrl =
 
 [@react.component]
 let make = (~showLogin, ~url: ReasonReactRouter.url) => {
-  let isLoggedIn = UserStore.useMe() !== None;
+  let showCatalogCheckbox =
+    switch (UserStore.useMe()) {
+    | Some(user) => user.enableCatalogCheckbox
+    | None => false
+    };
   let (numResultsPerPage, _setNumResultsPerPage) =
     React.useState(() => getNumResultsPerPage());
   let (filters, pageOffset) =
@@ -149,7 +153,7 @@ let make = (~showLogin, ~url: ReasonReactRouter.url) => {
        ->Belt.Array.mapWithIndexU((. i, item) => {
            <ItemCard
              item
-             isLoggedIn
+             showCatalogCheckbox
              showLogin
              key={item.id ++ string_of_int(i)}
            />

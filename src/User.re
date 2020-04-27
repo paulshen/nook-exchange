@@ -88,6 +88,7 @@ type t = {
   username: string,
   items: Js.Dict.t(item),
   profileText: string,
+  enableCatalogCheckbox: bool,
 };
 
 let fromAPI = (json: Js.Json.t) => {
@@ -115,5 +116,13 @@ let fromAPI = (json: Js.Json.t) => {
            )
       )
       ->Belt.Option.getWithDefault(""),
+    enableCatalogCheckbox:
+      (
+        json
+        |> field("metadata", json =>
+             json |> optional(field("enableCatalogCheckbox", bool))
+           )
+      )
+      ->Belt.Option.getWithDefault(false),
   };
 };

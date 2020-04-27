@@ -258,6 +258,49 @@ let updateProfileText = (~profileText) => {
   |> ignore;
 };
 
+let toggleCatalogCheckboxSetting = (~enabled) => {
+  let user = getUserExn();
+  let updatedUser = {...user, enableCatalogCheckbox: enabled};
+  api.dispatch(UpdateUser(updatedUser));
+  Analytics.Amplitude.logEventWithProperties(
+    ~eventName="Catalog Checkbox Setting Toggled",
+    ~eventProperties={"enabled": enabled},
+  );
+  {
+    let url = Constants.apiUrl ++ "/@me/toggleCatalogCheckboxSetting";
+    let%Repromise.Js responseResult =
+      Fetch.fetchWithInit(
+        url,
+        Fetch.RequestInit.make(
+          ~method_=Post,
+          ~body=
+            Fetch.BodyInit.make(
+              Js.Json.stringify(
+                Js.Json.object_(
+                  Js.Dict.fromArray([|
+                    ("enabled", Js.Json.boolean(enabled)),
+                  |]),
+                ),
+              ),
+            ),
+          ~headers=
+            Fetch.HeadersInit.make({
+              "X-Client-Version": Constants.gitCommitRef,
+              "Content-Type": "application/json",
+              "Authorization":
+                "Bearer " ++ Option.getWithDefault(sessionId^, ""),
+            }),
+          ~credentials=Include,
+          ~mode=CORS,
+          (),
+        ),
+      );
+    handleServerResponse(url, responseResult);
+    Promise.resolved();
+  }
+  |> ignore;
+};
+
 let errorQuotationMarksRegex = [%bs.re {|/^"(.*)"$/|}];
 let register = (~username, ~email, ~password) => {
   let%Repromise.JsExn response =

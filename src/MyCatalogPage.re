@@ -1,12 +1,6 @@
 module Styles = {
   open Css;
-  let emptyProfile =
-    style([
-      maxWidth(px(768)),
-      margin3(~top=px(32), ~bottom=px(128), ~h=auto),
-      textAlign(center),
-    ]);
-  let username =
+  let title =
     style([
       fontSize(px(36)),
       textAlign(center),
@@ -60,8 +54,6 @@ module Catalog = {
         media("(max-width: 470px)", [paddingTop(zero)]),
       ]);
   };
-
-  let numResultsPerPage = 60;
 
   let getNumResultsPerPage = (~viewportWidth) =>
     if (viewportWidth >= 1620) {
@@ -182,7 +174,7 @@ module Loaded = {
       );
 
     <div>
-      <div className=Styles.username> {React.string("My Catalog")} </div>
+      <div className=Styles.title> {React.string("My Catalog")} </div>
       <div className=Styles.userBody>
         <div className=Styles.userBodyParagraph>
           {React.string(

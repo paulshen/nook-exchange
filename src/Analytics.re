@@ -10,6 +10,7 @@ module Amplitude = {
     [@bs.send]
     external logEventWithProperties: (t, string, 'a) => unit = "logEvent";
     [@bs.send] external setUserId: (t, option(string)) => unit = "setUserId";
+    [@bs.send] external setVersionName: (t, string) => unit = "setVersionName";
 
     type identify;
     [@bs.module "amplitude-js"] [@bs.new]
@@ -35,7 +36,7 @@ module Amplitude = {
   };
 
   let init = () => {
-    getInstance() |> ignore;
+    getInstance()->API.setVersionName(Constants.gitCommitRef);
   };
 
   let logEvent = (~eventName) => {

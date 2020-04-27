@@ -72,6 +72,104 @@ module Styles = {
     style([marginTop(px(6)), textAlign(center), fontSize(px(12))]);
 };
 
+module WishlistEllipsisButton = {
+  module Styles = {
+    open Css;
+    let recipe =
+      style([marginTop(px(6)), textAlign(center), fontSize(px(12))]);
+    [@bs.module "./assets/dotdotdot.png"]
+    external dotdotdotIcon: string = "default";
+    let ellipsisButton =
+      style([
+        top(px(8)),
+        bottom(initial),
+        width(px(19)),
+        height(px(19)),
+        backgroundImage(url(dotdotdotIcon)),
+        backgroundSize(cover),
+        padding(zero),
+        right(px(8)),
+        outlineStyle(none),
+      ]);
+    let ellipsisButtonOpen = style([opacity(1.)]);
+    let menu =
+      style([
+        backgroundColor(Colors.white),
+        borderRadius(px(8)),
+        padding2(~v=px(6), ~h=zero),
+        overflow(hidden),
+        Colors.darkLayerShadow,
+      ]);
+    let menuItem =
+      style([
+        borderWidth(zero),
+        display(block),
+        width(pct(100.)),
+        textAlign(`left),
+        cursor(pointer),
+        padding2(~v=px(4), ~h=px(12)),
+        hover([backgroundColor(Colors.faintGray)]),
+      ]);
+    let menuItemRemove = style([color(Colors.red)]);
+  };
+
+  [@react.component]
+  let make = (~item: Item.t, ~variation) => {
+    let ellipsisButtonRef = React.useRef(Js.Nullable.null);
+    let (showEllipsisMenu, setShowEllipsisMenu) = React.useState(() => false);
+
+    <>
+      <button
+        className={Cn.make([
+          ItemCard.Styles.removeButton,
+          Styles.ellipsisButton,
+          Cn.ifTrue(Styles.ellipsisButtonOpen, showEllipsisMenu),
+        ])}
+        onClick={_ => setShowEllipsisMenu(_ => true)}
+        ref={ReactDOMRe.Ref.domRef(ellipsisButtonRef)}
+      />
+      {showEllipsisMenu
+         ? <ReactAtmosphere.PopperLayer
+             reference=ellipsisButtonRef
+             onOutsideClick={() => setShowEllipsisMenu(_ => false)}
+             options={
+               placement: Some("bottom"),
+               modifiers:
+                 Some([|
+                   {
+                     "name": "offset",
+                     "options": {
+                       "offset": [|0, 4|],
+                     },
+                   },
+                 |]),
+             }
+             render={_renderArgs =>
+               <div className=Styles.menu>
+                 <button className=Styles.menuItem>
+                   {React.string("Move to For Trade")}
+                 </button>
+                 <button className=Styles.menuItem>
+                   {React.string("Move to Can Craft")}
+                 </button>
+                 <button
+                   onClick={_ => {
+                     UserStore.removeItem(~itemId=item.id, ~variation)
+                   }}
+                   className={Cn.make([
+                     Styles.menuItem,
+                     Styles.menuItemRemove,
+                   ])}>
+                   {React.string("Remove from Wishlist")}
+                 </button>
+               </div>
+             }
+           />
+         : React.null}
+    </>;
+  };
+};
+
 [@react.component]
 let make =
     (
@@ -86,6 +184,7 @@ let make =
     ) => {
   let item = Item.getItem(~itemId);
   let viewerItem = UserStore.useItem(~itemId, ~variation);
+
   <div
     className={Cn.make([
       Styles.card,
@@ -174,37 +273,42 @@ let make =
                   key={string_of_int(variation)}
                 />
               : React.null}
-           <ReactAtmosphere.Tooltip text={React.string("Remove item")}>
-             {({onMouseEnter, onMouseLeave, onFocus, onBlur, ref}) =>
-                <button
-                  className={Cn.make([
-                    ItemCard.Styles.removeButton,
-                    Styles.removeButton,
-                  ])}
-                  onMouseEnter
-                  onMouseLeave
-                  onFocus
-                  onBlur
-                  onClick={_ =>
-                    if (onCatalogPage) {
-                      switch (userItem.status) {
-                      | CanCraft
-                      | ForTrade =>
-                        DeleteFromCatalog.confirm(~onConfirm=() =>
-                          UserStore.removeItem(~itemId=item.id, ~variation)
-                        )
-                      | InCatalog =>
-                        UserStore.removeItem(~itemId=item.id, ~variation)
-                      | Wishlist => raise(Constants.Uhoh)
-                      };
-                    } else {
-                      UserStore.removeItem(~itemId=item.id, ~variation);
-                    }
-                  }
-                  ref={ReactDOMRe.Ref.domRef(ref)}>
-                  {React.string({j|❌|j})}
-                </button>}
-           </ReactAtmosphere.Tooltip>
+           {userItem.status == Wishlist
+              ? <WishlistEllipsisButton item variation />
+              : <ReactAtmosphere.Tooltip text={React.string("Remove item")}>
+                  {({onMouseEnter, onMouseLeave, onFocus, onBlur, ref}) =>
+                     <button
+                       className={Cn.make([
+                         ItemCard.Styles.removeButton,
+                         Styles.removeButton,
+                       ])}
+                       onMouseEnter
+                       onMouseLeave
+                       onFocus
+                       onBlur
+                       onClick={_ =>
+                         if (onCatalogPage) {
+                           switch (userItem.status) {
+                           | CanCraft
+                           | ForTrade =>
+                             DeleteFromCatalog.confirm(~onConfirm=() =>
+                               UserStore.removeItem(
+                                 ~itemId=item.id,
+                                 ~variation,
+                               )
+                             )
+                           | InCatalog =>
+                             UserStore.removeItem(~itemId=item.id, ~variation)
+                           | Wishlist => raise(Constants.Uhoh)
+                           };
+                         } else {
+                           UserStore.removeItem(~itemId=item.id, ~variation);
+                         }
+                       }
+                       ref={ReactDOMRe.Ref.domRef(ref)}>
+                       {React.string({j|❌|j})}
+                     </button>}
+                </ReactAtmosphere.Tooltip>}
          </>
        : <>
            {if (userItem.note->Js.String.length > 0) {

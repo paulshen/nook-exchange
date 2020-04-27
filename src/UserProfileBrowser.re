@@ -145,7 +145,7 @@ module Styles = {
       marginTop(px(8)),
       padding3(~top=px(8), ~bottom=zero, ~h=px(4)),
     ]);
-  let removeButton = style([top(px(9)), bottom(initial)]);
+  let removeButton = style([top(px(8)), bottom(initial)]);
   let cardMini = style([position(relative)]);
   let cardMiniImage =
     style([display(block), width(px(64)), height(px(64))]);
@@ -284,19 +284,7 @@ module UserItemCard = {
              {!onCatalogPage
                 ? <UserItemNote itemId={item.id} variation userItem />
                 : React.null}
-             <ReactAtmosphere.Tooltip
-               text={React.string("Remove item")}
-               options={Obj.magic({
-                 "modifiers":
-                   Some([|
-                     {
-                       "name": "offset",
-                       "options": {
-                         "offset": [|0, 5|],
-                       },
-                     },
-                   |]),
-               })}>
+             <ReactAtmosphere.Tooltip text={React.string("Remove item")}>
                {({onMouseEnter, onMouseLeave, onFocus, onBlur, ref}) =>
                   <button
                     className={Cn.make([
@@ -307,18 +295,22 @@ module UserItemCard = {
                     onMouseLeave
                     onFocus
                     onBlur
-                    onClick={_ => {
-                      switch (userItem.status) {
-                      | CanCraft
-                      | ForTrade =>
-                        DeleteFromCatalog.confirm(~onConfirm=() =>
+                    onClick={_ =>
+                      if (onCatalogPage) {
+                        switch (userItem.status) {
+                        | CanCraft
+                        | ForTrade =>
+                          DeleteFromCatalog.confirm(~onConfirm=() =>
+                            UserStore.removeItem(~itemId=item.id, ~variation)
+                          )
+                        | InCatalog =>
                           UserStore.removeItem(~itemId=item.id, ~variation)
-                        )
-                      | InCatalog =>
-                        UserStore.removeItem(~itemId=item.id, ~variation)
-                      | Wishlist => raise(Constants.Uhoh)
+                        | Wishlist => raise(Constants.Uhoh)
+                        };
+                      } else {
+                        UserStore.removeItem(~itemId=item.id, ~variation);
                       }
-                    }}
+                    }
                     ref={ReactDOMRe.Ref.domRef(ref)}>
                     {React.string({j|❌|j})}
                   </button>}

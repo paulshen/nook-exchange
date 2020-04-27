@@ -404,7 +404,7 @@ let make =
                    variation
                    key={itemId ++ string_of_int(variation)}
                  />
-               : <UserProfileBrowser.UserItemCard
+               : <UserItemCard
                    itemId
                    variation
                    userItem

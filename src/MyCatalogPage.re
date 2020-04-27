@@ -130,7 +130,7 @@ module Catalog = {
              )
            )
          ->Belt.Array.mapU((. ((itemId, variation), userItem)) => {
-             <UserProfileBrowser.UserItemCard
+             <UserItemCard
                itemId
                variation
                listStatus=User.InCatalog

@@ -64,23 +64,23 @@ let make = () => {
   let url = ReasonReactRouter.useUrl();
   let (showLogin, setShowLogin) = React.useState(() => false);
 
+  let pathString =
+    "/" ++ Js.Array.joinWith("/", Belt.List.toArray(url.path));
   React.useEffect1(
     () => {
-      let pagePath =
-        "/" ++ Js.Array.joinWith("/", Belt.List.toArray(url.path));
       Analytics.Amplitude.logEventWithProperties(
         ~eventName="Page Viewed",
-        ~eventProperties={"path": pagePath},
+        ~eventProperties={"path": pathString},
       );
       switch (gtag) {
       | Some(gtag) =>
-        gtag(. "config", Constants.gtagId, {"page_path": pagePath})
+        gtag(. "config", Constants.gtagId, {"page_path": pathString})
       | None => ()
       };
 
       None;
     },
-    [|url.path|],
+    [|pathString|],
   );
   let (_, forceUpdate) = React.useState(() => 1);
   React.useEffect0(() => {

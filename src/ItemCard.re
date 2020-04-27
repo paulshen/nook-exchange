@@ -403,16 +403,24 @@ let make = (~item: Item.t, ~showLogin) => {
                    };
                  switch (status) {
                  | Some(status) =>
-                   let note =
-                     switch (userItem) {
-                     | Some(userItem) => userItem.note
-                     | None => ""
-                     };
-                   UserStore.setItem(
-                     ~itemId=item.id,
-                     ~variation,
-                     ~item={status, note},
-                   );
+                   let updateItem = () => {
+                     let note =
+                       switch (userItem) {
+                       | Some(userItem) => userItem.note
+                       | None => ""
+                       };
+                     UserStore.setItem(
+                       ~itemId=item.id,
+                       ~variation,
+                       ~item={status, note},
+                     );
+                   };
+                   if (Option.map(userItem, userItem => userItem.status)
+                       == Some(Wishlist)) {
+                     WishlistToCatalog.confirm(~onConfirm=updateItem);
+                   } else {
+                     updateItem();
+                   };
                  | None => UserStore.removeItem(~itemId=item.id, ~variation)
                  };
                }}

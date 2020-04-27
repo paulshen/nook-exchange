@@ -23,6 +23,7 @@ module Styles = {
     ]);
   let catalogCheckbox =
     style([
+      backgroundColor(Colors.white),
       height(px(20)),
       width(px(20)),
       borderRadius(px(3)),
@@ -65,7 +66,13 @@ module Styles = {
           "& ." ++ statusButton,
           [backgroundColor(hex("3aa56320")), color(Colors.green)],
         ),
-        selector("& ." ++ catalogCheckbox, [opacity(1.)]),
+        selector(
+          "& ." ++ catalogCheckbox,
+          [
+            opacity(1.),
+            media("(hover: none)", [borderColor(hex("808080"))]),
+          ],
+        ),
       ]),
       media(
         "(max-width: 600px)",

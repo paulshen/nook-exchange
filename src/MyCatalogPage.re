@@ -24,7 +24,7 @@ module Styles = {
       borderRadius(px(8)),
       media("(max-width: 512px)", [borderRadius(zero), padding(px(16))]),
     ]);
-  let bodyText = style([fontSize(px(18))]);
+  let userBodyParagraph = style([marginBottom(px(8))]);
 };
 
 module Catalog = {
@@ -62,7 +62,7 @@ module Catalog = {
     let (filters, setFilters) =
       React.useState(() =>
         (
-          {text: "", mask: None, category: None, sort: SellPriceDesc}: ItemFilters.t
+          {text: "", mask: None, category: None, sort: UserDefault}: ItemFilters.t
         )
       );
     let (pageOffset, setPageOffset) = React.useState(() => 0);
@@ -82,6 +82,8 @@ module Catalog = {
         },
         (userItems, filters),
       );
+    let userItemIds =
+      userItems->Belt.Array.mapU((. ((itemId, _variant), _)) => itemId);
     let numResults = filteredItems->Belt.Array.length;
 
     <div className={Cn.make([Styles.root])}>
@@ -91,6 +93,7 @@ module Catalog = {
           setFilters(_ => filters);
           setPageOffset(_ => 0);
         }}
+        userItemIds
       />
       <div className=ItemBrowser.Styles.filterBar>
         <ItemFilters
@@ -99,6 +102,7 @@ module Catalog = {
             setFilters(_ => filters);
             setPageOffset(_ => 0);
           }}
+          userItemIds
         />
         <ItemFilters.Pager
           numResults
@@ -141,37 +145,50 @@ module Catalog = {
   };
 };
 
-[@react.component]
-let make = (~user: User.t) => {
-  let userItems =
-    React.useMemo1(
-      () =>
-        user.items
-        ->Js.Dict.entries
-        ->Belt.Array.mapU((. (itemKey, item)) =>
-            (User.fromItemKey(~key=itemKey), item)
-          ),
-      [|user.items|],
-    );
-  let catalog =
-    userItems->Belt.Array.keepU((. (_, item: User.item)) =>
-      item.status != Wishlist
-    );
+module Loaded = {
+  [@react.component]
+  let make = (~user: User.t) => {
+    let userItems =
+      React.useMemo1(
+        () =>
+          user.items
+          ->Js.Dict.entries
+          ->Belt.Array.mapU((. (itemKey, item)) =>
+              (User.fromItemKey(~key=itemKey), item)
+            ),
+        [|user.items|],
+      );
+    let catalog =
+      userItems->Belt.Array.keepU((. (_, item: User.item)) =>
+        item.status != Wishlist
+      );
 
-  <div>
-    <div className=Styles.username> {React.string("My Catalog")} </div>
-    <div className=Styles.userBody>
-      <div>
-        {React.string(
-           "This is the list of all items in your catalog, including your For Trade and Can Craft items.",
-         )}
+    <div>
+      <div className=Styles.username> {React.string("My Catalog")} </div>
+      <div className=Styles.userBody>
+        <div className=Styles.userBodyParagraph>
+          {React.string(
+             "This is the list of all items in your catalog, including For Trade and Can Craft.",
+           )}
+        </div>
+        <div>
+          {React.string("Only you can see this. ")}
+          <a href="https://twitter.com/nookexchange" target="_blank">
+            {React.string("Let us know")}
+          </a>
+          {React.string(" if you want to share it!")}
+        </div>
       </div>
-      <div>
-        {React.string(
-           "This view is only visible to you. Let us know if you want to share it!",
-         )}
-      </div>
-    </div>
-    <Catalog userItems=catalog />
-  </div>;
+      <Catalog userItems=catalog />
+    </div>;
+  };
+};
+
+[@react.component]
+let make = () => {
+  let me = UserStore.useMe();
+  switch (me) {
+  | Some(me) => <Loaded user=me />
+  | None => React.null
+  };
 };

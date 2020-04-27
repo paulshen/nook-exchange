@@ -98,6 +98,7 @@ let make = () => {
       <HeaderBar onLogin={_ => setShowLogin(_ => true)} />
       <div className=Styles.body>
         {switch (url.path) {
+         | ["catalog"] => <MyCatalogPage />
          | ["u", username, ...urlRest] =>
            <UserPage
              username

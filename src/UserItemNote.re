@@ -1,6 +1,6 @@
 module Styles = {
   open Css;
-  let root = style([unsafe("alignSelf", "stretch"), marginTop(px(16))]);
+  let root = style([unsafe("alignSelf", "stretch"), marginTop(px(8))]);
   let textarea =
     style([
       backgroundColor(rgba(0, 0, 0, 0.03)),

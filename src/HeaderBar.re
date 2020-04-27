@@ -6,7 +6,7 @@ module Styles = {
       flexWrap(wrap),
       fontSize(px(16)),
       justifyContent(spaceBetween),
-      padding3(~top=px(16), ~bottom=px(16), ~h=px(16)),
+      padding3(~top=px(16), ~bottom=zero, ~h=px(16)),
       selector(
         "& a",
         [textDecoration(none), hover([textDecoration(underline)])],
@@ -38,7 +38,14 @@ module Styles = {
       textIndent(px(-9999)),
     ]);
   let nav = style([display(flexBox)]);
-  let navLink = style([color(Colors.gray), marginLeft(px(16))]);
+  let navLeft = style([marginBottom(px(16)), marginRight(px(16))]);
+  let navLink =
+    style([
+      color(Colors.gray),
+      marginLeft(px(16)),
+      firstChild([marginLeft(zero)]),
+    ]);
+  let logoutLink = style([media("(max-width: 400px)", [display(none)])]);
   let twitterLink = style([]);
 };
 
@@ -49,7 +56,7 @@ let make = (~onLogin) => {
     <Link path="/" className=Styles.logoLink>
       <h1 className=Styles.logo> {React.string("Nook Exchange")} </h1>
     </Link>
-    <div className=Styles.nav>
+    <div className={Cn.make([Styles.nav, Styles.navLeft])}>
       <Link path="/">
         <span className=Styles.standardLink>
           {React.string("Browse items")}
@@ -68,17 +75,27 @@ let make = (~onLogin) => {
                {React.string(user.username)}
              </Link>
            </div>
-           <div className=Styles.navLink>
-             <Link path={"/u/" ++ user.username ++ "/catalog"}>
-               {React.string("My Catalog")}
-             </Link>
-           </div>
+           {if (Js.Dict.values(user.items)
+                ->Belt.Array.some(userItem =>
+                    switch (userItem.status) {
+                    | ForTrade
+                    | CanCraft
+                    | InCatalog => true
+                    | Wishlist => false
+                    }
+                  )) {
+              <div className=Styles.navLink>
+                <Link path="/catalog"> {React.string("Catalog")} </Link>
+              </div>;
+            } else {
+              React.null;
+            }}
            <div className={Cn.make([Styles.navLink, Styles.twitterLink])}>
              <a href="https://twitter.com/nookexchange" target="_blank">
                {React.string("Twitter")}
              </a>
            </div>
-           <div className=Styles.navLink>
+           <div className={Cn.make([Styles.navLink, Styles.logoutLink])}>
              <a
                href="#"
                onClick={e => {

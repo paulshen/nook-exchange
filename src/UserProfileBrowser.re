@@ -89,9 +89,10 @@ module Styles = {
       top(px(8)),
       left(px(8)),
       fontSize(px(14)),
-      opacity(0.5),
+      opacity(0.),
       cursor(`default),
       transition(~duration=200, "all"),
+      media("(hover: none)", [opacity(0.8)]),
     ]);
   let card =
     style([

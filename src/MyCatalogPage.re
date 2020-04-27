@@ -47,6 +47,7 @@ module Catalog = {
           [width(auto), padding(px(16)), borderRadius(zero)],
         ),
       ]);
+    let filterBar = style([marginBottom(zero)]);
     let cards =
       style([
         paddingTop(px(16)),
@@ -87,15 +88,8 @@ module Catalog = {
     let numResults = filteredItems->Belt.Array.length;
 
     <div className={Cn.make([Styles.root])}>
-      <ItemFilters.CategoryButtons
-        filters
-        onChange={filters => {
-          setFilters(_ => filters);
-          setPageOffset(_ => 0);
-        }}
-        userItemIds
-      />
-      <div className=ItemBrowser.Styles.filterBar>
+      <div
+        className={Cn.make([ItemBrowser.Styles.filterBar, Styles.filterBar])}>
         <ItemFilters
           filters
           onChange={filters => {

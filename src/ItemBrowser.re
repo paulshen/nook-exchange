@@ -21,7 +21,6 @@ module Styles = {
       flexWrap(wrap),
       marginRight(px(-32)),
       justifyContent(flexStart),
-      media("(max-width: 640px)", [justifyContent(center)]),
       media("(max-width: 600px)", [marginRight(px(-16))]),
     ]);
   let filterBar =
@@ -62,6 +61,7 @@ let getUrl =
 
 [@react.component]
 let make = (~showLogin, ~url: ReasonReactRouter.url) => {
+  let isLoggedIn = UserStore.useMe() !== None;
   let (numResultsPerPage, _setNumResultsPerPage) =
     React.useState(() => getNumResultsPerPage());
   let (filters, pageOffset) =
@@ -147,7 +147,12 @@ let make = (~showLogin, ~url: ReasonReactRouter.url) => {
            ~len=numResultsPerPage,
          )
        ->Belt.Array.mapWithIndexU((. i, item) => {
-           <ItemCard item showLogin key={item.id ++ string_of_int(i)} />
+           <ItemCard
+             item
+             isLoggedIn
+             showLogin
+             key={item.id ++ string_of_int(i)}
+           />
          })
        ->React.array}
     </div>

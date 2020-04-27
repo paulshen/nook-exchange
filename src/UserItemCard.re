@@ -23,6 +23,8 @@ module Styles = {
       transition(~duration=200, "all"),
     ]);
   let topRightIconSelected = style([opacity(1.)]);
+  let wishlistEllipsisButton =
+    style([position(absolute), top(px(8)), right(px(8))]);
   let catalogStatusButton =
     style([
       position(absolute),
@@ -67,107 +69,15 @@ module Styles = {
       marginTop(px(8)),
       padding3(~top=px(8), ~bottom=zero, ~h=px(4)),
     ]);
-  let removeButton = style([top(px(8)), bottom(initial)]);
+  let removeButton =
+    style([
+      position(absolute),
+      top(px(10)),
+      right(px(10)),
+      selector("." ++ card ++ ":hover &", [opacity(0.8)]),
+    ]);
   let recipe =
     style([marginTop(px(6)), textAlign(center), fontSize(px(12))]);
-};
-
-module WishlistEllipsisButton = {
-  module Styles = {
-    open Css;
-    let recipe =
-      style([marginTop(px(6)), textAlign(center), fontSize(px(12))]);
-    [@bs.module "./assets/dotdotdot.png"]
-    external dotdotdotIcon: string = "default";
-    let ellipsisButton =
-      style([
-        top(px(8)),
-        bottom(initial),
-        width(px(19)),
-        height(px(19)),
-        backgroundImage(url(dotdotdotIcon)),
-        backgroundSize(cover),
-        padding(zero),
-        right(px(8)),
-        outlineStyle(none),
-      ]);
-    let ellipsisButtonOpen = style([opacity(1.)]);
-    let menu =
-      style([
-        backgroundColor(Colors.white),
-        borderRadius(px(8)),
-        padding2(~v=px(6), ~h=zero),
-        overflow(hidden),
-        Colors.darkLayerShadow,
-      ]);
-    let menuItem =
-      style([
-        borderWidth(zero),
-        display(block),
-        width(pct(100.)),
-        textAlign(`left),
-        cursor(pointer),
-        padding2(~v=px(4), ~h=px(12)),
-        hover([backgroundColor(Colors.faintGray)]),
-      ]);
-    let menuItemRemove = style([color(Colors.red)]);
-  };
-
-  [@react.component]
-  let make = (~item: Item.t, ~variation) => {
-    let ellipsisButtonRef = React.useRef(Js.Nullable.null);
-    let (showEllipsisMenu, setShowEllipsisMenu) = React.useState(() => false);
-
-    <>
-      <button
-        className={Cn.make([
-          ItemCard.Styles.removeButton,
-          Styles.ellipsisButton,
-          Cn.ifTrue(Styles.ellipsisButtonOpen, showEllipsisMenu),
-        ])}
-        onClick={_ => setShowEllipsisMenu(_ => true)}
-        ref={ReactDOMRe.Ref.domRef(ellipsisButtonRef)}
-      />
-      {showEllipsisMenu
-         ? <ReactAtmosphere.PopperLayer
-             reference=ellipsisButtonRef
-             onOutsideClick={() => setShowEllipsisMenu(_ => false)}
-             options={
-               placement: Some("bottom"),
-               modifiers:
-                 Some([|
-                   {
-                     "name": "offset",
-                     "options": {
-                       "offset": [|0, 4|],
-                     },
-                   },
-                 |]),
-             }
-             render={_renderArgs =>
-               <div className=Styles.menu>
-                 <button className=Styles.menuItem>
-                   {React.string("Move to For Trade")}
-                 </button>
-                 <button className=Styles.menuItem>
-                   {React.string("Move to Can Craft")}
-                 </button>
-                 <button
-                   onClick={_ => {
-                     UserStore.removeItem(~itemId=item.id, ~variation)
-                   }}
-                   className={Cn.make([
-                     Styles.menuItem,
-                     Styles.menuItemRemove,
-                   ])}>
-                   {React.string("Remove from Wishlist")}
-                 </button>
-               </div>
-             }
-           />
-         : React.null}
-    </>;
-  };
 };
 
 [@react.component]
@@ -259,7 +169,7 @@ let make =
                   </div>
               )}
            </ReactAtmosphere.Tooltip>
-         | InCatalog => React.null
+         | CatalogOnly => React.null
          | Wishlist => raise(Constants.Uhoh)
          }
        )}
@@ -274,14 +184,15 @@ let make =
                 />
               : React.null}
            {userItem.status == Wishlist
-              ? <WishlistEllipsisButton item variation />
+              ? <WishlistEllipsisButton
+                  item
+                  variation
+                  className=Styles.wishlistEllipsisButton
+                />
               : <ReactAtmosphere.Tooltip text={React.string("Remove item")}>
                   {({onMouseEnter, onMouseLeave, onFocus, onBlur, ref}) =>
-                     <button
-                       className={Cn.make([
-                         ItemCard.Styles.removeButton,
-                         Styles.removeButton,
-                       ])}
+                     <RemoveButton
+                       className=Styles.removeButton
                        onMouseEnter
                        onMouseLeave
                        onFocus
@@ -297,7 +208,7 @@ let make =
                                  ~variation,
                                )
                              )
-                           | InCatalog =>
+                           | CatalogOnly =>
                              UserStore.removeItem(~itemId=item.id, ~variation)
                            | Wishlist => raise(Constants.Uhoh)
                            };
@@ -305,9 +216,8 @@ let make =
                            UserStore.removeItem(~itemId=item.id, ~variation);
                          }
                        }
-                       ref={ReactDOMRe.Ref.domRef(ref)}>
-                       {React.string({j|❌|j})}
-                     </button>}
+                       ref
+                     />}
                 </ReactAtmosphere.Tooltip>}
          </>
        : <>

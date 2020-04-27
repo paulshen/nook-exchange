@@ -143,15 +143,16 @@ module Styles = {
   let removeButton =
     style([
       position(absolute),
-      bottom(px(6)),
-      right(px(2)),
-      backgroundColor(transparent),
-      borderWidth(zero),
-      fontSize(px(12)),
-      opacity(0.5),
-      transition(~duration=200, "all"),
-      cursor(pointer),
-      hover([opacity(1.)]),
+      bottom(px(10)),
+      right(px(10)),
+      selector("." ++ card ++ ":hover &", [opacity(0.8)]),
+    ]);
+  let wishlistEllipsisButton =
+    style([
+      position(absolute),
+      bottom(px(8)),
+      right(px(8)),
+      selector("." ++ card ++ ":hover &", [opacity(0.8)]),
     ]);
 };
 
@@ -261,7 +262,7 @@ let renderStatusButton =
       | Wishlist => "Add to Wishlist"
       | ForTrade => "Add to For Trade list"
       | CanCraft => "Add to Can Craft list"
-      | InCatalog => raise(Constants.Uhoh)
+      | CatalogOnly => raise(Constants.Uhoh)
       }
     }>
     {React.string(
@@ -269,7 +270,7 @@ let renderStatusButton =
        | Wishlist => {j|+ Wishlist|j}
        | ForTrade => {j|+ For Trade|j}
        | CanCraft => {j|+ Can Craft|j}
-       | InCatalog => raise(Constants.Uhoh)
+       | CatalogOnly => raise(Constants.Uhoh)
        },
      )}
   </button>;
@@ -379,7 +380,7 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
                  | Some(Wishlist) => "Move to catalog from Wishlist"
                  | Some(ForTrade)
                  | Some(CanCraft)
-                 | Some(InCatalog) => "In your catalog"
+                 | Some(CatalogOnly) => "In your catalog"
                  },
                )}>
                {({onMouseEnter, onMouseLeave, ref}) =>
@@ -400,10 +401,10 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
                           Option.map(userItem, userItem => userItem.status)
                         ) {
                         | None
-                        | Some(Wishlist) => Some(User.InCatalog)
+                        | Some(Wishlist) => Some(User.CatalogOnly)
                         | Some(CanCraft)
                         | Some(ForTrade)
-                        | Some(InCatalog) => None
+                        | Some(CatalogOnly) => None
                         };
                       switch (status) {
                       | Some(status) =>
@@ -421,7 +422,7 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
                           updateItem();
                         };
                       | None =>
-                        if (Belt.Option.getExn(userItem).status == InCatalog) {
+                        if (Belt.Option.getExn(userItem).status == CatalogOnly) {
                           UserStore.removeItem(~itemId=item.id, ~variation);
                         } else {
                           DeleteFromCatalog.confirm(~onConfirm=() =>
@@ -438,7 +439,8 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
            </div>
          : React.null}
     </div>
-    {switch (userItem, userItem->Option.map(userItem => userItem.status)) {
+    {let userItemStatus = userItem->Option.map(userItem => userItem.status);
+     switch (userItem, userItemStatus) {
      | (Some(userItem), Some(Wishlist))
      | (Some(userItem), Some(ForTrade))
      | (Some(userItem), Some(CanCraft)) =>
@@ -461,26 +463,34 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
               },
             )}
          </div>
-         <button
-           className=Styles.removeButton
-           title="Remove"
-           onClick={_ => {
-             let status =
-               switch (showCatalogCheckbox, userItem.status) {
-               | (_, InCatalog) => raise(Constants.Uhoh)
-               | (false, _) => None
-               | (true, CanCraft)
-               | (true, ForTrade) => Some(User.InCatalog)
-               | (true, Wishlist) => None
-               };
-             switch (status) {
-             | Some(status) =>
-               UserStore.setItemStatus(~itemId=item.id, ~variation, ~status)
-             | None => UserStore.removeItem(~itemId=item.id, ~variation)
-             };
-           }}>
-           {React.string({j|❌|j})}
-         </button>
+         {userItemStatus == Some(Wishlist)
+            ? <WishlistEllipsisButton
+                item
+                variation
+                className=Styles.wishlistEllipsisButton
+              />
+            : <RemoveButton
+                className=Styles.removeButton
+                onClick={_ => {
+                  let status =
+                    switch (showCatalogCheckbox, userItem.status) {
+                    | (_, CatalogOnly) => raise(Constants.Uhoh)
+                    | (false, _) => None
+                    | (true, CanCraft)
+                    | (true, ForTrade) => Some(User.CatalogOnly)
+                    | (true, Wishlist) => None
+                    };
+                  switch (status) {
+                  | Some(status) =>
+                    UserStore.setItemStatus(
+                      ~itemId=item.id,
+                      ~variation,
+                      ~status,
+                    )
+                  | None => UserStore.removeItem(~itemId=item.id, ~variation)
+                  };
+                }}
+              />}
        </>
      | _ =>
        <div className={Cn.make([Styles.bottomBar, Styles.statusButtons])}>

@@ -332,7 +332,7 @@ let make =
            </div>
          : React.null}
       <div className=Styles.sectionToggles>
-        <div>
+        <div className=UserProfileBrowser.Styles.showRecipesBox>
           <label
             htmlFor="show-mini"
             className=UserProfileBrowser.Styles.showRecipesLabel>

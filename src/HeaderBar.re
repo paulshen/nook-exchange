@@ -80,7 +80,7 @@ let make = (~onLogin) => {
                     switch (userItem.status) {
                     | ForTrade
                     | CanCraft
-                    | InCatalog => true
+                    | CatalogOnly => true
                     | Wishlist => false
                     }
                   )) {

@@ -102,7 +102,12 @@ module Styles = {
       media("(max-width: 640px)", [top(px(32)), right(px(16))]),
     ]);
   let showRecipesBox =
-    style([marginLeft(px(16)), firstChild([marginLeft(zero)])]);
+    style([
+      marginLeft(px(16)),
+      display(flexBox),
+      alignItems(center),
+      firstChild([marginLeft(zero)]),
+    ]);
   let showRecipesLabel = style([fontSize(px(16)), marginRight(px(8))]);
   let showRecipesLabelDisabled = style([opacity(0.5)]);
   let showRecipesCheckbox =
@@ -219,7 +224,7 @@ module Section = {
         </Link>
       </div>
       <div className=Styles.sectionToggles>
-        <div>
+        <div className=Styles.showRecipesBox>
           <label htmlFor=id className=Styles.showRecipesLabel>
             {React.string("Thumbnails")}
           </label>

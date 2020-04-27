@@ -120,7 +120,7 @@ let setItemStatus =
   };
   api.dispatch(UpdateUser(updatedUser));
   let item = Item.getItem(~itemId);
-  if (status == InCatalog
+  if (status == CatalogOnly
       || numItemUpdatesLogged^ < 5
       || updatedUser.items->Js.Dict.keys->Js.Array.length < 10) {
     Analytics.Amplitude.logEventWithProperties(

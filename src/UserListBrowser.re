@@ -424,7 +424,11 @@ let make =
                numResultsPerPage
                setPageOffset={f => {
                  setPageOffset(f);
-                 Webapi.Dom.(window |> Window.scrollTo(0., 0.));
+                 let rootElement = Utils.getElementForDomRef(rootRef);
+                 open Webapi.Dom;
+                 let boundingRect =
+                   Element.getBoundingClientRect(rootElement);
+                 window |> Window.scrollBy(0., DomRect.top(boundingRect));
                }}
              />
            </div>

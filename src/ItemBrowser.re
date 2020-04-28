@@ -104,6 +104,7 @@ let make = (~showLogin, ~url: ReasonReactRouter.url) => {
       );
     };
   };
+  let rootRef = React.useRef(Js.Nullable.null);
   let setPageOffset = f => {
     let nextPageOffset = f(pageOffset);
     let urlSearchParams =
@@ -127,7 +128,7 @@ let make = (~showLogin, ~url: ReasonReactRouter.url) => {
     );
   let numResults = filteredItems->Belt.Array.length;
 
-  <div className=Styles.root>
+  <div className=Styles.root ref={ReactDOMRe.Ref.domRef(rootRef)}>
     <div className=Styles.tagline>
       {React.string("Your friendly Animal Crossing marketplace!")}
     </div>
@@ -167,7 +168,10 @@ let make = (~showLogin, ~url: ReasonReactRouter.url) => {
         numResultsPerPage
         setPageOffset={f => {
           setPageOffset(f);
-          Webapi.Dom.(window |> Window.scrollTo(0., 0.));
+          let rootElement = Utils.getElementForDomRef(rootRef);
+          open Webapi.Dom;
+          let boundingRect = Element.getBoundingClientRect(rootElement);
+          window |> Window.scrollBy(0., DomRect.top(boundingRect));
         }}
       />
     </div>

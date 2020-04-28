@@ -290,7 +290,7 @@ module Pager = {
            ++ " of "
            ++ string_of_int(numResults),
          )}
-        {pageOffset < numResults / numResultsPerPage
+        {pageOffset < (numResults - 1) / numResultsPerPage
            ? <a
                href="#"
                onClick={e => {

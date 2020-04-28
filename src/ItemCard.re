@@ -289,7 +289,7 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
       Cn.ifSome(Styles.cardSelected, userItem),
     ])}>
     <div className=Styles.body>
-      <div className=Styles.name> {React.string(item.name)} </div>
+      <div className=Styles.name> {React.string(Item.getName(item))} </div>
       <div
         className={Cn.make([
           Styles.mainImageWrapper,

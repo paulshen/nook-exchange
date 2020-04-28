@@ -128,7 +128,7 @@ module UserItemCardMini = {
   let make = (~itemId, ~variation) => {
     let item = Item.getItem(~itemId);
     <div className=Styles.cardMini>
-      <ReactAtmosphere.Tooltip text={React.string(item.name)}>
+      <ReactAtmosphere.Tooltip text={React.string(Item.getName(item))}>
         {({onMouseEnter, onMouseLeave, onFocus, onBlur, ref}) =>
            <div
              onMouseEnter

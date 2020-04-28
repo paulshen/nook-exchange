@@ -61,6 +61,9 @@ let tooltipConfig:
     }),
 };
 
+[@bs.val] [@bs.scope "navigator"]
+external browserLanguage: string = "language";
+
 [@react.component]
 let make = () => {
   let url = ReasonReactRouter.useUrl();
@@ -90,6 +93,39 @@ let make = () => {
       Item.setVariantNames(json);
       forceUpdate(x => x + 1);
     });
+    let languageLocale =
+      if (browserLanguage == "de") {
+        Some("de");
+      } else if (browserLanguage |> Js.String.startsWith("es")) {
+        Some("es");
+      } else if (browserLanguage |> Js.String.startsWith("fr")) {
+        Some("fr");
+      } else if (browserLanguage |> Js.String.startsWith("it")) {
+        Some("it");
+      } else if (browserLanguage == "ja") {
+        Some("ja");
+      } else if (browserLanguage == "ko") {
+        Some("ko");
+      } else if (browserLanguage == "nl") {
+        Some("nl");
+      } else if (Js.String.toLowerCase(browserLanguage) == "zh-cn") {
+        Some("zh-cn");
+      } else if (browserLanguage |> Js.String.startsWith("zh")) {
+        Some("zh-tw");
+      } else {
+        None;
+      };
+    switch (languageLocale) {
+    | Some(languageLocale) =>
+      Item.loadTranslation(
+        languageLocale,
+        json => {
+          Item.setTranslations(json);
+          forceUpdate(x => x + 1);
+        },
+      )
+    | None => ()
+    };
     None;
   });
 

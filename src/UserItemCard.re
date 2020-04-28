@@ -117,7 +117,7 @@ let make =
              />
            : React.null}
       </div>
-      <div className=Styles.name> {React.string(item.name)} </div>
+      <div className=Styles.name> {React.string(Item.getName(item))} </div>
       {switch (showRecipe, item.recipe) {
        | (true, Some(recipe)) =>
          <div className=Styles.recipe>

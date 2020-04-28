@@ -61,9 +61,6 @@ let tooltipConfig:
     }),
 };
 
-[@bs.val] [@bs.scope "navigator"]
-external browserLanguage: string = "language";
-
 [@react.component]
 let make = () => {
   let url = ReasonReactRouter.useUrl();
@@ -88,66 +85,61 @@ let make = () => {
     [|pathString|],
   );
   let (_, forceUpdate) = React.useState(() => 1);
+
+  let locale = SettingsStore.useLocale();
+  let (isLocaleLoaded, setIsLocaleLoaded) =
+    React.useState(() => locale === `English);
+  if (locale === `English && !isLocaleLoaded) {
+    setIsLocaleLoaded(_ => true);
+  };
+  React.useEffect1(
+    () => {
+      if (locale !== `English) {
+        setIsLocaleLoaded(_ => false);
+        Item.loadTranslation(
+          SettingsStore.localeToJs(locale),
+          json => {
+            setIsLocaleLoaded(_ => true);
+            Item.setTranslations(json);
+            forceUpdate(x => x + 1);
+          },
+        );
+      };
+      None;
+    },
+    [|locale|],
+  );
+
   React.useEffect0(() => {
     Item.loadVariants(json => {
       Item.setVariantNames(json);
       forceUpdate(x => x + 1);
     });
-    let languageLocale =
-      if (browserLanguage == "de") {
-        Some("de");
-      } else if (browserLanguage |> Js.String.startsWith("es")) {
-        Some("es");
-      } else if (browserLanguage |> Js.String.startsWith("fr")) {
-        Some("fr");
-      } else if (browserLanguage |> Js.String.startsWith("it")) {
-        Some("it");
-      } else if (browserLanguage == "ja") {
-        Some("ja");
-      } else if (browserLanguage == "ko") {
-        Some("ko");
-      } else if (browserLanguage == "nl") {
-        Some("nl");
-      } else if (Js.String.toLowerCase(browserLanguage) == "zh-cn") {
-        Some("zh-cn");
-      } else if (browserLanguage |> Js.String.startsWith("zh")) {
-        Some("zh-tw");
-      } else {
-        None;
-      };
-    switch (languageLocale) {
-    | Some(languageLocale) =>
-      Item.loadTranslation(
-        languageLocale,
-        json => {
-          Item.setTranslations(json);
-          forceUpdate(x => x + 1);
-        },
-      )
-    | None => ()
-    };
     None;
   });
 
   <div className=Styles.root>
     <TooltipConfigContextProvider value=tooltipConfig>
       <HeaderBar onLogin={_ => setShowLogin(_ => true)} />
-      <div className=Styles.body>
-        {switch (url.path) {
-         | ["catalog"] => <MyCatalogPage />
-         | ["u", username, ...urlRest] =>
-           <UserPage
-             username
-             urlRest
-             url
-             showLogin={() => setShowLogin(_ => true)}
-             key=username
-           />
-         | ["privacy"] => <TextPages.PrivacyPolicy />
-         | ["terms"] => <TextPages.TermsOfService />
-         | _ => <ItemBrowser showLogin={() => setShowLogin(_ => true)} url />
-         }}
-      </div>
+      {isLocaleLoaded
+         ? <div className=Styles.body>
+             {switch (url.path) {
+              | ["catalog"] => <MyCatalogPage />
+              | ["u", username, ...urlRest] =>
+                <UserPage
+                  username
+                  urlRest
+                  url
+                  showLogin={() => setShowLogin(_ => true)}
+                  key=username
+                />
+              | ["privacy"] => <TextPages.PrivacyPolicy />
+              | ["terms"] => <TextPages.TermsOfService />
+              | _ =>
+                <ItemBrowser showLogin={() => setShowLogin(_ => true)} url />
+              }}
+           </div>
+         : React.null}
       <Footer />
       {showLogin
          ? <LoginOverlay onClose={() => setShowLogin(_ => false)} />

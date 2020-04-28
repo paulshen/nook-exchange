@@ -273,7 +273,7 @@ let renderStatusButton =
           for (i in 0 to numVariations - 1) {
             variations |> Js.Array.push(i) |> ignore;
           };
-          UserStore.setItemBatchStatus(~itemId, ~variations, ~status);
+          UserStore.setItemStatusBatch(~itemId, ~variations, ~status);
         } else {
           UserStore.setItemStatus(~itemId, ~variation, ~status);
         };
@@ -490,7 +490,7 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
                             for (i in 0 to numVariations - 1) {
                               variations |> Js.Array.push(i) |> ignore;
                             };
-                            UserStore.setItemBatchStatus(
+                            UserStore.setItemStatusBatch(
                               ~itemId=item.id,
                               ~variations,
                               ~status,

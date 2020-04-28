@@ -201,7 +201,7 @@ let setItemStatus =
   |> ignore;
 };
 
-let setItemBatchStatus =
+let setItemStatusBatch =
     (~itemId: string, ~variations: array(int), ~status: User.itemStatus) => {
   let user = getUserExn();
   let updatedItems = {

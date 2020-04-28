@@ -27,7 +27,7 @@ module Styles = {
 [@react.component]
 let make = () => {
   let isLoggedIn = UserStore.useMe() !== None;
-  let locale = SettingsStore.useLocale();
+  let language = SettingsStore.useLanguage();
   <div className=Styles.footer>
     <div className=Styles.contents>
       <div>
@@ -55,7 +55,7 @@ let make = () => {
               ReactEvent.Mouse.preventDefault(e);
               LanguageSelector.show();
             }}>
-            {React.string(SettingsStore.localeToString(locale))}
+            {React.string(SettingsStore.languageToString(language))}
           </a>
         </span>
         {isLoggedIn

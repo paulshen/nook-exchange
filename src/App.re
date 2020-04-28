@@ -86,19 +86,19 @@ let make = () => {
   );
   let (_, forceUpdate) = React.useState(() => 1);
 
-  let locale = SettingsStore.useLocale();
-  let (isLocaleLoaded, setIsLocaleLoaded) =
-    React.useState(() => locale === `English);
-  if (locale === `English && !isLocaleLoaded) {
-    setIsLocaleLoaded(_ => true);
+  let language = SettingsStore.useLanguage();
+  let (isLanguageLoaded, setIsLanguageLoaded) =
+    React.useState(() => language === `English);
+  if (language === `English && !isLanguageLoaded) {
+    setIsLanguageLoaded(_ => true);
   };
   React.useEffect1(
     () => {
-      if (locale !== `English) {
+      if (language !== `English) {
         Item.loadTranslation(
-          SettingsStore.localeToJs(locale),
+          SettingsStore.languageToJs(language),
           json => {
-            setIsLocaleLoaded(_ => true);
+            setIsLanguageLoaded(_ => true);
             Item.setTranslations(json);
             forceUpdate(x => x + 1);
           },
@@ -109,7 +109,7 @@ let make = () => {
       };
       None;
     },
-    [|locale|],
+    [|language|],
   );
 
   React.useEffect0(() => {
@@ -123,7 +123,7 @@ let make = () => {
   <div className=Styles.root>
     <TooltipConfigContextProvider value=tooltipConfig>
       <HeaderBar onLogin={_ => setShowLogin(_ => true)} />
-      {isLocaleLoaded
+      {isLanguageLoaded
          ? <div className=Styles.body>
              {switch (url.path) {
               | ["catalog"] => <MyCatalogPage />

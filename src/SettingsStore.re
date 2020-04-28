@@ -1,5 +1,5 @@
 [@bs.deriving jsConverter]
-type locale = [
+type language = [
   | [@bs.as "de"] `German
   | [@bs.as "es"] `Spanish
   | [@bs.as "fr"] `French
@@ -12,7 +12,7 @@ type locale = [
   | [@bs.as "en"] `English
 ];
 
-let locales: array(locale) = [|
+let languages: array(language) = [|
   `English,
   `Spanish,
   `French,
@@ -25,8 +25,8 @@ let locales: array(locale) = [|
   `ChineseSimplified,
 |];
 
-let localeToString = (locale: locale) => {
-  switch (locale) {
+let languageToString = (language: language) => {
+  switch (language) {
   | `German => {j|Deutsch|j}
   | `Spanish => {j|Español|j}
   | `French => {j|Français|j}
@@ -43,7 +43,7 @@ let localeToString = (locale: locale) => {
 [@bs.val] [@bs.scope "navigator"]
 external browserLanguage: string = "language";
 
-let browserLocale =
+let browserLanguage =
   if (browserLanguage == "de") {
     `German;
   } else if (browserLanguage |> Js.String.startsWith("es")) {
@@ -66,38 +66,42 @@ let browserLocale =
     `English;
   };
 
-type state = {locale};
+type state = {language};
 type action =
-  | SetLocale(locale);
+  | SetLanguage(language);
 
-let localStorageKey = "locale";
-let localStorageLocale =
+let localStorageKey = "language";
+let localStorageLanguage =
   Dom.Storage.localStorage |> Dom.Storage.getItem(localStorageKey);
 
 let api =
   Restorative.createStore(
     {
-      locale:
-        localStorageLocale
-        ->Belt.Option.flatMap(localeFromJs)
+      language:
+        localStorageLanguage
+        ->Belt.Option.flatMap(languageFromJs)
         ->Belt.Option.getWithDefault(`English),
     },
     (state, action) => {
     switch (action) {
-    | SetLocale(locale) => {locale: locale}
+    | SetLanguage(language) => {language: language}
     }
   });
 
-let useLocale = () => {
-  api.useStoreWithSelector(state => state.locale, ());
+let useLanguage = () => {
+  api.useStoreWithSelector(state => state.language, ());
 };
 
-let setLocale = (~locale) => {
-  api.dispatch(SetLocale(locale));
-  if (locale == browserLocale) {
+let setLanguage = (~language) => {
+  api.dispatch(SetLanguage(language));
+  if (language == browserLanguage) {
     Dom.Storage.localStorage |> Dom.Storage.removeItem(localStorageKey);
   } else {
     Dom.Storage.localStorage
-    |> Dom.Storage.setItem(localStorageKey, localeToJs(locale));
+    |> Dom.Storage.setItem(localStorageKey, languageToJs(language));
   };
+  Analytics.Amplitude.logEventWithProperties(
+    ~eventName="Language Changed",
+    ~eventProperties={"language": language},
+  );
 };

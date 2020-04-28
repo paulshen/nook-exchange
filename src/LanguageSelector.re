@@ -68,7 +68,7 @@ module Modal = {
 
   [@react.component]
   let make = (~onClose) => {
-    let selectedLocale = SettingsStore.useLocale();
+    let selectedLanguage = SettingsStore.useLanguage();
     <div className=Styles.overlay>
       <div className=Styles.backdrop onClick={_ => onClose()} />
       <div className=Styles.root>
@@ -76,25 +76,26 @@ module Modal = {
           {React.string("Select a language:")}
         </div>
         <div>
-          {SettingsStore.locales
-           ->Belt.Array.map(locale => {
+          {SettingsStore.languages
+           ->Belt.Array.map(language => {
                <div
-                 className=Styles.row key={SettingsStore.localeToJs(locale)}>
+                 className=Styles.row
+                 key={SettingsStore.languageToJs(language)}>
                  <a
                    href="#"
                    onClick={e => {
                      ReactEvent.Mouse.preventDefault(e);
-                     SettingsStore.setLocale(~locale);
+                     SettingsStore.setLanguage(~language);
                      onClose();
                    }}
                    className={Cn.make([
                      Styles.languageLink,
                      Cn.ifTrue(
                        Styles.languageLinkSelected,
-                       selectedLocale == locale,
+                       selectedLanguage == language,
                      ),
                    ])}>
-                   {React.string(SettingsStore.localeToString(locale))}
+                   {React.string(SettingsStore.languageToString(language))}
                  </a>
                </div>
              })

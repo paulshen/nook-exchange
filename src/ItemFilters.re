@@ -326,8 +326,17 @@ module CategoryButtons = {
         marginBottom(px(8)),
         media("(min-width: 1200px)", [marginBottom(px(4))]),
       ]);
-    let button = style([marginRight(px(8)), marginBottom(px(8))]);
-    let buttonNotSelected = style([opacity(0.5), hover([opacity(1.)])]);
+    let button =
+      style([
+        marginRight(px(8)),
+        marginBottom(px(8)),
+        transition(~duration=200, "all"),
+      ]);
+    let buttonNotSelected =
+      style([
+        backgroundColor(hex("8fcaa3e0")),
+        hover([backgroundColor(hex("3aa563e0"))]),
+      ]);
     let select =
       style([height(px(37)), opacity(0.5), hover([opacity(1.)])]);
     let selectSelected = style([height(px(37)), opacity(1.)]);

@@ -123,6 +123,7 @@ module Styles = {
       justifyContent(center),
       marginBottom(px(8)),
     ]);
+  let variationBatch = style([borderRadius(px(4)), overflow(hidden)]);
   let variationImage =
     style([
       display(block),
@@ -132,13 +133,25 @@ module Styles = {
       borderRadius(px(4)),
       hover([backgroundColor(hex("00000010"))]),
     ]);
+  let variationImageBatch =
+    style([backgroundColor(hex("3aa56320")), borderRadius(zero)]);
   let variationImageSelected = style([backgroundColor(hex("3aa56320"))]);
   let metaIcons = style([position(absolute), top(px(8)), left(px(6))]);
   let topRightIcons =
     style([position(absolute), top(px(10)), right(px(10))]);
   let bottomBar = style([fontSize(px(12))]);
   let bottomBarStatus = style([alignSelf(flexStart), paddingTop(px(4))]);
-  let statusButtons = style([]);
+  let statusButtons = style([display(flexBox), alignItems(center)]);
+  let batchIndicator =
+    style([
+      backgroundColor(Colors.green),
+      color(Colors.white),
+      fontSize(px(12)),
+      padding3(~top=px(5), ~bottom=px(3), ~h=px(4)),
+      borderRadius(px(4)),
+      textTransform(uppercase),
+      marginRight(px(4)),
+    ]);
   let statusButtonSelected =
     style([backgroundColor(Colors.green), color(Colors.white)]);
   let removeButton =
@@ -247,13 +260,23 @@ let renderStatusButton =
       ~status,
       ~userItem: option(User.item),
       ~showLogin=?,
+      ~useBatchMode,
+      ~numVariations,
       (),
     ) => {
   let userItemStatus = Option.map(userItem, userItem => userItem.status);
   <button
     onClick={_ =>
       if (UserStore.isLoggedIn()) {
-        UserStore.setItemStatus(~itemId, ~variation, ~status);
+        if (useBatchMode && numVariations > 1) {
+          let variations = [||];
+          for (i in 0 to numVariations - 1) {
+            variations |> Js.Array.push(i) |> ignore;
+          };
+          UserStore.setItemStatusBatch(~itemId, ~variations, ~status);
+        } else {
+          UserStore.setItemStatus(~itemId, ~variation, ~status);
+        };
       } else {
         Option.map(showLogin, showLogin => showLogin()) |> ignore;
       }
@@ -272,9 +295,9 @@ let renderStatusButton =
     }>
     {React.string(
        switch (status) {
-       | Wishlist => {j|+ Wishlist|j}
-       | ForTrade => {j|+ For Trade|j}
-       | CanCraft => {j|+ Can Craft|j}
+       | Wishlist => "+ Wishlist"
+       | ForTrade => "+ For Trade"
+       | CanCraft => "+ Can Craft"
        | CatalogOnly => raise(Constants.Uhoh)
        },
      )}
@@ -285,8 +308,47 @@ let renderStatusButton =
 let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
   let (variation, setVariation) = React.useState(() => 0);
   let userItem = UserStore.useItem(~itemId=item.id, ~variation);
-
+  let (useBatchMode, setUseBatchMode) = React.useState(() => false);
   let numVariations = Item.getNumVariations(~item);
+
+  if (useBatchMode
+      && (
+        numVariations === 1
+        || (
+          switch (userItem->Belt.Option.map(userItem => userItem.status)) {
+          | Some(ForTrade)
+          | Some(CanCraft)
+          | Some(Wishlist) => true
+          | Some(CatalogOnly)
+          | None => false
+          }
+        )
+      )) {
+    setUseBatchMode(_ => false);
+  };
+
+  React.useEffect0(() => {
+    open Webapi.Dom;
+    let onKeyDown = e =>
+      if (KeyboardEvent.key(e) == "Shift") {
+        setUseBatchMode(_ => true);
+      };
+    let onKeyUp = e =>
+      if (KeyboardEvent.key(e) == "Shift") {
+        setUseBatchMode(_ => false);
+      };
+    if (numVariations > 1) {
+      window |> Window.addKeyDownEventListener(onKeyDown);
+      window |> Window.addKeyUpEventListener(onKeyUp);
+    };
+    Some(
+      () => {
+        window |> Window.removeKeyDownEventListener(onKeyDown);
+        window |> Window.removeKeyUpEventListener(onKeyUp);
+      },
+    );
+  });
+
   <div
     className={Cn.make([
       Styles.card,
@@ -313,7 +375,11 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
       {switch (numVariations) {
        | 1 => React.null
        | numVariations =>
-         <div className=Styles.variation>
+         <div
+           className={Cn.make([
+             Styles.variation,
+             Cn.ifTrue(Styles.variationBatch, useBatchMode),
+           ])}>
            {let children = [||];
             for (v in 0 to numVariations - 1) {
               let image =
@@ -321,6 +387,7 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
                   src={Item.getImageUrl(~item, ~variant=v)}
                   className={Cn.make([
                     Styles.variationImage,
+                    Cn.ifTrue(Styles.variationImageBatch, useBatchMode),
                     Cn.ifTrue(Styles.variationImageSelected, v == variation),
                   ])}
                 />;
@@ -417,13 +484,24 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
                         };
                       switch (status) {
                       | Some(status) =>
-                        let updateItem = () => {
-                          UserStore.setItemStatus(
-                            ~itemId=item.id,
-                            ~variation,
-                            ~status,
-                          );
-                        };
+                        let updateItem = () =>
+                          if (useBatchMode && numVariations > 1) {
+                            let variations = [||];
+                            for (i in 0 to numVariations - 1) {
+                              variations |> Js.Array.push(i) |> ignore;
+                            };
+                            UserStore.setItemStatusBatch(
+                              ~itemId=item.id,
+                              ~variations,
+                              ~status,
+                            );
+                          } else {
+                            UserStore.setItemStatus(
+                              ~itemId=item.id,
+                              ~variation,
+                              ~status,
+                            );
+                          };
                         if (Option.map(userItem, userItem => userItem.status)
                             == Some(Wishlist)) {
                           WishlistToCatalog.confirm(~onConfirm=updateItem);
@@ -503,12 +581,19 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
        </>
      | _ =>
        <div className={Cn.make([Styles.bottomBar, Styles.statusButtons])}>
+         {useBatchMode && numVariations > 1
+            ? <div className=Styles.batchIndicator>
+                {React.string("All")}
+              </div>
+            : React.null}
          {renderStatusButton(
             ~itemId=item.id,
             ~variation,
             ~status=Wishlist,
             ~userItem,
             ~showLogin,
+            ~useBatchMode,
+            ~numVariations,
             (),
           )}
          {renderStatusButton(
@@ -517,6 +602,8 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
             ~status=ForTrade,
             ~userItem,
             ~showLogin,
+            ~useBatchMode,
+            ~numVariations,
             (),
           )}
          {!item.isRecipe && item.recipe !== None
@@ -526,6 +613,8 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
                 ~status=CanCraft,
                 ~userItem,
                 ~showLogin,
+                ~useBatchMode,
+                ~numVariations,
                 (),
               )
             : React.null}

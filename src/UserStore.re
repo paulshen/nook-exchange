@@ -201,6 +201,81 @@ let setItemStatus =
   |> ignore;
 };
 
+let setItemStatusBatch =
+    (~itemId: string, ~variations: array(int), ~status: User.itemStatus) => {
+  let user = getUserExn();
+  let updatedItems = {
+    let clone = Utils.cloneJsDict(user.items);
+    variations
+    |> Js.Array.forEach(variant => {
+         let itemKey = User.getItemKey(~itemId, ~variation=variant);
+         let userItem =
+           switch (user.items->Js.Dict.get(itemKey)) {
+           | Some(item) => {...item, status}
+           | None => {status, note: ""}
+           };
+         clone->Js.Dict.set(itemKey, userItem);
+       });
+    clone;
+  };
+  let updatedUser = {...user, items: updatedItems};
+  api.dispatch(UpdateUser(updatedUser));
+  let item = Item.getItem(~itemId);
+  if (numItemUpdatesLogged^ < 5
+      || updatedUser.items->Js.Dict.keys->Js.Array.length < 10) {
+    Analytics.Amplitude.logEventWithProperties(
+      ~eventName="Item Status Updated",
+      ~eventProperties={
+        "itemId": item.id,
+        "variants": variations,
+        "status": User.itemStatusToJs(status),
+      },
+    );
+    numItemUpdatesLogged := numItemUpdatesLogged^ + 1;
+  };
+  Analytics.Amplitude.setItemCount(
+    ~itemCount=Js.Dict.keys(updatedUser.items)->Js.Array.length,
+  );
+  {
+    let url = Constants.apiUrl ++ "/@me4/items/" ++ item.id ++ "/batch/status";
+    let%Repromise.Js responseResult =
+      Fetch.fetchWithInit(
+        url,
+        Fetch.RequestInit.make(
+          ~method_=Post,
+          ~body=
+            Fetch.BodyInit.make(
+              Js.Json.stringify(
+                Json.Encode.object_([
+                  ("status", Json.Encode.int(User.itemStatusToJs(status))),
+                  (
+                    "variants",
+                    Json.Encode.array(
+                      Json.Encode.string,
+                      variations->Belt.Array.map(string_of_int),
+                    ),
+                  ),
+                ]),
+              ),
+            ),
+          ~headers=
+            Fetch.HeadersInit.make({
+              "X-Client-Version": Constants.gitCommitRef,
+              "Content-Type": "application/json",
+              "Authorization":
+                "Bearer " ++ Option.getWithDefault(sessionId^, ""),
+            }),
+          ~credentials=Include,
+          ~mode=CORS,
+          (),
+        ),
+      );
+    handleServerResponse(url, responseResult);
+    Promise.resolved();
+  }
+  |> ignore;
+};
+
 let setItemNote = (~itemId: string, ~variation: int, ~note: string) => {
   let user = getUserExn();
   let itemKey = User.getItemKey(~itemId, ~variation);

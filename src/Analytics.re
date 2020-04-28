@@ -57,6 +57,12 @@ module Amplitude = {
     getInstance()->API.identify(identifyInstance);
   };
 
+  let setLanguage = (~language) => {
+    let identifyInstance =
+      API.getIdentify()->API.identifySet("language", language);
+    getInstance()->API.identify(identifyInstance);
+  };
+
   let addExperimentBucket = (~experimentId, ~bucketId) => {
     let identifyInstance =
       API.getIdentify()

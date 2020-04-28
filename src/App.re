@@ -107,6 +107,9 @@ let make = () => {
         Item.clearTranslations();
         forceUpdate(x => x + 1);
       };
+      Analytics.Amplitude.setLanguage(
+        ~language=SettingsStore.languageToJs(language),
+      );
       None;
     },
     [|language|],

@@ -415,7 +415,7 @@ let register = (~username, ~email, ~password) => {
     let user = User.fromAPI(json);
     api.dispatch(Login(user));
     Analytics.Amplitude.setUserId(~userId=Some(user.id));
-    Analytics.Amplitude.setUsername(~username);
+    Analytics.Amplitude.setUsername(~username, ~email);
     Promise.resolved(Ok(user));
   | _ =>
     let%Repromise.JsExn text = Fetch.Response.text(response);

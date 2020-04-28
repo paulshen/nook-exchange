@@ -51,9 +51,11 @@ module Amplitude = {
     getInstance()->API.setUserId(userId);
   };
 
-  let setUsername = (~username) => {
+  let setUsername = (~username, ~email) => {
     let identifyInstance =
-      API.getIdentify()->API.identifySet("username", username);
+      API.getIdentify()
+      ->API.identifySet("username", username)
+      ->API.identifySet("email", email);
     getInstance()->API.identify(identifyInstance);
   };
 

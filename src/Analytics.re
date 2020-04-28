@@ -18,6 +18,8 @@ module Amplitude = {
     [@bs.send]
     external identifySet: (identify, string, string) => identify = "set";
     [@bs.send]
+    external identifySetInt: (identify, string, int) => identify = "set";
+    [@bs.send]
     external identifyAppend: (identify, string, string) => identify = "append";
 
     [@bs.send] external identify: (t, identify) => unit = "identify";
@@ -62,6 +64,12 @@ module Amplitude = {
   let setLanguage = (~language) => {
     let identifyInstance =
       API.getIdentify()->API.identifySet("language", language);
+    getInstance()->API.identify(identifyInstance);
+  };
+
+  let setItemCount = (~itemCount) => {
+    let identifyInstance =
+      API.getIdentify()->API.identifySetInt("itemCount", itemCount);
     getInstance()->API.identify(identifyInstance);
   };
 

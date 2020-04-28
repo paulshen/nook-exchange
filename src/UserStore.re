@@ -133,6 +133,9 @@ let setItemStatus =
     );
     numItemUpdatesLogged := numItemUpdatesLogged^ + 1;
   };
+  Analytics.Amplitude.setItemCount(
+    ~itemCount=Js.Dict.keys(updatedUser.items)->Js.Array.length,
+  );
   {
     let url =
       Constants.apiUrl
@@ -260,6 +263,9 @@ let removeItem = (~itemId, ~variation) => {
       );
       numItemRemovesLogged := numItemRemovesLogged^ + 1;
     };
+    Analytics.Amplitude.setItemCount(
+      ~itemCount=Js.Dict.keys(updatedUser.items)->Js.Array.length,
+    );
     {
       let url =
         Constants.apiUrl

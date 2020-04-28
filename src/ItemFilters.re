@@ -345,6 +345,7 @@ external unsafeAsHtmlInputElement: 'a => Webapi.Dom.HtmlInputElement.t =
 
 let getCategoryLabel = category => {
   switch (category) {
+  | "recipes" => "All Recipes"
   | "furniture" => "All Furniture"
   | "clothing" => "All Clothing"
   | category => Utils.capitalizeFirstLetter(category)
@@ -371,8 +372,15 @@ module CategoryButtons = {
         hover([backgroundColor(hex("3aa563e0"))]),
       ]);
     let select =
-      style([height(px(37)), opacity(0.5), hover([opacity(1.)])]);
+      style([
+        height(px(37)),
+        opacity(0.7),
+        marginRight(px(16)),
+        hover([opacity(1.)]),
+      ]);
     let selectSelected = style([height(px(37)), opacity(1.)]);
+    let excludeNotice =
+      style([display(inlineBlock), marginBottom(px(12))]);
   };
 
   [@react.component]
@@ -411,7 +419,14 @@ module CategoryButtons = {
 
     let selectCategories =
       Belt.Array.concatMany([|
-        [|"wallpapers", "floors", "rugs"|],
+        [|
+          "housewares",
+          "miscellaneous",
+          "wall-mounted",
+          "wallpapers",
+          "floors",
+          "rugs",
+        |],
         Item.clothingCategories,
         Item.otherCategories,
       |]);
@@ -429,9 +444,6 @@ module CategoryButtons = {
         {React.string("Everything!")}
       </Button>
       {renderButton("furniture")}
-      {renderButton("housewares")}
-      {renderButton("miscellaneous")}
-      {renderButton("wall-mounted")}
       {renderButton("recipes")}
       {renderButton("clothing")}
       <select
@@ -466,7 +478,7 @@ module CategoryButtons = {
             },
           ),
         ])}>
-        <option value=""> {React.string("-- Other Categories")} </option>
+        <option value=""> {React.string("-- Categories")} </option>
         {selectCategories
          ->Belt.Array.mapU((. category) =>
              shouldRenderCategory(category)
@@ -477,6 +489,22 @@ module CategoryButtons = {
            )
          ->React.array}
       </select>
+      {switch (filters.exclude) {
+       | [|Wishlist, Catalog|]
+       | [|Catalog, Wishlist|] =>
+         <div className=CategoryStyles.excludeNotice>
+           {React.string("Hiding items in Catalog and Wishlist")}
+         </div>
+       | [|Catalog|] =>
+         <div className=CategoryStyles.excludeNotice>
+           {React.string("Hiding items in Catalog")}
+         </div>
+       | [|Wishlist|] =>
+         <div className=CategoryStyles.excludeNotice>
+           {React.string("Hiding items in Wishlist")}
+         </div>
+       | _ => React.null
+       }}
     </div>;
   };
 };
@@ -673,7 +701,10 @@ let make =
       <option value="sell-asc"> {React.string({j|Sell Price ↑|j})} </option>
       <option value="abc"> {React.string("A - Z")} </option>
     </select>
-    {if (filters.text != "" || filters.mask != None || filters.category != None) {
+    {if (filters.text != ""
+         || filters.mask != None
+         || filters.exclude != [||]
+         || filters.category != None) {
        <a
          href="#"
          onClick={e => {

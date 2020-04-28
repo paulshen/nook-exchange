@@ -103,6 +103,9 @@ let make = () => {
             forceUpdate(x => x + 1);
           },
         );
+      } else {
+        Item.clearTranslations();
+        forceUpdate(x => x + 1);
       };
       None;
     },

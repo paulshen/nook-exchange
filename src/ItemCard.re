@@ -177,7 +177,11 @@ module RecipeIcon = {
         {recipe
          ->Array.map(((itemId, quantity)) =>
              <div key=itemId>
-               {React.string(itemId ++ " x " ++ string_of_int(quantity))}
+               {React.string(
+                  Item.getMaterialName(itemId)
+                  ++ " x "
+                  ++ string_of_int(quantity),
+                )}
              </div>
            )
          ->React.array}

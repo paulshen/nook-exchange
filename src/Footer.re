@@ -41,6 +41,12 @@ let make = () => {
           {React.string("Data Source")}
         </a>
         {React.string(" | ")}
+        <a
+          href="https://github.com/alexislours/acnh-translations"
+          target="_blank">
+          {React.string("Translations")}
+        </a>
+        {React.string(" | ")}
         <span>
           {React.string("Language: ")}
           <a

@@ -256,42 +256,54 @@ type translationItem = {
   name: string,
   variants: option(variantNames),
 };
-let translations: ref(option(Js.Dict.t(translationItem))) = ref(None);
+type translations = {
+  items: Js.Dict.t(translationItem),
+  materials: Js.Dict.t(string),
+};
+let translations: ref(option(translations)) = ref(None);
 let setTranslations = json => {
   Json.Decode.(
     translations :=
-      Some(
-        json
-        |> dict(json => {
-             let row = Js.Json.decodeArray(json)->Belt.Option.getExn;
-             {
-               name: string(row[0]),
-               variants:
-                 Belt.Option.map(Belt.Array.get(row, 1), json => {
-                   json
-                   |> oneOf([
-                        json =>
-                          NameTwoDimensions(
-                            json |> tuple2(array(string), array(string)),
-                          ),
-                        json => NameOneDimension(json |> array(string)),
-                      ])
-                 }),
-             };
-           }),
-      )
+      Some({
+        items:
+          json
+          |> field(
+               "items",
+               dict(json => {
+                 let row = Js.Json.decodeArray(json)->Belt.Option.getExn;
+                 {
+                   name: string(row[0]),
+                   variants:
+                     Belt.Option.map(Belt.Array.get(row, 1), json => {
+                       json
+                       |> oneOf([
+                            json =>
+                              NameTwoDimensions(
+                                json |> tuple2(array(string), array(string)),
+                              ),
+                            json => NameOneDimension(json |> array(string)),
+                          ])
+                     }),
+                 };
+               }),
+             ),
+        materials: json |> field("materials", dict(string)),
+      })
   );
+};
+let clearTranslations = () => {
+  translations := None;
 };
 
 let getName = (item: t) =>
   if (item.isRecipe) {
     Belt.(
       (translations^)
-      ->Option.flatMap(
+      ->Option.flatMap(translations =>
           Js.Dict.get(
-            _,
+            translations.items,
             getItemIdForRecipeId(~recipeId=item.id)->Option.getExn,
-          ),
+          )
         )
       ->Option.map(translation => translation.name ++ " DIY")
       ->Option.getWithDefault(item.name)
@@ -299,7 +311,9 @@ let getName = (item: t) =>
   } else {
     Belt.(
       (translations^)
-      ->Option.flatMap(Js.Dict.get(_, item.id))
+      ->Option.flatMap(translations =>
+          Js.Dict.get(translations.items, item.id)
+        )
       ->Option.map(translation => translation.name)
       ->Option.getWithDefault(item.name)
     );
@@ -313,7 +327,9 @@ let getVariantName = (~item: t, ~variant: int) => {
       (
         switch (
           (translations^)
-          ->Option.flatMap(Js.Dict.get(_, item.id))
+          ->Option.flatMap(translations =>
+              Js.Dict.get(translations.items, item.id)
+            )
           ->Option.flatMap(translationItem => translationItem.variants)
         ) {
         | Some(value) => Some(value)
@@ -330,7 +346,9 @@ let getVariantName = (~item: t, ~variant: int) => {
       (
         switch (
           (translations^)
-          ->Option.flatMap(Js.Dict.get(_, item.id))
+          ->Option.flatMap(translations =>
+              Js.Dict.get(translations.items, item.id)
+            )
           ->Option.flatMap(translationItem => translationItem.variants)
         ) {
         | Some(value) => Some(value)
@@ -356,3 +374,12 @@ let getVariantName = (~item: t, ~variant: int) => {
     }
   );
 };
+
+let getMaterialName = (material: string) =>
+  Belt.(
+    (translations^)
+    ->Option.flatMap(translations =>
+        Js.Dict.get(translations.materials, material)
+      )
+    ->Option.getWithDefault(material)
+  );

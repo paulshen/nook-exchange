@@ -13,16 +13,16 @@ type locale = [
 ];
 
 let locales: array(locale) = [|
-  `German,
+  `English,
   `Spanish,
   `French,
+  `German,
   `Italian,
+  `Dutch,
   `Japanese,
   `Korean,
-  `Dutch,
-  `ChineseSimplified,
   `ChineseTraditional,
-  `English,
+  `ChineseSimplified,
 |];
 
 let localeToString = (locale: locale) => {

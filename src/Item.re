@@ -100,6 +100,12 @@ let otherCategories = [|
 
 [@bs.val] [@bs.scope "window"] external itemsJson: Js.Json.t = "items";
 
+let loadTranslation: (string, Js.Json.t => unit) => unit = [%raw
+  {|function(language, callback) {
+    import(/* webpackChunkName */ './translations/' + language + '.json').then(j => callback(j.default))
+  }|}
+];
+
 exception UnexpectedType(string);
 
 let spaceRegex = [%bs.re "/\\s/g"];
@@ -241,36 +247,139 @@ let setVariantNames = json => {
   );
 };
 
-let getVariantName = (~item: t, ~variant: int) => {
-  switch (item.variations) {
-  | Single => None
-  | OneDimension(_) =>
-    (variantNames^)
-    ->Belt.Option.flatMap(Js.Dict.get(_, item.id))
-    ->Belt.Option.flatMap(value =>
-        switch (value) {
-        | NameOneDimension(names) => Some(names[variant])
-        | _ => None
-        }
-      )
-  | TwoDimensions(_a, b) =>
-    (variantNames^)
-    ->Belt.Option.flatMap(Js.Dict.get(_, item.id))
-    ->Belt.Option.flatMap(value =>
-        switch (value) {
-        | NameTwoDimensions((nameA, nameB)) =>
-          Some(
-            nameA[variant / b]
-            ++ (
-              if (b > 1) {
-                " x " ++ nameB[variant mod b];
-              } else {
-                "";
-              }
-            ),
-          )
-        | _ => None
-        }
-      )
-  };
+let loadTranslation: (string, Js.Json.t => unit) => unit = [%raw
+  {|function(language, callback) {
+    import(/* webpackChunkName */ './translations/' + language + '.json').then(j => callback(j.default))
+  }|}
+];
+type translationItem = {
+  name: string,
+  variants: option(variantNames),
 };
+type translations = {
+  items: Js.Dict.t(translationItem),
+  materials: Js.Dict.t(string),
+};
+let translations: ref(option(translations)) = ref(None);
+let setTranslations = json => {
+  Json.Decode.(
+    translations :=
+      Some({
+        items:
+          json
+          |> field(
+               "items",
+               dict(json => {
+                 let row = Js.Json.decodeArray(json)->Belt.Option.getExn;
+                 {
+                   name: string(row[0]),
+                   variants:
+                     Belt.Option.map(Belt.Array.get(row, 1), json => {
+                       json
+                       |> oneOf([
+                            json =>
+                              NameTwoDimensions(
+                                json |> tuple2(array(string), array(string)),
+                              ),
+                            json => NameOneDimension(json |> array(string)),
+                          ])
+                     }),
+                 };
+               }),
+             ),
+        materials: json |> field("materials", dict(string)),
+      })
+  );
+};
+let clearTranslations = () => {
+  translations := None;
+};
+
+let getName = (item: t) =>
+  if (item.isRecipe) {
+    Belt.(
+      (translations^)
+      ->Option.flatMap(translations =>
+          Js.Dict.get(
+            translations.items,
+            getItemIdForRecipeId(~recipeId=item.id)->Option.getExn,
+          )
+        )
+      ->Option.map(translation => translation.name ++ " DIY")
+      ->Option.getWithDefault(item.name)
+    );
+  } else {
+    Belt.(
+      (translations^)
+      ->Option.flatMap(translations =>
+          Js.Dict.get(translations.items, item.id)
+        )
+      ->Option.map(translation => translation.name)
+      ->Option.getWithDefault(item.name)
+    );
+  };
+
+let getVariantName = (~item: t, ~variant: int) => {
+  Belt.(
+    switch (item.variations) {
+    | Single => None
+    | OneDimension(_) =>
+      (
+        switch (
+          (translations^)
+          ->Option.flatMap(translations =>
+              Js.Dict.get(translations.items, item.id)
+            )
+          ->Option.flatMap(translationItem => translationItem.variants)
+        ) {
+        | Some(value) => Some(value)
+        | None => (variantNames^)->Option.flatMap(Js.Dict.get(_, item.id))
+        }
+      )
+      ->Option.flatMap(value =>
+          switch (value) {
+          | NameOneDimension(names) => Some(Option.getExn(names[variant]))
+          | _ => None
+          }
+        )
+    | TwoDimensions(_a, b) =>
+      (
+        switch (
+          (translations^)
+          ->Option.flatMap(translations =>
+              Js.Dict.get(translations.items, item.id)
+            )
+          ->Option.flatMap(translationItem => translationItem.variants)
+        ) {
+        | Some(value) => Some(value)
+        | None => (variantNames^)->Option.flatMap(Js.Dict.get(_, item.id))
+        }
+      )
+      ->Belt.Option.flatMap(value =>
+          switch (value) {
+          | NameTwoDimensions((nameA, nameB)) =>
+            Some(
+              Option.getExn(nameA[variant / b])
+              ++ (
+                if (b > 1) {
+                  " x " ++ Option.getExn(nameB[variant mod b]);
+                } else {
+                  "";
+                }
+              ),
+            )
+          | _ => None
+          }
+        )
+    }
+  );
+};
+
+let getMaterialName = (material: string) =>
+  Belt.(
+    (translations^)
+    ->Option.flatMap(translations =>
+        Js.Dict.get(translations.materials, material)
+      )
+    ->Option.getWithDefault(material)
+  );

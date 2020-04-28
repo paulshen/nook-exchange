@@ -85,6 +85,33 @@ let make = () => {
     [|pathString|],
   );
   let (_, forceUpdate) = React.useState(() => 1);
+
+  let language = SettingsStore.useLanguage();
+  let (isLanguageLoaded, setIsLanguageLoaded) =
+    React.useState(() => language === `English);
+  if (language === `English && !isLanguageLoaded) {
+    setIsLanguageLoaded(_ => true);
+  };
+  React.useEffect1(
+    () => {
+      if (language !== `English) {
+        Item.loadTranslation(
+          SettingsStore.languageToJs(language),
+          json => {
+            setIsLanguageLoaded(_ => true);
+            Item.setTranslations(json);
+            forceUpdate(x => x + 1);
+          },
+        );
+      } else {
+        Item.clearTranslations();
+        forceUpdate(x => x + 1);
+      };
+      None;
+    },
+    [|language|],
+  );
+
   React.useEffect0(() => {
     Item.loadVariants(json => {
       Item.setVariantNames(json);
@@ -96,22 +123,25 @@ let make = () => {
   <div className=Styles.root>
     <TooltipConfigContextProvider value=tooltipConfig>
       <HeaderBar onLogin={_ => setShowLogin(_ => true)} />
-      <div className=Styles.body>
-        {switch (url.path) {
-         | ["catalog"] => <MyCatalogPage />
-         | ["u", username, ...urlRest] =>
-           <UserPage
-             username
-             urlRest
-             url
-             showLogin={() => setShowLogin(_ => true)}
-             key=username
-           />
-         | ["privacy"] => <TextPages.PrivacyPolicy />
-         | ["terms"] => <TextPages.TermsOfService />
-         | _ => <ItemBrowser showLogin={() => setShowLogin(_ => true)} url />
-         }}
-      </div>
+      {isLanguageLoaded
+         ? <div className=Styles.body>
+             {switch (url.path) {
+              | ["catalog"] => <MyCatalogPage />
+              | ["u", username, ...urlRest] =>
+                <UserPage
+                  username
+                  urlRest
+                  url
+                  showLogin={() => setShowLogin(_ => true)}
+                  key=username
+                />
+              | ["privacy"] => <TextPages.PrivacyPolicy />
+              | ["terms"] => <TextPages.TermsOfService />
+              | _ =>
+                <ItemBrowser showLogin={() => setShowLogin(_ => true)} url />
+              }}
+           </div>
+         : React.null}
       <Footer />
       {showLogin
          ? <LoginOverlay onClose={() => setShowLogin(_ => false)} />

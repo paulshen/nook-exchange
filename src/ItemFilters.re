@@ -55,10 +55,15 @@ type mask =
   | Orderable
   | HasRecipe;
 
+type excludables =
+  | Catalog
+  | Wishlist;
+
 type t = {
   text: string,
   mask: option(mask),
   category: option(string),
+  exclude: array(excludables),
   sort,
 };
 
@@ -89,6 +94,21 @@ let serialize = (~filters, ~defaultSort, ~pageOffset) => {
   | Some(category) => p |> Js.Array.push(("c", category)) |> ignore
   | None => ()
   };
+  if (Js.Array.length(filters.exclude) > 0) {
+    p
+    |> Js.Array.push((
+         "e",
+         filters.exclude
+         ->Belt.Array.map(exclude =>
+             switch (exclude) {
+             | Catalog => "catalog"
+             | Wishlist => "wishlist"
+             }
+           )
+         |> Js.Array.joinWith(","),
+       ))
+    |> ignore;
+  };
   if (pageOffset != 0) {
     p |> Js.Array.push(("p", string_of_int(pageOffset + 1))) |> ignore;
   };
@@ -114,6 +134,19 @@ let fromUrlSearch = (~urlSearch, ~defaultSort) => {
             None;
           }
         ),
+      exclude:
+        switch (searchParams |> get("e")) {
+        | Some(e) =>
+          (e |> Js.String.split(","))
+          ->Belt.Array.keepMap(fragment => {
+              switch (fragment) {
+              | "wishlist" => Some(Wishlist)
+              | "catalog" => Some(Catalog)
+              | _ => None
+              }
+            })
+        | None => [||]
+        },
       sort:
         switch (searchParams |> get("s")) {
         | Some("abc") => ABC
@@ -649,6 +682,7 @@ let make =
              text: "",
              mask: None,
              category: None,
+             exclude: [||],
              sort: filters.sort,
            });
          }}

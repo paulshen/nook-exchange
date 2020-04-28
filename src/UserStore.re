@@ -40,6 +40,32 @@ let useItem = (~itemId, ~variation) => {
     );
   api.useStoreWithSelector(selector, ());
 };
+let useIsLoggedIn = () => {
+  api.useStoreWithSelector(
+    state =>
+      switch (state) {
+      | LoggedIn(_) => true
+      | _ => false
+      },
+    (),
+  );
+};
+let useEnableCatalogCheckbox = () => {
+  api.useStoreWithSelector(
+    state =>
+      switch (state) {
+      | LoggedIn(user) => user.enableCatalogCheckbox
+      | _ => false
+      },
+    (),
+  );
+};
+let getUser = () => {
+  switch (api.getState()) {
+  | LoggedIn(user) => user
+  | _ => raise(Constants.Uhoh)
+  };
+};
 let getItem = (~itemId, ~variation) => {
   switch (api.getState()) {
   | LoggedIn(user) =>

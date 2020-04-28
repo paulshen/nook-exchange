@@ -61,11 +61,8 @@ let getUrl =
 
 [@react.component]
 let make = (~showLogin, ~url: ReasonReactRouter.url) => {
-  let showCatalogCheckbox =
-    switch (UserStore.useMe()) {
-    | Some(user) => user.enableCatalogCheckbox
-    | None => false
-    };
+  let isLoggedIn = UserStore.useIsLoggedIn();
+  let showCatalogCheckbox = UserStore.useEnableCatalogCheckbox();
   let (numResultsPerPage, _setNumResultsPerPage) =
     React.useState(() => getNumResultsPerPage());
   let (filters, pageOffset) =
@@ -117,14 +114,45 @@ let make = (~showLogin, ~url: ReasonReactRouter.url) => {
       );
     ReasonReactRouter.push(getUrl(~url, ~urlSearchParams));
   };
+  let excludeString = filters.exclude |> Js.Array.joinWith(",");
+  let excludeUserItemIds =
+    React.useMemo2(
+      () =>
+        if (isLoggedIn && Js.Array.length(filters.exclude) > 0) {
+          let userItems = UserStore.getUser().items;
+          let excludeItemIds = [||];
+          userItems
+          ->Js.Dict.entries
+          ->Belt.Array.forEach(((itemKey, userItem)) =>
+              if (switch (userItem.status) {
+                  | Wishlist =>
+                    filters.exclude |> Js.Array.includes(ItemFilters.Wishlist)
+                  | CanCraft
+                  | CatalogOnly
+                  | ForTrade =>
+                    filters.exclude |> Js.Array.includes(ItemFilters.Catalog)
+                  }) {
+                let (itemId, _) = User.fromItemKey(~key=itemKey);
+                if (!Js.Array.includes(itemId, excludeItemIds)) {
+                  excludeItemIds |> Js.Array.push(itemId) |> ignore;
+                };
+              }
+            );
+          excludeItemIds;
+        } else {
+          [||];
+        },
+      (excludeString, isLoggedIn),
+    );
   let filteredItems =
-    React.useMemo1(
+    React.useMemo2(
       () =>
         Item.all->Belt.Array.keep(item =>
-          ItemFilters.doesItemMatchFilters(~item, ~filters)
+          !Js.Array.includes(item.id, excludeUserItemIds)
+          && ItemFilters.doesItemMatchFilters(~item, ~filters)
         )
         |> Js.Array.sortInPlaceWith(ItemFilters.getSort(~sort=filters.sort)),
-      [|filters|],
+      (filters, excludeUserItemIds),
     );
   let numResults = filteredItems->Belt.Array.length;
 
@@ -182,7 +210,13 @@ let make = (~showLogin, ~url: ReasonReactRouter.url) => {
            href="#"
            onClick={e => {
              setFilters(
-               {text: "", mask: None, category: None, sort: SellPriceDesc}: ItemFilters.t,
+               {
+                 text: "",
+                 mask: None,
+                 category: None,
+                 exclude: [||],
+                 sort: SellPriceDesc,
+               }: ItemFilters.t,
              );
              ReactEvent.Mouse.preventDefault(e);
            }}>

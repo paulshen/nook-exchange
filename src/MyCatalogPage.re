@@ -79,7 +79,13 @@ module Catalog = {
     let (filters, setFilters) =
       React.useState(() =>
         (
-          {text: "", mask: None, category: None, sort: UserDefault}: ItemFilters.t
+          {
+            text: "",
+            mask: None,
+            category: None,
+            exclude: [||],
+            sort: UserDefault,
+          }: ItemFilters.t
         )
       );
     let (pageOffset, setPageOffset) = React.useState(() => 0);

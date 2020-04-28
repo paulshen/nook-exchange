@@ -27,6 +27,7 @@ module Styles = {
 [@react.component]
 let make = () => {
   let isLoggedIn = UserStore.useMe() !== None;
+  let locale = SettingsStore.useLocale();
   <div className=Styles.footer>
     <div className=Styles.contents>
       <div>
@@ -40,9 +41,17 @@ let make = () => {
           {React.string("Data Source")}
         </a>
         {React.string(" | ")}
-        <a href="/terms"> {React.string("Terms of Service")} </a>
-        {React.string(" | ")}
-        <a href="/privacy"> {React.string("Privacy Policy")} </a>
+        <span>
+          {React.string("Language: ")}
+          <a
+            href="#"
+            onClick={e => {
+              ReactEvent.Mouse.preventDefault(e);
+              LanguageSelector.show();
+            }}>
+            {React.string(SettingsStore.localeToString(locale))}
+          </a>
+        </span>
         {isLoggedIn
            ? <span className=Styles.logoutLink>
                {React.string(" | ")}
@@ -56,6 +65,11 @@ let make = () => {
                </a>
              </span>
            : React.null}
+      </div>
+      <div>
+        <a href="/terms"> {React.string("Terms of Service")} </a>
+        {React.string(" | ")}
+        <a href="/privacy"> {React.string("Privacy Policy")} </a>
         {React.string(" | Thanks for visiting!")}
       </div>
       <div className=Styles.disclaimer>

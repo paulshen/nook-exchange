@@ -12,6 +12,34 @@ type locale = [
   | [@bs.as "en"] `English
 ];
 
+let locales: array(locale) = [|
+  `German,
+  `Spanish,
+  `French,
+  `Italian,
+  `Japanese,
+  `Korean,
+  `Dutch,
+  `ChineseSimplified,
+  `ChineseTraditional,
+  `English,
+|];
+
+let localeToString = (locale: locale) => {
+  switch (locale) {
+  | `German => {j|Deutsch|j}
+  | `Spanish => {j|Español|j}
+  | `French => {j|Français|j}
+  | `Italian => {j|Italiano|j}
+  | `Japanese => {j|日本語|j}
+  | `Korean => {j|한국어|j}
+  | `Dutch => {j|Dansk|j}
+  | `ChineseSimplified => {j|中文|j}
+  | `ChineseTraditional => {j|繁體中文|j}
+  | `English => {j|English|j}
+  };
+};
+
 [@bs.val] [@bs.scope "navigator"]
 external browserLanguage: string = "language";
 
@@ -64,10 +92,12 @@ let useLocale = () => {
   api.useStoreWithSelector(state => state.locale, ());
 };
 
-let setLocale = (~locale) =>
+let setLocale = (~locale) => {
+  api.dispatch(SetLocale(locale));
   if (locale == browserLocale) {
     Dom.Storage.localStorage |> Dom.Storage.removeItem(localStorageKey);
   } else {
     Dom.Storage.localStorage
     |> Dom.Storage.setItem(localStorageKey, localeToJs(locale));
   };
+};

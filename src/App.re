@@ -95,7 +95,6 @@ let make = () => {
   React.useEffect1(
     () => {
       if (locale !== `English) {
-        setIsLocaleLoaded(_ => false);
         Item.loadTranslation(
           SettingsStore.localeToJs(locale),
           json => {

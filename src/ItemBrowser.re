@@ -120,7 +120,7 @@ let make = (~showLogin, ~url: ReasonReactRouter.url) => {
       () =>
         if (isLoggedIn && Js.Array.length(filters.exclude) > 0) {
           let userItems = UserStore.getUser().items;
-          let excludeItemIds = [||];
+          let userItemMap = Js.Dict.empty();
           userItems
           ->Js.Dict.entries
           ->Belt.Array.forEach(((itemKey, userItem)) =>
@@ -132,13 +132,30 @@ let make = (~showLogin, ~url: ReasonReactRouter.url) => {
                   | ForTrade =>
                     filters.exclude |> Js.Array.includes(ItemFilters.Catalog)
                   }) {
-                let (itemId, _) = User.fromItemKey(~key=itemKey);
-                if (!Js.Array.includes(itemId, excludeItemIds)) {
-                  excludeItemIds |> Js.Array.push(itemId) |> ignore;
-                };
+                let (itemId, variant) = User.fromItemKey(~key=itemKey);
+                let itemVariantList =
+                  switch (Js.Dict.get(userItemMap, itemId)) {
+                  | Some(list) => list
+                  | None =>
+                    let list = [||];
+                    userItemMap->Js.Dict.set(itemId, list);
+                    list;
+                  };
+                itemVariantList |> Js.Array.push(variant) |> ignore;
               }
             );
-          excludeItemIds;
+          userItemMap
+          ->Js.Dict.entries
+          ->Belt.Array.keepMap(((itemId, variantList)) => {
+              let numVariations =
+                Item.getNumVariations(~item=Item.getItem(~itemId));
+              // Exclude item only if user has all variants
+              if (Js.Array.length(variantList) >= numVariations) {
+                Some(itemId);
+              } else {
+                None;
+              };
+            });
         } else {
           [||];
         },

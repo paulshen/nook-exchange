@@ -49,7 +49,8 @@ type sort =
   | ABC
   | SellPriceDesc
   | SellPriceAsc
-  | UserDefault;
+  | UserDefault
+  | UserTimeUpdated;
 
 type mask =
   | Orderable
@@ -78,6 +79,7 @@ let serialize = (~filters, ~defaultSort, ~pageOffset) => {
          | SellPriceDesc => "pd"
          | SellPriceAsc => "pa"
          | UserDefault => ""
+         | UserTimeUpdated => "tu"
          },
        ))
     |> ignore;
@@ -152,6 +154,7 @@ let fromUrlSearch = (~urlSearch, ~defaultSort) => {
         | Some("abc") => ABC
         | Some("pd") => SellPriceDesc
         | Some("pa") => SellPriceAsc
+        | Some("tu") => UserTimeUpdated
         | _ => defaultSort
         },
     },
@@ -232,6 +235,7 @@ let getSort = (~sort) => {
   | ABC => compareItemsABC
   | SellPriceDesc => compareItemsSellPriceDesc
   | SellPriceAsc => compareItemsSellPriceAsc
+  | UserTimeUpdated
   | UserDefault => raise(UnexpectedSort(sort))
   };
 };
@@ -240,28 +244,28 @@ let getUserItemSort =
   Belt.(
     switch (sort) {
     | ABC => (
-        ((aId, _), (bId, _)) =>
+        (((aId, _), _), ((bId, _), _)) =>
           compareItemsABC(
             Item.getItem(~itemId=aId),
             Item.getItem(~itemId=bId),
           )
       )
     | SellPriceDesc => (
-        ((aId, _), (bId, _)) =>
+        (((aId, _), _), ((bId, _), _)) =>
           compareItemsSellPriceDesc(
             Item.getItem(~itemId=aId),
             Item.getItem(~itemId=bId),
           )
       )
     | SellPriceAsc => (
-        ((aId, _), (bId, _)) =>
+        (((aId, _), _), ((bId, _), _)) =>
           compareItemsSellPriceAsc(
             Item.getItem(~itemId=aId),
             Item.getItem(~itemId=bId),
           )
       )
     | UserDefault => (
-        ((aId, aVariant), (bId, bVariant)) => {
+        (((aId, aVariant), _), ((bId, bVariant), _)) => {
           let aItem = Item.getItem(~itemId=aId);
           let bItem = Item.getItem(~itemId=bId);
           compareArrays(
@@ -286,6 +290,33 @@ let getUserItemSort =
               },
               Item.categories |> Js.Array.indexOf(bItem.category),
               - Option.getWithDefault(bItem.sellPrice, 0),
+            |],
+          );
+        }
+      )
+    | UserTimeUpdated => (
+        (
+          ((aId, aVariant), aUserItem: User.item),
+          ((bId, bVariant), bUserItem: User.item),
+        ) => {
+          let aItem = Item.getItem(~itemId=aId);
+          let bItem = Item.getItem(~itemId=bId);
+          compareArrays(
+            [|
+              -. aUserItem.timeUpdated->Belt.Option.getWithDefault(0.),
+              float_of_int(
+                Item.categories |> Js.Array.indexOf(aItem.category),
+              ),
+              float_of_int(- Option.getWithDefault(aItem.sellPrice, 0)),
+              float_of_int(aVariant),
+            |],
+            [|
+              -. bUserItem.timeUpdated->Belt.Option.getWithDefault(0.),
+              float_of_int(
+                Item.categories |> Js.Array.indexOf(bItem.category),
+              ),
+              float_of_int(- Option.getWithDefault(bItem.sellPrice, 0)),
+              float_of_int(bVariant),
             |],
           );
         }
@@ -671,6 +702,7 @@ let make =
         | SellPriceDesc => "sell-desc"
         | SellPriceAsc => "sell-asc"
         | UserDefault => "user-default"
+        | UserTimeUpdated => "time-updated"
         }
       }
       onChange={e => {
@@ -683,15 +715,21 @@ let make =
             | "sell-desc" => SellPriceDesc
             | "sell-asc" => SellPriceAsc
             | "user-default" => UserDefault
+            | "time-updated" => UserTimeUpdated
             | _ => SellPriceDesc
             },
         });
       }}
       className={Cn.make([Styles.select, Styles.selectSort])}>
       {if (userItemIds !== None) {
-         <option value="user-default">
-           {React.string(isViewingSelf ? "Sort: Category" : "Sort: Default")}
-         </option>;
+         <>
+           <option value="user-default">
+             {React.string(isViewingSelf ? "Sort: Category" : "Sort: Default")}
+           </option>
+           <option value="time-updated">
+             {React.string({j|Time Updated ↓|j})}
+           </option>
+         </>;
        } else {
          React.null;
        }}

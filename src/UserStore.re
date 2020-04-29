@@ -131,10 +131,11 @@ let setItemStatus =
     (~itemId: string, ~variation: int, ~status: User.itemStatus) => {
   let user = getUserExn();
   let itemKey = User.getItemKey(~itemId, ~variation);
+  let timeUpdated = Some(Js.Date.now() /. 1000.);
   let userItem =
     switch (user.items->Js.Dict.get(itemKey)) {
-    | Some(item) => {...item, status}
-    | None => {status, note: ""}
+    | Some(item) => {...item, status, timeUpdated}
+    | None => {status, note: "", timeUpdated}
     };
   let updatedUser = {
     ...user,
@@ -209,10 +210,11 @@ let setItemStatusBatch =
     variations
     |> Js.Array.forEach(variant => {
          let itemKey = User.getItemKey(~itemId, ~variation=variant);
+         let timeUpdated = Some(Js.Date.now() /. 1000.);
          let userItem =
            switch (user.items->Js.Dict.get(itemKey)) {
-           | Some(item) => {...item, status}
-           | None => {status, note: ""}
+           | Some(item) => {...item, status, timeUpdated}
+           | None => {status, note: "", timeUpdated}
            };
          clone->Js.Dict.set(itemKey, userItem);
        });

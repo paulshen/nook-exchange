@@ -243,8 +243,8 @@ let make =
             ~filters,
           )
         )
-        |> Js.Array.sortInPlaceWith(((aItemKey, _), (bItemKey, _)) =>
-             sortFn(aItemKey, bItemKey)
+        |> Js.Array.sortInPlaceWith((aUserItem, bUserItem) =>
+             sortFn(aUserItem, bUserItem)
            );
       },
       (userItems, filters),

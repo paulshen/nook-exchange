@@ -146,9 +146,21 @@ module Menu = {
            <Link path={"/u/" ++ user.username} className=MenuStyles.menuItem>
              {React.string("My Profile")}
            </Link>
-           <Link path="/catalog" className=MenuStyles.menuItem>
-             {React.string("My Catalog")}
-           </Link>
+           {if (Js.Dict.values(user.items)
+                ->Belt.Array.some(userItem =>
+                    switch (userItem.status) {
+                    | ForTrade
+                    | CanCraft
+                    | CatalogOnly => true
+                    | Wishlist => false
+                    }
+                  )) {
+              <Link path="/catalog" className=MenuStyles.menuItem>
+                {React.string("My Catalog")}
+              </Link>;
+            } else {
+              React.null;
+            }}
            <a
              href="https://twitter.com/nookexchange"
              target="_blank"

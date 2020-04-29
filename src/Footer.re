@@ -16,17 +16,11 @@ module Styles = {
       maxWidth(px(512)),
       padding2(~v=zero, ~h=px(8)),
     ]);
-  let logoutLink =
-    style([
-      display(none),
-      media("(max-width: 420px)", [display(inline)]),
-    ]);
   let disclaimer = style([marginTop(px(8))]);
 };
 
 [@react.component]
 let make = () => {
-  let isLoggedIn = UserStore.useMe() !== None;
   let language = SettingsStore.useLanguage();
   <div className=Styles.footer>
     <div className=Styles.contents>
@@ -58,19 +52,6 @@ let make = () => {
             {React.string(SettingsStore.languageToString(language))}
           </a>
         </span>
-        {isLoggedIn
-           ? <span className=Styles.logoutLink>
-               {React.string(" | ")}
-               <a
-                 href="#"
-                 onClick={e => {
-                   UserStore.logout() |> ignore;
-                   ReactEvent.Mouse.preventDefault(e);
-                 }}>
-                 {React.string("Logout")}
-               </a>
-             </span>
-           : React.null}
       </div>
       <div>
         <a href="/terms"> {React.string("Terms of Service")} </a>

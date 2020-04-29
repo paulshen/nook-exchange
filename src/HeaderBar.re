@@ -1,8 +1,11 @@
-let menuHeight = Css.px(52);
-
 module Styles = {
   open Css;
-  let wrapper = style([height(menuHeight)]);
+  let wrapper =
+    style([
+      height(px(Constants.headerHeight)),
+      marginBottom(px(32)),
+      media("(max-width: 500px)", [marginBottom(px(16))]),
+    ]);
   let root =
     style([
       position(fixed),
@@ -15,20 +18,24 @@ module Styles = {
       justifyContent(spaceBetween),
       padding3(~top=px(16), ~bottom=zero, ~h=px(16)),
       zIndex(1),
-      transition(~duration=400, "all"),
+      opacity(0.),
+      transition(~duration=300, "all"),
       selector(
         "& a",
         [textDecoration(none), hover([textDecoration(underline)])],
       ),
       media("(max-width: 600px)", [paddingBottom(zero)]),
-      hover([backgroundColor(hex("fffffff0"))]),
+      hover([opacity(1.), backgroundColor(hex("fffffff0"))]),
     ]);
-  let rootWithBackground = style([backgroundColor(hex("fffffff0"))]);
+  let rootWithMenu =
+    style([opacity(1.), backgroundColor(hex("fffffff0"))]);
   let rootIsScrollingUp =
     style([
+      opacity(1.),
       media("(max-width: 600px)", [backgroundColor(hex("fffffff0"))]),
     ]);
-  let rootIsNearTop = style([important(backgroundColor(transparent))]);
+  let rootIsNearTop =
+    style([opacity(1.), important(backgroundColor(transparent))]);
   let standardViewport =
     style([media("(max-width: 500px)", [display(none)])]);
   let smallViewport =
@@ -43,8 +50,11 @@ module Styles = {
       marginLeft(px(-100)),
       top(px(8)),
       zIndex(1),
+      media("(max-width: 500px)", [marginLeft(px(-70))]),
     ]);
   [@bs.module "./assets/logo.png"] external logo: string = "default";
+  [@bs.module "./assets/logo_small.png"]
+  external logoSmall: string = "default";
   let logo =
     style([
       backgroundImage(url(logo)),
@@ -53,6 +63,14 @@ module Styles = {
       width(px(200)),
       height(px(60)),
       textIndent(px(-9999)),
+      media(
+        "(max-width: 500px)",
+        [
+          backgroundImage(url(logoSmall)),
+          width(px(140)),
+          height(px(50)),
+        ],
+      ),
     ]);
   let nav = style([display(flexBox)]);
   let navLeft = style([marginBottom(px(16)), marginRight(px(16))]);
@@ -72,7 +90,7 @@ module Menu = {
       style([
         position(fixed),
         left(zero),
-        top(menuHeight),
+        top(px(Constants.headerHeight)),
         backgroundColor(Colors.white),
         padding2(~v=px(8), ~h=zero),
         borderTopRightRadius(px(8)),
@@ -170,25 +188,30 @@ module Menu = {
   };
 };
 
+let nearTopThreshold = 64.;
+
 [@react.component]
 let make = (~onLogin) => {
   let user = UserStore.useMe();
   let (isNearTop, setIsNearTop) =
-    React.useState(() => {Webapi.Dom.(window |> Window.pageYOffset < 100.)});
+    React.useState(() => {
+      Webapi.Dom.(window |> Window.pageYOffset < nearTopThreshold)
+    });
   let (isScrollingUp, setIsScrollingUp) = React.useState(() => false);
   React.useEffect0(() => {
     open Webapi.Dom;
     let scrollTop = ref(window |> Window.pageYOffset);
     let isScrollingUp = ref(false);
-    let newIsNearTop = scrollTop^ < 100.;
+    let newIsNearTop = scrollTop^ < nearTopThreshold;
     if (newIsNearTop != isNearTop) {
       setIsNearTop(_ => newIsNearTop);
     };
     let isNearTop = ref(newIsNearTop);
     let onScroll = e => {
       let newScrollTop = window |> Window.pageYOffset;
-      let newIsScrollingUp = newScrollTop < scrollTop^;
-      let newIsNearTop = newScrollTop < 100.;
+      let newIsScrollingUp =
+        newScrollTop < scrollTop^ && newScrollTop > scrollTop^ -. 300.;
+      let newIsNearTop = newScrollTop < nearTopThreshold;
       if (newIsScrollingUp != isScrollingUp^) {
         setIsScrollingUp(_ => newIsScrollingUp);
       };
@@ -207,7 +230,7 @@ let make = (~onLogin) => {
     <div
       className={Cn.make([
         Styles.root,
-        Cn.ifTrue(Styles.rootWithBackground, showMenu),
+        Cn.ifTrue(Styles.rootWithMenu, showMenu),
         Cn.ifTrue(Styles.rootIsScrollingUp, isScrollingUp),
         Cn.ifTrue(Styles.rootIsNearTop, isNearTop),
       ])}>

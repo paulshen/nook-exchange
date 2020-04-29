@@ -184,6 +184,7 @@ module MetaIconStyles = {
       marginBottom(px(-4)),
       paddingTop(px(6)),
       paddingLeft(px(8)),
+      paddingRight(px(8)),
       paddingBottom(px(4)),
     ]);
 };

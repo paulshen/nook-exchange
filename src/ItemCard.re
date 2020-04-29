@@ -335,7 +335,6 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
     };
 
   let (variation, setVariation) = React.useState(() => 0);
-  let userItem = UserStore.useItem(~itemId=item.id, ~variation);
   let (useBatchMode, setUseBatchMode) = React.useState(() => false);
   let numVariations = Item.getNumVariations(~item);
   let numVariationsRef = React.useRef(numVariations);
@@ -349,6 +348,8 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
   if (variation > numVariations) {
     setVariation(_ => 0);
   };
+  let variation = Js.Math.min_int(variation, numVariations - 1);
+  let userItem = UserStore.useItem(~itemId=item.id, ~variation);
 
   if (useBatchMode
       && (

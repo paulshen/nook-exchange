@@ -1,23 +1,47 @@
 module Styles = {
   open Css;
+  let wrapper =
+    style([
+      height(px(Constants.headerHeight)),
+      marginBottom(px(32)),
+      media("(max-width: 500px)", [marginBottom(px(16))]),
+    ]);
   let root =
     style([
+      position(fixed),
+      left(zero),
+      right(zero),
+      top(zero),
       display(flexBox),
       flexWrap(wrap),
       fontSize(px(16)),
       justifyContent(spaceBetween),
       padding3(~top=px(16), ~bottom=zero, ~h=px(16)),
+      zIndex(1),
+      opacity(0.),
+      transition(~duration=300, "all"),
       selector(
         "& a",
         [textDecoration(none), hover([textDecoration(underline)])],
       ),
       media("(max-width: 600px)", [paddingBottom(zero)]),
+      hover([opacity(1.), backgroundColor(hex("fffffff0"))]),
     ]);
-  let standardLink = style([media("(max-width: 600px)", [display(none)])]);
-  let smallViewportLink =
+  let rootWithMenu =
+    style([opacity(1.), backgroundColor(hex("fffffff0"))]);
+  let rootIsScrollingUp =
     style([
-      display(none),
-      media("(max-width: 600px)", [display(inline)]),
+      opacity(1.),
+      media("(max-width: 600px)", [backgroundColor(hex("fffffff0"))]),
+    ]);
+  let rootIsNearTop =
+    style([opacity(1.), important(backgroundColor(transparent))]);
+  let standardViewport =
+    style([media("(max-width: 500px)", [display(none)])]);
+  let smallViewport =
+    style([
+      important(display(none)),
+      media("(max-width: 500px)", [important(display(inherit_))]),
     ]);
   let logoLink =
     style([
@@ -25,9 +49,12 @@ module Styles = {
       left(pct(50.)),
       marginLeft(px(-100)),
       top(px(8)),
-      media("(max-width: 680px)", [display(none)]),
+      zIndex(1),
+      media("(max-width: 500px)", [marginLeft(px(-70))]),
     ]);
   [@bs.module "./assets/logo.png"] external logo: string = "default";
+  [@bs.module "./assets/logo_small.png"]
+  external logoSmall: string = "default";
   let logo =
     style([
       backgroundImage(url(logo)),
@@ -36,6 +63,14 @@ module Styles = {
       width(px(200)),
       height(px(60)),
       textIndent(px(-9999)),
+      media(
+        "(max-width: 500px)",
+        [
+          backgroundImage(url(logoSmall)),
+          width(px(140)),
+          height(px(50)),
+        ],
+      ),
     ]);
   let nav = style([display(flexBox)]);
   let navLeft = style([marginBottom(px(16)), marginRight(px(16))]);
@@ -45,36 +80,72 @@ module Styles = {
       marginLeft(px(16)),
       firstChild([marginLeft(zero)]),
     ]);
-  let logoutLink = style([media("(max-width: 420px)", [display(none)])]);
   let twitterLink = style([]);
 };
 
-[@react.component]
-let make = (~onLogin) => {
-  let user = UserStore.useMe();
-  <div className=Styles.root>
-    <Link path="/" className=Styles.logoLink>
-      <h1 className=Styles.logo> {React.string("Nook Exchange")} </h1>
-    </Link>
-    <div className={Cn.make([Styles.nav, Styles.navLeft])}>
-      <Link path="/">
-        <span className=Styles.standardLink>
-          {React.string("Browse items")}
-        </span>
-        <span className=Styles.smallViewportLink>
-          {React.string("Nook Exchange")}
-        </span>
+module Menu = {
+  module MenuStyles = {
+    open Css;
+    let root =
+      style([
+        position(fixed),
+        left(zero),
+        top(px(Constants.headerHeight)),
+        backgroundColor(Colors.white),
+        padding2(~v=px(8), ~h=zero),
+        borderTopRightRadius(px(8)),
+        borderBottomRightRadius(px(8)),
+        overflow(hidden),
+        minWidth(px(256)),
+        boxSizing(borderBox),
+        Colors.darkLayerShadow,
+        zIndex(1),
+        opacity(0.),
+        transition(~duration=200, "all"),
+        transform(translateX(px(-64))),
+      ]);
+    let rootAppear = style([opacity(1.), transform(translateX(zero))]);
+    let menuItem =
+      style([
+        display(block),
+        fontSize(px(16)),
+        width(pct(100.)),
+        cursor(pointer),
+        padding2(~v=px(6), ~h=px(16)),
+        boxSizing(borderBox),
+        textDecoration(none),
+        hover([backgroundColor(Colors.green), color(Colors.white)]),
+      ]);
+  };
+
+  [@react.component]
+  let make = (~onClose, ~user: option(User.t), ~onLogin) => {
+    let (animateIn, setAnimateIn) = React.useState(() => false);
+    React.useEffect0(() => {
+      setAnimateIn(_ => true);
+      let onClick = _ => {
+        onClose();
+      };
+      open Webapi.Dom;
+      window |> Window.addClickEventListener(onClick);
+      Some(() => {window |> Window.removeClickEventListener(onClick)});
+    });
+    <div
+      className={Cn.make([
+        MenuStyles.root,
+        Cn.ifTrue(MenuStyles.rootAppear, animateIn),
+      ])}>
+      <Link
+        path="/"
+        className={Cn.make([MenuStyles.menuItem, Styles.smallViewport])}>
+        {React.string("Browse Items")}
       </Link>
-    </div>
-    <div className=Styles.nav>
       {switch (user) {
        | Some(user) =>
          <>
-           <div className=Styles.navLink>
-             <Link path={"/u/" ++ user.username}>
-               {React.string(user.username)}
-             </Link>
-           </div>
+           <Link path={"/u/" ++ user.username} className=MenuStyles.menuItem>
+             {React.string("My Profile")}
+           </Link>
            {if (Js.Dict.values(user.items)
                 ->Belt.Array.some(userItem =>
                     switch (userItem.status) {
@@ -84,47 +155,150 @@ let make = (~onLogin) => {
                     | Wishlist => false
                     }
                   )) {
-              <div className=Styles.navLink>
-                <Link path="/catalog"> {React.string("Catalog")} </Link>
-              </div>;
+              <Link path="/catalog" className=MenuStyles.menuItem>
+                {React.string("My Catalog")}
+              </Link>;
             } else {
               React.null;
             }}
-           <div className={Cn.make([Styles.navLink, Styles.twitterLink])}>
-             <a href="https://twitter.com/nookexchange" target="_blank">
-               {React.string("Twitter")}
-             </a>
-           </div>
-           <div className={Cn.make([Styles.navLink, Styles.logoutLink])}>
-             <a
-               href="#"
-               onClick={e => {
-                 UserStore.logout() |> ignore;
-                 ReactEvent.Mouse.preventDefault(e);
-               }}>
-               {React.string("Logout")}
-             </a>
-           </div>
+           <a
+             href="https://twitter.com/nookexchange"
+             target="_blank"
+             className=MenuStyles.menuItem>
+             {React.string("Twitter")}
+           </a>
+           <a
+             href="#"
+             className=MenuStyles.menuItem
+             onClick={e => {
+               UserStore.logout() |> ignore;
+               ReactEvent.Mouse.preventDefault(e);
+             }}>
+             {React.string("Logout")}
+           </a>
          </>
        | None =>
          <>
-           <div className=Styles.navLink>
-             <a
-               href="#"
-               onClick={e => {
-                 onLogin();
-                 ReactEvent.Mouse.preventDefault(e);
-               }}>
-               {React.string("Login")}
-             </a>
-           </div>
-           <div className=Styles.navLink>
-             <a href="https://twitter.com/nookexchange" target="_blank">
-               {React.string("Twitter")}
-             </a>
-           </div>
+           <a
+             href="#"
+             onClick={e => {
+               onLogin();
+               ReactEvent.Mouse.preventDefault(e);
+             }}
+             className=MenuStyles.menuItem>
+             {React.string("Login")}
+           </a>
+           <a
+             href="https://twitter.com/nookexchange"
+             target="_blank"
+             className=MenuStyles.menuItem>
+             {React.string("Twitter")}
+           </a>
          </>
        }}
+    </div>;
+  };
+};
+
+let nearTopThreshold = 64.;
+
+[@react.component]
+let make = (~onLogin) => {
+  let user = UserStore.useMe();
+  let (isNearTop, setIsNearTop) =
+    React.useState(() => {
+      Webapi.Dom.(window |> Window.pageYOffset < nearTopThreshold)
+    });
+  let (isScrollingUp, setIsScrollingUp) = React.useState(() => false);
+  React.useEffect0(() => {
+    open Webapi.Dom;
+    let scrollTop = ref(window |> Window.pageYOffset);
+    let isScrollingUp = ref(false);
+    let newIsNearTop = scrollTop^ < nearTopThreshold;
+    if (newIsNearTop != isNearTop) {
+      setIsNearTop(_ => newIsNearTop);
+    };
+    let isNearTop = ref(newIsNearTop);
+    let onScroll = e => {
+      let newScrollTop = window |> Window.pageYOffset;
+      let newIsScrollingUp =
+        newScrollTop < scrollTop^ && newScrollTop > scrollTop^ -. 300.;
+      let newIsNearTop = newScrollTop < nearTopThreshold;
+      if (newIsScrollingUp != isScrollingUp^) {
+        setIsScrollingUp(_ => newIsScrollingUp);
+      };
+      if (newIsNearTop != isNearTop^) {
+        setIsNearTop(_ => newIsNearTop);
+      };
+      scrollTop := newScrollTop;
+      isScrollingUp := newIsScrollingUp;
+      isNearTop := newIsNearTop;
+    };
+    window |> Window.addEventListener("scroll", onScroll);
+    Some(() => {window |> Window.removeEventListener("scroll", onScroll)});
+  });
+  let (showMenu, setShowMenu) = React.useState(() => false);
+  <div className=Styles.wrapper>
+    <div
+      className={Cn.make([
+        Styles.root,
+        Cn.ifTrue(Styles.rootWithMenu, showMenu),
+        Cn.ifTrue(Styles.rootIsScrollingUp, isScrollingUp),
+        Cn.ifTrue(Styles.rootIsNearTop, isNearTop),
+      ])}>
+      <div className={Cn.make([Styles.nav, Styles.navLeft])}>
+        <div className=Styles.navLink>
+          <a
+            href="#"
+            onClick={e => {
+              ReactEvent.Mouse.preventDefault(e);
+              setShowMenu(show => !show);
+            }}>
+            {React.string("Menu")}
+          </a>
+        </div>
+        <div className=Styles.navLink>
+          <Link path="/" className=Styles.standardViewport>
+            {React.string("Browse Items")}
+          </Link>
+        </div>
+      </div>
+      <div className=Styles.nav>
+        {switch (user) {
+         | Some(user) =>
+           <>
+             <div className=Styles.navLink>
+               <Link path={"/u/" ++ user.username}>
+                 {React.string(user.username)}
+               </Link>
+             </div>
+           </>
+         | None =>
+           <>
+             <div className=Styles.navLink>
+               <a
+                 href="#"
+                 onClick={e => {
+                   onLogin();
+                   ReactEvent.Mouse.preventDefault(e);
+                 }}>
+                 {React.string("Login")}
+               </a>
+             </div>
+           </>
+         }}
+        <div className={Cn.make([Styles.navLink, Styles.standardViewport])}>
+          <a href="https://twitter.com/nookexchange" target="_blank">
+            {React.string("Twitter")}
+          </a>
+        </div>
+      </div>
     </div>
+    <Link path="/" className=Styles.logoLink>
+      <h1 className=Styles.logo> {React.string("Nook Exchange")} </h1>
+    </Link>
+    {showMenu
+       ? <Menu user onLogin onClose={() => setShowMenu(_ => false)} />
+       : React.null}
   </div>;
 };

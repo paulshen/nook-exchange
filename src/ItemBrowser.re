@@ -2,18 +2,12 @@ module Styles = {
   open Css;
   let root =
     style([
+      margin2(~v=zero, ~h=auto),
       padding2(~v=zero, ~h=px(16)),
-      margin3(~top=px(32), ~bottom=zero, ~h=auto),
       media("(min-width: 600px)", [width(px(544))]),
       media("(min-width: 940px)", [width(px(832))]),
       media("(min-width: 1200px)", [width(px(1120))]),
       media("(min-width: 1520px)", [width(px(1408))]),
-    ]);
-  let tagline =
-    style([
-      textAlign(center),
-      marginBottom(px(48)),
-      media("(max-width: 600px)", [display(none)]),
     ]);
   let cards =
     style([
@@ -174,9 +168,6 @@ let make = (~showLogin, ~url: ReasonReactRouter.url) => {
   let numResults = filteredItems->Belt.Array.length;
 
   <div className=Styles.root ref={ReactDOMRe.Ref.domRef(rootRef)}>
-    <div className=Styles.tagline>
-      {React.string("Your friendly Animal Crossing marketplace!")}
-    </div>
     <ItemFilters.CategoryButtons
       filters
       onChange={filters => {setFilters(filters)}}

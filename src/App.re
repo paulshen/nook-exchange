@@ -3,6 +3,13 @@ module Styles = {
   let root =
     style([display(flexBox), flexDirection(column), minHeight(vh(100.))]);
   let body = style([flexGrow(1.)]);
+  let tagline =
+    style([
+      textAlign(center),
+      marginTop(px(32)),
+      marginBottom(px(48)),
+      media("(max-width: 600px)", [display(none)]),
+    ]);
   let tooltip =
     style([
       backgroundColor(Colors.darkLayerBackground),
@@ -141,7 +148,14 @@ let make = () => {
               | ["privacy"] => <TextPages.PrivacyPolicy />
               | ["terms"] => <TextPages.TermsOfService />
               | _ =>
-                <ItemBrowser showLogin={() => setShowLogin(_ => true)} url />
+                <>
+                  <div className=Styles.tagline>
+                    {React.string(
+                       "Your friendly Animal Crossing marketplace!",
+                     )}
+                  </div>
+                  <ItemBrowser showLogin={() => setShowLogin(_ => true)} url />
+                </>
               }}
            </div>
          : React.null}

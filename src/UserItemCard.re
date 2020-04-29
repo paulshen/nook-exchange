@@ -135,7 +135,8 @@ let make =
     {!onCatalogPage
        ? <div className=Styles.metaIcons>
            {switch (item.recipe) {
-            | Some(recipe) => <ItemCard.RecipeIcon recipe />
+            | Some(recipe) =>
+              <ItemCard.RecipeIcon recipe onDoubleClick={() => ()} />
             | None => React.null
             }}
            {if (item.orderable) {

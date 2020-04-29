@@ -206,7 +206,18 @@ module RecipeIcon = {
   external recipeIcon: string = "default";
 
   [@react.component]
-  let make = (~recipe: Item.recipe) => {
+  let make = (~recipe: Item.recipe, ~onDoubleClick) => {
+    let lastClickTimeRef = React.useRef(None);
+    let onClick = _ => {
+      switch (React.Ref.current(lastClickTimeRef)) {
+      | Some(lastClickTime) =>
+        if (Js.Date.now() < lastClickTime +. 300.) {
+          onDoubleClick();
+        }
+      | None => ()
+      };
+      React.Ref.setCurrent(lastClickTimeRef, Some(Js.Date.now()));
+    };
     <ReactAtmosphere.Tooltip
       text={<RecipeLayer recipe />}
       options={Obj.magic({"placement": "bottom-start"})}>
@@ -216,6 +227,7 @@ module RecipeIcon = {
            className=MetaIconStyles.icon
            onMouseEnter
            onMouseLeave
+           onClick
            ref={ReactDOMRe.Ref.domRef(ref)}
          />}
     </ReactAtmosphere.Tooltip>;
@@ -306,10 +318,37 @@ let renderStatusButton =
 
 [@react.component]
 let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
+  let (showRecipeAlternate, setShowRecipeAlternate) =
+    React.useState(() => false);
+  let item =
+    if (showRecipeAlternate) {
+      if (item.isRecipe) {
+        Item.getItem(
+          ~itemId=
+            Item.getItemIdForRecipeId(~recipeId=item.id)->Belt.Option.getExn,
+        );
+      } else {
+        Item.getItem(~itemId=Item.getRecipeIdForItemId(~itemId=item.id));
+      };
+    } else {
+      item;
+    };
+
   let (variation, setVariation) = React.useState(() => 0);
   let userItem = UserStore.useItem(~itemId=item.id, ~variation);
   let (useBatchMode, setUseBatchMode) = React.useState(() => false);
   let numVariations = Item.getNumVariations(~item);
+  let numVariationsRef = React.useRef(numVariations);
+  React.useEffect1(
+    () => {
+      React.Ref.setCurrent(numVariationsRef, numVariations);
+      None;
+    },
+    [|numVariations|],
+  );
+  if (variation > numVariations) {
+    setVariation(_ => 0);
+  };
 
   if (useBatchMode
       && (
@@ -331,16 +370,16 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
     open Webapi.Dom;
     let onKeyDown = e =>
       if (KeyboardEvent.key(e) == "Shift") {
-        setUseBatchMode(_ => true);
+        if (React.Ref.current(numVariationsRef) > 1) {
+          setUseBatchMode(_ => true);
+        };
       };
     let onKeyUp = e =>
       if (KeyboardEvent.key(e) == "Shift") {
         setUseBatchMode(_ => false);
       };
-    if (numVariations > 1) {
-      window |> Window.addKeyDownEventListener(onKeyDown);
-      window |> Window.addKeyUpEventListener(onKeyUp);
-    };
+    window |> Window.addKeyDownEventListener(onKeyDown);
+    window |> Window.addKeyUpEventListener(onKeyUp);
     Some(
       () => {
         window |> Window.removeKeyDownEventListener(onKeyDown);
@@ -425,9 +464,13 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
          </div>
        }}
       <div className=Styles.metaIcons>
-        {switch (item.isRecipe, item.recipe) {
-         | (false, Some(recipe)) => <RecipeIcon recipe />
-         | _ => React.null
+        {switch (item.recipe) {
+         | Some(recipe) =>
+           <RecipeIcon
+             recipe
+             onDoubleClick={() => {setShowRecipeAlternate(show => !show)}}
+           />
+         | None => React.null
          }}
         {if (item.orderable) {
            <OrderableIcon />;

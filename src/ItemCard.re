@@ -172,21 +172,43 @@ module Styles = {
 
 module MetaIconStyles = {
   open Css;
-  let icon =
-    style([
-      display(block),
-      width(px(24)),
-      height(px(24)),
-      marginRight(px(8)),
-    ]);
+  let icon = style([display(block), width(px(24)), height(px(24))]);
+  let iconClickable = style([cursor(pointer)]);
   let layer = style([padding2(~v=px(4), ~h=px(4))]);
+  let clickNote =
+    style([
+      borderTop(px(1), solid, hex("ffffff40")),
+      marginTop(px(6)),
+      marginLeft(px(-8)),
+      marginRight(px(-8)),
+      marginBottom(px(-4)),
+      paddingTop(px(6)),
+      paddingLeft(px(8)),
+      paddingBottom(px(4)),
+    ]);
 };
 
 module RecipeIcon = {
+  module RecipeIconStyles = {
+    open Css;
+    let tooltip =
+      style([
+        backgroundColor(Colors.darkLayerBackground),
+        borderRadius(px(4)),
+        color(Colors.white),
+        fontSize(px(14)),
+        padding3(~top=px(9), ~bottom=px(7), ~h=px(14)),
+        position(relative),
+        whiteSpace(`preLine),
+        Colors.darkLayerShadow,
+      ]);
+  };
+
   module RecipeLayer = {
     [@react.component]
-    let make = (~recipe) => {
-      <div className=MetaIconStyles.layer>
+    let make = (~recipe, ~isRecipe, ~onClickAlternate) => {
+      <div
+        className={Cn.make([MetaIconStyles.layer, RecipeIconStyles.tooltip])}>
         {recipe
          ->Array.map(((itemId, quantity)) =>
              <div key=itemId>
@@ -198,6 +220,14 @@ module RecipeIcon = {
              </div>
            )
          ->React.array}
+        {switch (isRecipe, onClickAlternate) {
+         | (Some(isRecipe), Some(onClickAlternate)) =>
+           <div
+             onMouseDown=onClickAlternate className=MetaIconStyles.clickNote>
+             {React.string("Click to see " ++ (isRecipe ? "item" : "DIY"))}
+           </div>
+         | _ => React.null
+         }}
       </div>;
     };
   };
@@ -206,31 +236,63 @@ module RecipeIcon = {
   external recipeIcon: string = "default";
 
   [@react.component]
-  let make = (~recipe: Item.recipe, ~onDoubleClick) => {
-    let lastClickTimeRef = React.useRef(None);
-    let onClick = _ => {
-      switch (React.Ref.current(lastClickTimeRef)) {
-      | Some(lastClickTime) =>
-        if (Js.Date.now() < lastClickTime +. 300.) {
-          onDoubleClick();
+  let make = (~recipe: Item.recipe, ~isRecipe=?, ~onClick=?, ()) => {
+    let (showLayer, setShowLayer) = React.useState(() => false);
+    let iconRef = React.useRef(Js.Nullable.null);
+    let isMountedRef = React.useRef(true);
+    React.useEffect0(() => {
+      Some(() => React.Ref.setCurrent(isMountedRef, false))
+    });
+    <>
+      <img
+        src=recipeIcon
+        className={Cn.make([
+          MetaIconStyles.icon,
+          Cn.ifTrue(MetaIconStyles.iconClickable, onClick !== None),
+        ])}
+        onMouseEnter={_ => {
+          Js.Global.setTimeout(() => setShowLayer(_ => true), 10) |> ignore
+        }}
+        onMouseLeave={_ => {
+          Js.Global.setTimeout(
+            () =>
+              if (React.Ref.current(isMountedRef)) {
+                setShowLayer(_ => false);
+              },
+            10,
+          )
+          |> ignore
+        }}
+        onClick=?{
+          Belt.Option.map(onClick, (onClick, e) =>
+            if (showLayer) {
+              onClick(e);
+            }
+          )
         }
-      | None => ()
-      };
-      React.Ref.setCurrent(lastClickTimeRef, Some(Js.Date.now()));
-    };
-    <ReactAtmosphere.Tooltip
-      text={<RecipeLayer recipe />}
-      options={Obj.magic({"placement": "bottom-start"})}>
-      {({onMouseEnter, onMouseLeave, ref}) =>
-         <img
-           src=recipeIcon
-           className=MetaIconStyles.icon
-           onMouseEnter
-           onMouseLeave
-           onClick
-           ref={ReactDOMRe.Ref.domRef(ref)}
-         />}
-    </ReactAtmosphere.Tooltip>;
+        ref={ReactDOMRe.Ref.domRef(iconRef)}
+      />
+      {showLayer
+         ? <ReactAtmosphere.PopperLayer
+             reference=iconRef
+             render={_ =>
+               <RecipeLayer recipe isRecipe onClickAlternate=onClick />
+             }
+             options={Obj.magic({
+               "placement": "bottom-start",
+               "modifiers":
+                 Some([|
+                   {
+                     "name": "offset",
+                     "options": {
+                       "offset": [|0, 2|],
+                     },
+                   },
+                 |]),
+             })}
+           />
+         : React.null}
+    </>;
   };
 };
 
@@ -469,7 +531,9 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
          | Some(recipe) =>
            <RecipeIcon
              recipe
-             onDoubleClick={() => {setShowRecipeAlternate(show => !show)}}
+             isRecipe={item.isRecipe}
+             onClick={_ => {setShowRecipeAlternate(show => !show)}}
+             key={item.id}
            />
          | None => React.null
          }}

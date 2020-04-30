@@ -188,7 +188,8 @@ let doesItemMatchFilters = (~item: Item.t, ~filters: t) => {
       fragments->Belt.Array.every(fragment =>
         Js.String.toLowerCase(Item.getName(item))
         |> Js.String.includes(fragment)
-        || item.tags->Belt.Array.some(Js.String.includes(fragment))
+        || item.tags
+        |> Js.Array.includes(fragment)
       );
     }
   )

@@ -14,7 +14,7 @@ module Styles = {
       marginBottom(px(16)),
       transition(~duration=200, "all"),
       focus([
-        backgroundColor(hex("ffffff")),
+        backgroundColor(Colors.white),
         borderColor(rgba(0, 0, 0, 0.15)),
         boxShadow(Shadow.box(~spread=px(4), rgba(0, 0, 0, 0.05))),
       ]),

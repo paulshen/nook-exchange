@@ -222,7 +222,7 @@ let compareArrays = (a, b) => {
 };
 
 let compareItemsABC = (a: Item.t, b: Item.t) =>
-  int_of_float(Js.String.localeCompare(b.name, a.name));
+  int_of_float(Js.String.localeCompare(Item.getName(b), Item.getName(a)));
 let compareItemsSellPriceDesc = (a: Item.t, b: Item.t) =>
   Belt.Option.getWithDefault(b.sellPrice, 0)
   - Belt.Option.getWithDefault(a.sellPrice, 0);

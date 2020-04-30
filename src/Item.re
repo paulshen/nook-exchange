@@ -449,3 +449,13 @@ let getMaterialName = (material: string) =>
       )
     ->Option.getWithDefault(material)
   );
+
+let getByName = (~name: string) => {
+  let getCanonicalName = text => {
+    Js.String.toLowerCase(text) |> Js.String.replaceByRe(spaceRegex, "-");
+  };
+  let searchName = getCanonicalName(name);
+  all->Belt.Array.getBy((item: t) => {
+    getCanonicalName(item.name) == searchName
+  });
+};

@@ -8,9 +8,31 @@ module Styles = {
       margin3(~top=px(48), ~bottom=px(32), ~h=auto),
       maxWidth(px(720)),
     ]);
-  let textarea = style([width(pct(100.)), minHeight(px(256))]);
+  let textarea =
+    style([
+      width(pct(100.)),
+      minHeight(px(256)),
+      boxSizing(borderBox),
+      marginBottom(px(8)),
+    ]);
+  let searchButtonRow = style([display(flexBox), justifyContent(flexEnd)]);
 
+  let sectionTitle = style([fontSize(px(32)), marginBottom(px(16))]);
+  let missingRows = style([marginBottom(px(64))]);
+  let missingRow = style([color(Colors.red)]);
+  let matchRows = style([marginBottom(px(64))]);
+  let resultRow = style([display(flexBox), marginBottom(px(8))]);
+  let resultQueryCell =
+    style([
+      width(pct(20.)),
+      minWidth(px(128)),
+      flexShrink(0.),
+      paddingRight(px(16)),
+    ]);
+  let resultDestinationCell = style([whiteSpace(nowrap)]);
   let rowImages = style([display(flexBox), flexWrap(wrap)]);
+  let resultVariantCell =
+    style([flexGrow(1.), padding2(~v=zero, ~h=px(16))]);
   let variationImage =
     style([
       display(block),
@@ -43,22 +65,24 @@ module ResultRowWithItem = {
       (~query, ~item, ~itemState: itemState, ~onChange: itemState => unit) => {
     let numVariations = Item.getNumVariations(~item);
     let renderDestinationOption = destination => {
-      <label>
-        {React.string(itemDestinationToJs(destination))}
-        <input
-          type_="radio"
-          name={item.id}
-          value={itemDestinationToJs(destination)}
-          checked={itemState.destination == destination}
-          onChange={e => {
-            let value = ReactEvent.Form.target(e)##value;
-            onChange({
-              ...itemState,
-              destination: itemDestinationFromJs(value)->Option.getExn,
-            });
-          }}
-        />
-      </label>;
+      <div>
+        <label>
+          <input
+            type_="radio"
+            name={item.id}
+            value={itemDestinationToJs(destination)}
+            checked={itemState.destination == destination}
+            onChange={e => {
+              let value = ReactEvent.Form.target(e)##value;
+              onChange({
+                ...itemState,
+                destination: itemDestinationFromJs(value)->Option.getExn,
+              });
+            }}
+          />
+          {React.string(itemDestinationToJs(destination))}
+        </label>
+      </div>;
     };
 
     let onClickVariant = v => {
@@ -71,10 +95,9 @@ module ResultRowWithItem = {
       onChange({...itemState, selectedVariants});
     };
 
-    <tr>
-      <td> {React.string(query)} </td>
-      <td> {React.string(item.id)} </td>
-      <td>
+    <div className=Styles.resultRow>
+      <div className=Styles.resultQueryCell> {React.string(query)} </div>
+      <div className=Styles.resultVariantCell>
         <div className=Styles.rowImages>
           {let children = [||];
            for (v in 0 to numVariations - 1) {
@@ -121,19 +144,20 @@ module ResultRowWithItem = {
            };
            children->React.array}
         </div>
-      </td>
-      <td>
+      </div>
+      <div className=Styles.resultDestinationCell>
         {renderDestinationOption(`ForTrade)}
         {renderDestinationOption(`CatalogOnly)}
         {renderDestinationOption(`Ignore)}
-      </td>
-    </tr>;
+      </div>
+    </div>;
   };
 };
 
 module Results = {
   [@react.component]
   let make = (~rows: array((string, option(Item.t)))) => {
+    let missingRows = rows->Array.keep(((_, item)) => item == None);
     let (itemsState, setItemStates) =
       React.useState(() => {
         Js.Dict.fromArray(
@@ -153,36 +177,50 @@ module Results = {
           ),
         )
       });
-    <table>
-      <tbody>
-        {rows
-         ->Belt.Array.mapWithIndex((i, (query, item)) =>
-             switch (item) {
-             | Some(item) =>
-               <ResultRowWithItem
-                 query
-                 item
-                 itemState={itemsState->Js.Dict.get(query)->Option.getExn}
-                 onChange={itemState => {
-                   setItemStates(itemsState => {
-                     let clone = Utils.cloneJsDict(itemsState);
-                     clone->Js.Dict.set(query, itemState);
-                     clone;
-                   })
-                 }}
-                 key={string_of_int(i)}
-               />
-             | None =>
-               <tr key={string_of_int(i)}>
-                 <td> {React.string(query)} </td>
-                 <td> {React.string("Item not found")} </td>
-                 <td />
-               </tr>
-             }
-           )
-         ->React.array}
-      </tbody>
-    </table>;
+    <div>
+      {Js.Array.length(missingRows) > 0
+         ? <div className=Styles.missingRows>
+             <div className=Styles.sectionTitle>
+               {React.string("Missing rows")}
+             </div>
+             {missingRows
+              ->Array.mapWithIndex((i, (query, _)) =>
+                  <div className=Styles.missingRow key={string_of_int(i)}>
+                    {React.string(query)}
+                  </div>
+                )
+              ->React.array}
+           </div>
+         : React.null}
+      {Js.Array.length(rows) > 0
+         ? <div className=Styles.matchRows>
+             <div className=Styles.sectionTitle>
+               {React.string("Matches!")}
+             </div>
+             {rows
+              ->Belt.Array.keepMap(((query, item)) =>
+                  item->Option.map(item =>
+                    <ResultRowWithItem
+                      query
+                      item
+                      itemState={
+                        itemsState->Js.Dict.get(query)->Option.getExn
+                      }
+                      onChange={itemState => {
+                        setItemStates(itemsState => {
+                          let clone = Utils.cloneJsDict(itemsState);
+                          clone->Js.Dict.set(query, itemState);
+                          clone;
+                        })
+                      }}
+                      key={item.name}
+                    />
+                  )
+                )
+              ->React.array}
+           </div>
+         : React.null}
+    </div>;
   };
 };
 
@@ -190,9 +228,6 @@ let process = value => {
   let rows = value |> Js.String.split("\n");
   let results =
     rows->Belt.Array.map(row => (row, Item.getByName(~name=row)));
-  Js.log(results);
-  Js.log(results->Belt.Array.keep(((_, x)) => x === None));
-  Js.log(results->Belt.Array.keep(((_, x)) => x !== None));
   results;
 };
 
@@ -206,25 +241,24 @@ let make = () => {
   };
 
   <div className=Styles.root>
-    <div> {React.string("Import!")} </div>
+    {switch (results) {
+     | Some(results) => <Results rows=results />
+     | None => React.null
+     }}
     <div>
-      {switch (results) {
-       | Some(results) => <Results rows=results />
-       | None => React.null
-       }}
-      <div>
-        <form onSubmit>
-          <textarea
-            value
-            onChange={e => {
-              let value = ReactEvent.Form.target(e)##value;
-              setValue(_ => value);
-            }}
-            className=Styles.textarea
-          />
-          <Button> {React.string("Import!")} </Button>
-        </form>
-      </div>
+      <form onSubmit>
+        <textarea
+          value
+          onChange={e => {
+            let value = ReactEvent.Form.target(e)##value;
+            setValue(_ => value);
+          }}
+          className=Styles.textarea
+        />
+        <div className=Styles.searchButtonRow>
+          <Button> {React.string("Search!")} </Button>
+        </div>
+      </form>
     </div>
   </div>;
 };

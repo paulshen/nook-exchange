@@ -20,7 +20,7 @@ module Styles = {
       borderRadius(px(4)),
       hover([backgroundColor(hex("00000010"))]),
     ]);
-  let variationImageSelected = style([backgroundColor(hex("3aa56320"))]);
+  let variationImageSelected = style([backgroundColor(hex("3aa56380"))]);
 };
 
 [@bs.deriving jsConverter]
@@ -39,13 +39,36 @@ type itemState = {
 
 module ResultRowWithItem = {
   [@react.component]
-  let make = (~query, ~item, ~itemState: itemState) => {
+  let make =
+      (~query, ~item, ~itemState: itemState, ~onChange: itemState => unit) => {
     let numVariations = Item.getNumVariations(~item);
     let renderDestinationOption = destination => {
       <label>
         {React.string(itemDestinationToJs(destination))}
-        <input type_="radio" value={itemDestinationToJs(destination)} />
+        <input
+          type_="radio"
+          name={item.id}
+          value={itemDestinationToJs(destination)}
+          checked={itemState.destination == destination}
+          onChange={e => {
+            let value = ReactEvent.Form.target(e)##value;
+            onChange({
+              ...itemState,
+              destination: itemDestinationFromJs(value)->Option.getExn,
+            });
+          }}
+        />
       </label>;
+    };
+
+    let onClickVariant = v => {
+      let selectedVariants =
+        if (itemState.selectedVariants |> Js.Array.includes(v)) {
+          itemState.selectedVariants->Array.keep(x => x != v);
+        } else {
+          itemState.selectedVariants->Array.concat([|v|]);
+        };
+      onChange({...itemState, selectedVariants});
     };
 
     <tr>
@@ -76,7 +99,7 @@ module ResultRowWithItem = {
                       {(
                          ({onMouseEnter, onMouseLeave, onFocus, onBlur, ref}) =>
                            <div
-                             onClick={_ => ()}
+                             onClick={_ => onClickVariant(v)}
                              onMouseEnter
                              onMouseLeave
                              onFocus
@@ -87,7 +110,9 @@ module ResultRowWithItem = {
                        )}
                     </ReactAtmosphere.Tooltip>
                   | None =>
-                    <div onClick={_ => ()} key={string_of_int(v)}>
+                    <div
+                      onClick={_ => onClickVariant(v)}
+                      key={string_of_int(v)}>
                       image
                     </div>
                   },
@@ -119,12 +144,7 @@ module Results = {
                 {
                   itemId: item.id,
                   selectedVariants:
-                    Js.Array.fillRangeInPlace(
-                      None,
-                      ~start=0,
-                      ~end_=Item.getNumVariations(~item) - 1,
-                      [||],
-                    )
+                    Array.make(Item.getNumVariations(~item), None)
                     ->Array.mapWithIndex((i, _) => i),
                   destination: `CatalogOnly,
                 }: itemState,
@@ -143,6 +163,13 @@ module Results = {
                  query
                  item
                  itemState={itemsState->Js.Dict.get(query)->Option.getExn}
+                 onChange={itemState => {
+                   setItemStates(itemsState => {
+                     let clone = Utils.cloneJsDict(itemsState);
+                     clone->Js.Dict.set(query, itemState);
+                     clone;
+                   })
+                 }}
                  key={string_of_int(i)}
                />
              | None =>

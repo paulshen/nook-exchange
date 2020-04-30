@@ -1,7 +1,8 @@
 [@bs.deriving jsConverter]
 type language = [
   | [@bs.as "de"] `German
-  | [@bs.as "es"] `Spanish
+  | [@bs.as "es-eu"] `SpanishEurope
+  | [@bs.as "es-us"] `SpanishAmerica
   | [@bs.as "fr"] `French
   | [@bs.as "it"] `Italian
   | [@bs.as "ja"] `Japanese
@@ -14,7 +15,8 @@ type language = [
 
 let languages: array(language) = [|
   `English,
-  `Spanish,
+  `SpanishAmerica,
+  `SpanishEurope,
   `French,
   `German,
   `Italian,
@@ -28,7 +30,8 @@ let languages: array(language) = [|
 let languageToString = (language: language) => {
   switch (language) {
   | `German => {j|Deutsch|j}
-  | `Spanish => {j|Español|j}
+  | `SpanishAmerica => {j|Español (America)|j}
+  | `SpanishEurope => {j|Español (Europe)|j}
   | `French => {j|Français|j}
   | `Italian => {j|Italiano|j}
   | `Japanese => {j|日本語|j}
@@ -46,8 +49,10 @@ external browserLanguage: string = "language";
 let browserLanguage =
   if (browserLanguage == "de") {
     `German;
+  } else if (browserLanguage == "es-ES") {
+    `SpanishEurope;
   } else if (browserLanguage |> Js.String.startsWith("es")) {
-    `Spanish;
+    `SpanishAmerica;
   } else if (browserLanguage |> Js.String.startsWith("fr")) {
     `French;
   } else if (browserLanguage |> Js.String.startsWith("it")) {

@@ -111,7 +111,7 @@ module Menu = {
         fontSize(px(16)),
         width(pct(100.)),
         cursor(pointer),
-        padding2(~v=px(6), ~h=px(16)),
+        padding2(~v=px(8), ~h=px(16)),
         boxSizing(borderBox),
         textDecoration(none),
         hover([backgroundColor(Colors.green), color(Colors.white)]),

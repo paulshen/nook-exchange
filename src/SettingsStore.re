@@ -80,7 +80,7 @@ let api =
       language:
         localStorageLanguage
         ->Belt.Option.flatMap(languageFromJs)
-        ->Belt.Option.getWithDefault(`English),
+        ->Belt.Option.getWithDefault(browserLanguage),
     },
     (state, action) => {
     switch (action) {
@@ -102,6 +102,6 @@ let setLanguage = (~language) => {
   };
   Analytics.Amplitude.logEventWithProperties(
     ~eventName="Language Changed",
-    ~eventProperties={"language": language},
+    ~eventProperties={"language": languageToJs(language)},
   );
 };

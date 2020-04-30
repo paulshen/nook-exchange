@@ -71,6 +71,7 @@ let tooltipConfig:
 let make = () => {
   let url = ReasonReactRouter.useUrl();
   let (showLogin, setShowLogin) = React.useState(() => false);
+  let (showSettings, setShowSettings) = React.useState(() => false);
 
   let pathString =
     "/" ++ Js.Array.joinWith("/", Belt.List.toArray(url.path));
@@ -131,7 +132,10 @@ let make = () => {
 
   <div className=Styles.root>
     <TooltipConfigContextProvider value=tooltipConfig>
-      <HeaderBar onLogin={_ => setShowLogin(_ => true)} />
+      <HeaderBar
+        onLogin={_ => setShowLogin(_ => true)}
+        onSettings={_ => setShowSettings(_ => true)}
+      />
       {isLanguageLoaded
          ? <div className=Styles.body>
              {switch (url.path) {
@@ -161,6 +165,9 @@ let make = () => {
       <Footer />
       {showLogin
          ? <LoginOverlay onClose={() => setShowLogin(_ => false)} />
+         : React.null}
+      {showSettings
+         ? <SettingsOverlay onClose={() => setShowSettings(_ => false)} />
          : React.null}
     </TooltipConfigContextProvider>
     <ReactAtmosphere.LayerContainer />

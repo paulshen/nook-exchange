@@ -60,10 +60,11 @@ let useEnableCatalogCheckbox = () => {
     (),
   );
 };
+exception ExpectedUser;
 let getUser = () => {
   switch (api.getState()) {
   | LoggedIn(user) => user
-  | _ => raise(Constants.Uhoh)
+  | _ => raise(ExpectedUser)
   };
 };
 let getItem = (~itemId, ~variation) => {
@@ -120,16 +121,10 @@ let handleServerResponse = (url, responseResult) =>
     );
   };
 
-exception Unexpected;
-let getUserExn = () =>
-  switch (api.getState()) {
-  | LoggedIn(user) => user
-  | _ => raise(Unexpected)
-  };
 let numItemUpdatesLogged = ref(0);
 let setItemStatus =
     (~itemId: string, ~variation: int, ~status: User.itemStatus) => {
-  let user = getUserExn();
+  let user = getUser();
   let itemKey = User.getItemKey(~itemId, ~variation);
   let timeUpdated = Some(Js.Date.now() /. 1000.);
   let userItem =
@@ -204,7 +199,7 @@ let setItemStatus =
 
 let setItemStatusBatch =
     (~itemId: string, ~variations: array(int), ~status: User.itemStatus) => {
-  let user = getUserExn();
+  let user = getUser();
   let updatedItems = {
     let clone = Utils.cloneJsDict(user.items);
     variations
@@ -279,7 +274,7 @@ let setItemStatusBatch =
 };
 
 let setItemNote = (~itemId: string, ~variation: int, ~note: string) => {
-  let user = getUserExn();
+  let user = getUser();
   let itemKey = User.getItemKey(~itemId, ~variation);
   let userItem = {
     ...Belt.Option.getExn(user.items->Js.Dict.get(itemKey)),
@@ -346,7 +341,7 @@ let setItemNote = (~itemId: string, ~variation: int, ~note: string) => {
 
 let numItemRemovesLogged = ref(0);
 let removeItem = (~itemId, ~variation) => {
-  let user = getUserExn();
+  let user = getUser();
   let key = User.getItemKey(~itemId, ~variation);
   if (user.items->Js.Dict.get(key)->Option.isSome) {
     let updatedUser = {
@@ -401,7 +396,7 @@ let removeItem = (~itemId, ~variation) => {
 };
 
 let updateProfileText = (~profileText) => {
-  let user = getUserExn();
+  let user = getUser();
   let updatedUser = {...user, profileText};
   api.dispatch(UpdateUser(updatedUser));
   Analytics.Amplitude.logEventWithProperties(
@@ -443,8 +438,76 @@ let updateProfileText = (~profileText) => {
   |> ignore;
 };
 
+let patchMe = (~username=?, ~newPassword=?, ~email=?, ~oldPassword, ()) => {
+  let url = Constants.apiUrl ++ "/@me";
+  let%Repromise.JsExn response =
+    Fetch.fetchWithInit(
+      url,
+      Fetch.RequestInit.make(
+        ~method_=Patch,
+        ~body=
+          Fetch.BodyInit.make(
+            Js.Json.stringify(
+              Js.Json.object_(
+                Js.Dict.fromArray(
+                  Belt.Array.keepMap(
+                    [|
+                      Option.map(username, username =>
+                        ("username", Js.Json.string(username))
+                      ),
+                      Option.map(newPassword, newPassword =>
+                        ("password", Js.Json.string(newPassword))
+                      ),
+                      Option.map(email, email =>
+                        ("email", Js.Json.string(email))
+                      ),
+                      Some(("oldPassword", Js.Json.string(oldPassword))),
+                    |],
+                    x =>
+                    x
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ~headers=
+          Fetch.HeadersInit.make({
+            "X-Client-Version": Constants.gitCommitRef,
+            "Content-Type": "application/json",
+            "Authorization":
+              "Bearer " ++ Option.getWithDefault(sessionId^, ""),
+          }),
+        ~credentials=Include,
+        ~mode=CORS,
+        (),
+      ),
+    );
+  switch (Fetch.Response.status(response)) {
+  | 200 =>
+    let%Repromise.JsExn json = Fetch.Response.json(response);
+    let user = User.fromAPI(json);
+    api.dispatch(UpdateUser(user));
+    Analytics.Amplitude.logEventWithProperties(
+      ~eventName="Account Update Succeeded",
+      ~eventProperties={
+        "username": username,
+        "password": newPassword !== None,
+        "email": email,
+      },
+    );
+    Promise.resolved(Ok());
+  | _ =>
+    let%Repromise.JsExn error = Fetch.Response.text(response);
+    Analytics.Amplitude.logEventWithProperties(
+      ~eventName="Account Update Failed",
+      ~eventProperties={"error": error},
+    );
+    Promise.resolved(Error(error));
+  };
+};
+
 let toggleCatalogCheckboxSetting = (~enabled) => {
-  let user = getUserExn();
+  let user = getUser();
   let updatedUser = {...user, enableCatalogCheckbox: enabled};
   api.dispatch(UpdateUser(updatedUser));
   Analytics.Amplitude.logEventWithProperties(

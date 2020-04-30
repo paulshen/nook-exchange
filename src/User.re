@@ -88,6 +88,7 @@ let fromItemKey = (~key: string) => {
 type t = {
   id: string,
   username: string,
+  email: option(string),
   items: Js.Dict.t(item),
   profileText: string,
   enableCatalogCheckbox: bool,
@@ -97,6 +98,12 @@ let fromAPI = (json: Js.Json.t) => {
   Json.Decode.{
     id: json |> field("uuid", string),
     username: json |> field("username", string),
+    email:
+      switch (json |> optional(field("email", string))) {
+      | Some("") => None
+      | Some(email) => Some(email)
+      | None => None
+      },
     items:
       (json |> field("items", dict(itemFromJson)))
       ->Js.Dict.entries

@@ -376,9 +376,9 @@ external unsafeAsHtmlInputElement: 'a => Webapi.Dom.HtmlInputElement.t =
 
 let getCategoryLabel = category => {
   switch (category) {
-  | "recipes" => "All Recipes"
-  | "furniture" => "All Furniture"
-  | "clothing" => "All Clothing"
+  | "recipes" => "Recipes"
+  | "furniture" => "Furniture"
+  | "clothing" => "Clothing"
   | category => Utils.capitalizeFirstLetter(category)
   };
 };

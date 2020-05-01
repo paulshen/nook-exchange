@@ -192,6 +192,14 @@ let setItemStatus =
         ),
       );
     handleServerResponse(url, responseResult);
+    BAPI.setItemStatus(
+      ~userId=user.id,
+      ~sessionId=sessionId^,
+      ~itemId,
+      ~variant=variation,
+      ~status,
+    )
+    |> ignore;
     Promise.resolved();
   }
   |> ignore;
@@ -268,6 +276,14 @@ let setItemStatusBatch =
         ),
       );
     handleServerResponse(url, responseResult);
+    BAPI.setItemStatusBatch(
+      ~userId=user.id,
+      ~sessionId=sessionId^,
+      ~itemId,
+      ~variants=variations,
+      ~status,
+    )
+    |> ignore;
     Promise.resolved();
   }
   |> ignore;
@@ -334,6 +350,14 @@ let setItemNote = (~itemId: string, ~variation: int, ~note: string) => {
         ),
       );
     handleServerResponse(url, responseResult);
+    BAPI.setItemNote(
+      ~userId=user.id,
+      ~sessionId=sessionId^,
+      ~itemId,
+      ~variant=variation,
+      ~note,
+    )
+    |> ignore;
     Promise.resolved();
   }
   |> ignore;
@@ -389,6 +413,13 @@ let removeItem = (~itemId, ~variation) => {
           ),
         );
       handleServerResponse(url, responseResult);
+      BAPI.removeItem(
+        ~userId=user.id,
+        ~sessionId=sessionId^,
+        ~itemId,
+        ~variant=variation,
+      )
+      |> ignore;
       Promise.resolved();
     }
     |> ignore;

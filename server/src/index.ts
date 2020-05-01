@@ -67,7 +67,14 @@ app.post("/register", async (req, res) => {
   try {
     const userResult = await client.query(
       `INSERT INTO ${PG_SCHEMA}.users (id, username, email, password, password_salt, create_time) VALUES ($1, $2, $3, $4, $5, $6)`,
-      [userId, username, email, passwordHash, passwordSalt, createTime]
+      [
+        userId,
+        username,
+        email !== "" ? email : null,
+        passwordHash,
+        passwordSalt,
+        createTime,
+      ]
     );
     if (userResult.rowCount === 1) {
       const sessionResult = await client.query(
@@ -318,7 +325,7 @@ app.patch("/@me", cors(corsOptions), async (req, res) => {
         errorStatusCode = 400;
         throw new Error();
       }
-      updates["email"] = email;
+      updates["email"] = email !== "" ? email : null;
     }
     const setPhrase = Object.keys(updates)
       .map((updateKey, i) => {

@@ -7,7 +7,7 @@ let gitCommitRef =
   |> Js.String.slice(~from=0, ~to_=8);
 
 let apiUrl = "https://paulshen-animalcrossing.builtwithdark.com";
-let bapiUrl = "https://bapi.nook.exchange";
+let bapiUrl = "https://a.nook.exchange";
 let cdnUrl =
   nodeEnv === Some("production")
     ? "https://b.nook.exchange/file/nook-exchange" : "";

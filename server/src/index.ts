@@ -34,7 +34,11 @@ function hashPassword(password: string, salt: string) {
 const app = express();
 app.use(bearerToken());
 app.use(bodyParser.json());
-var corsWhitelist = ["http://localhost:8080", "https://nook.exchange"];
+var corsWhitelist = [
+  "http://localhost:8080",
+  "https://nook.exchange",
+  "https://preview.nook.exchange",
+];
 var corsOptions = {
   origin: function (
     origin: string | undefined,

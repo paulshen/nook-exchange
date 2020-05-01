@@ -526,6 +526,15 @@ let patchMe = (~username=?, ~newPassword=?, ~email=?, ~oldPassword, ()) => {
         "email": email,
       },
     );
+    BAPI.patchMe(
+      ~userId=user.id,
+      ~sessionId=sessionId^,
+      ~username,
+      ~newPassword,
+      ~email,
+      ~oldPassword,
+    )
+    |> ignore;
     Promise.resolved(Ok());
   | _ =>
     let%Repromise.JsExn error = Fetch.Response.text(response);

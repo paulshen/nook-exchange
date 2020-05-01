@@ -136,3 +136,53 @@ let removeItem = (~userId, ~sessionId, ~itemId, ~variant) => {
     );
   Promise.resolved();
 };
+
+let patchMe =
+    (~userId, ~sessionId, ~username, ~newPassword, ~email, ~oldPassword) => {
+  open Belt;
+  let url = Constants.bapiUrl ++ "/@me";
+  let%Repromise.Js _responseResult =
+    Fetch.fetchWithInit(
+      url,
+      Fetch.RequestInit.make(
+        ~method_=Patch,
+        ~body=
+          Fetch.BodyInit.make(
+            Js.Json.stringify(
+              Js.Json.object_(
+                Js.Dict.fromArray(
+                  Array.keepMap(
+                    [|
+                      Option.map(username, username =>
+                        ("username", Js.Json.string(username))
+                      ),
+                      Option.map(newPassword, newPassword =>
+                        ("password", Js.Json.string(newPassword))
+                      ),
+                      Option.map(email, email =>
+                        ("email", Js.Json.string(email))
+                      ),
+                      Some(("userId", Js.Json.string(userId))),
+                      Some(("oldPassword", Js.Json.string(oldPassword))),
+                    |],
+                    x =>
+                    x
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ~headers=
+          Fetch.HeadersInit.make({
+            "X-Client-Version": Constants.gitCommitRef,
+            "Content-Type": "application/json",
+            "Authorization":
+              "Bearer " ++ Belt.Option.getWithDefault(sessionId, ""),
+          }),
+        ~credentials=Include,
+        ~mode=CORS,
+        (),
+      ),
+    );
+  Promise.resolved();
+};

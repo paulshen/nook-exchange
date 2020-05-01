@@ -91,6 +91,12 @@ app.post("/sessions", async (req, res) => {
 async function validateUserId(req: express.Request, client: PoolClient) {
   const sessionId = req.token;
   const { userId } = req.body;
+  if (!sessionId) {
+    console.error("missing sessionId in req.token");
+  }
+  if (!userId) {
+    console.error("missing userId in req.body");
+  }
   const sessionResult = await client.query(
     `SELECT * FROM ${PG_SCHEMA}.sessions WHERE id=$1`,
     [sessionId]
@@ -109,6 +115,37 @@ async function validateUserId(req: express.Request, client: PoolClient) {
   }
   return userId;
 }
+
+app.post(
+  "/@me4/items/:itemId/batch/status",
+  cors(corsOptions),
+  async (req, res) => {
+    const client = await pool.connect();
+    let errorStatusCode;
+    try {
+      const userId = await validateUserId(req, client);
+      const itemId = req.params.itemId;
+      const status: number = req.body.status;
+      const variants: Array<number> = req.body.variants;
+      // TODO assertions
+      await Promise.all(
+        variants.map((variant) => {
+          client.query(
+            `INSERT INTO ${PG_SCHEMA}.items (user_id, item_id, variant, status, update_time) VALUES ($1, $2, $3, $4, NOW())
+            ON CONFLICT (user_id, item_id, variant) DO UPDATE SET status=EXCLUDED.status, update_time=EXCLUDED.update_time`,
+            [userId, itemId, variant, status]
+          );
+        })
+      );
+    } catch (e) {
+      console.error(e);
+      errorStatusCode = 400;
+    } finally {
+      client.release();
+    }
+    res.sendStatus(errorStatusCode !== undefined ? errorStatusCode : 201);
+  }
+);
 
 app.post(
   "/@me4/items/:itemId/:variant/status",
@@ -130,36 +167,6 @@ app.post(
       }
     } catch (e) {
       console.error(e);
-    } finally {
-      client.release();
-    }
-    res.sendStatus(errorStatusCode !== undefined ? errorStatusCode : 201);
-  }
-);
-
-app.post(
-  "/@me4/items/:itemId/batch/status",
-  cors(corsOptions),
-  async (req, res) => {
-    const client = await pool.connect();
-    let errorStatusCode;
-    try {
-      const userId = await validateUserId(req, client);
-      const status: number = req.body.status;
-      const variants: Array<number> = req.body.variants;
-      // TODO assertions
-      await Promise.all(
-        variants.map((variant) => {
-          client.query(
-            `INSERT INTO ${PG_SCHEMA}.items (user_id, item_id, variant, status, update_time) VALUES ($1, $2, $3, $4, NOW())
-         ON CONFLICT (user_id, item_id, variant) DO UPDATE SET status=EXCLUDED.status, update_time=EXCLUDED.update_time`,
-            [userId, req.params.itemId, variant, status]
-          );
-        })
-      );
-    } catch (e) {
-      console.error(e);
-      errorStatusCode = 400;
     } finally {
       client.release();
     }

@@ -48,7 +48,6 @@ var corsOptions = {
   },
   credentials: true,
 };
-app.use(cors(corsOptions));
 app.options("*", cors(corsOptions));
 
 app.get("/paullikesnatto", (req, res) => {
@@ -111,95 +110,111 @@ async function validateUserId(req: express.Request, client: PoolClient) {
   return userId;
 }
 
-app.post("/@me4/items/:itemId/:variant/status", async (req, res) => {
-  const sessionId = req.token;
-  const client = await pool.connect();
-  let errorStatusCode;
-  try {
-    const userId = await validateUserId(req, client);
-    // TODO assertions
-    const updateResult = await client.query(
-      `INSERT INTO ${PG_SCHEMA}.items (user_id, item_id, variant, status, update_time) VALUES ($1, $2, $3, $4, NOW())
+app.post(
+  "/@me4/items/:itemId/:variant/status",
+  cors(corsOptions),
+  async (req, res) => {
+    const sessionId = req.token;
+    const client = await pool.connect();
+    let errorStatusCode;
+    try {
+      const userId = await validateUserId(req, client);
+      // TODO assertions
+      const updateResult = await client.query(
+        `INSERT INTO ${PG_SCHEMA}.items (user_id, item_id, variant, status, update_time) VALUES ($1, $2, $3, $4, NOW())
          ON CONFLICT (user_id, item_id, variant) DO UPDATE SET status=EXCLUDED.status, update_time=EXCLUDED.update_time`,
-      [userId, req.params.itemId, req.params.variant, req.body.status]
-    );
-    if (updateResult.rowCount !== 1) {
-      console.error("Unexpected rowCount", updateResult.rowCount);
+        [userId, req.params.itemId, req.params.variant, req.body.status]
+      );
+      if (updateResult.rowCount !== 1) {
+        console.error("Unexpected rowCount", updateResult.rowCount);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      client.release();
     }
-  } catch (e) {
-    console.error(e);
-  } finally {
-    client.release();
+    res.sendStatus(errorStatusCode !== undefined ? errorStatusCode : 201);
   }
-  res.sendStatus(errorStatusCode !== undefined ? errorStatusCode : 201);
-});
+);
 
-app.post("/@me4/items/:itemId/batch/status", async (req, res) => {
-  const client = await pool.connect();
-  let errorStatusCode;
-  try {
-    const userId = await validateUserId(req, client);
-    const status: number = req.body.status;
-    const variants: Array<number> = req.body.variants;
-    // TODO assertions
-    await Promise.all(
-      variants.map((variant) => {
-        client.query(
-          `INSERT INTO ${PG_SCHEMA}.items (user_id, item_id, variant, status, update_time) VALUES ($1, $2, $3, $4, NOW())
+app.post(
+  "/@me4/items/:itemId/batch/status",
+  cors(corsOptions),
+  async (req, res) => {
+    const client = await pool.connect();
+    let errorStatusCode;
+    try {
+      const userId = await validateUserId(req, client);
+      const status: number = req.body.status;
+      const variants: Array<number> = req.body.variants;
+      // TODO assertions
+      await Promise.all(
+        variants.map((variant) => {
+          client.query(
+            `INSERT INTO ${PG_SCHEMA}.items (user_id, item_id, variant, status, update_time) VALUES ($1, $2, $3, $4, NOW())
          ON CONFLICT (user_id, item_id, variant) DO UPDATE SET status=EXCLUDED.status, update_time=EXCLUDED.update_time`,
-          [userId, req.params.itemId, variant, status]
-        );
-      })
-    );
-  } catch (e) {
-    console.error(e);
-    errorStatusCode = 400;
-  } finally {
-    client.release();
-  }
-  res.sendStatus(errorStatusCode !== undefined ? errorStatusCode : 201);
-});
-
-app.post("/@me4/items/:itemId/:variant/note", async (req, res) => {
-  const client = await pool.connect();
-  let errorStatusCode;
-  try {
-    const userId = await validateUserId(req, client);
-    // TODO assertions
-    const updateResult = await client.query(
-      `INSERT INTO ${PG_SCHEMA}.items (user_id, item_id, variant, note, update_time) VALUES ($1, $2, $3, $4, NOW())
-         ON CONFLICT (user_id, item_id, variant) DO UPDATE SET note=EXCLUDED.note, update_time=EXCLUDED.update_time`,
-      [userId, req.params.itemId, req.params.variant, req.body.note]
-    );
-    if (updateResult.rowCount !== 1) {
-      console.error("Unexpected rowCount", updateResult.rowCount);
+            [userId, req.params.itemId, variant, status]
+          );
+        })
+      );
+    } catch (e) {
+      console.error(e);
       errorStatusCode = 400;
+    } finally {
+      client.release();
     }
-  } catch (e) {
-    console.error(e);
-  } finally {
-    client.release();
+    res.sendStatus(errorStatusCode !== undefined ? errorStatusCode : 201);
   }
-  res.sendStatus(errorStatusCode !== undefined ? errorStatusCode : 201);
-});
+);
 
-app.delete("/@me3/items/:itemId/:variant", async (req, res) => {
-  const client = await pool.connect();
-  let errorStatusCode;
-  try {
-    const userId = await validateUserId(req, client);
-    // TODO assertions
-    const deleteResult = await client.query(
-      `DELETE FROM ${PG_SCHEMA}.items WHERE user_id=$1 AND item_id=$2 AND variant=$3`,
-      [userId, req.params.itemId, req.params.variant]
-    );
-  } catch (e) {
-    console.error(e);
-  } finally {
-    client.release();
+app.post(
+  "/@me4/items/:itemId/:variant/note",
+  cors(corsOptions),
+  async (req, res) => {
+    const client = await pool.connect();
+    let errorStatusCode;
+    try {
+      const userId = await validateUserId(req, client);
+      // TODO assertions
+      const updateResult = await client.query(
+        `INSERT INTO ${PG_SCHEMA}.items (user_id, item_id, variant, note, update_time) VALUES ($1, $2, $3, $4, NOW())
+         ON CONFLICT (user_id, item_id, variant) DO UPDATE SET note=EXCLUDED.note, update_time=EXCLUDED.update_time`,
+        [userId, req.params.itemId, req.params.variant, req.body.note]
+      );
+      if (updateResult.rowCount !== 1) {
+        console.error("Unexpected rowCount", updateResult.rowCount);
+        errorStatusCode = 400;
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      client.release();
+    }
+    res.sendStatus(errorStatusCode !== undefined ? errorStatusCode : 201);
   }
-  res.sendStatus(errorStatusCode !== undefined ? errorStatusCode : 204);
-});
+);
+
+app.delete(
+  "/@me3/items/:itemId/:variant",
+  cors(corsOptions),
+  async (req, res) => {
+    const client = await pool.connect();
+    let errorStatusCode;
+    try {
+      const userId = await validateUserId(req, client);
+      // TODO assertions
+      const deleteResult = await client.query(
+        `DELETE FROM ${PG_SCHEMA}.items WHERE user_id=$1 AND item_id=$2 AND variant=$3`,
+        [userId, req.params.itemId, req.params.variant]
+      );
+    } catch (e) {
+      console.error(e);
+    } finally {
+      client.release();
+    }
+    res.sendStatus(errorStatusCode !== undefined ? errorStatusCode : 204);
+  }
+);
 
 app.listen(3022);
 console.log("Listening at 3022");

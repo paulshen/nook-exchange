@@ -1,6 +1,6 @@
 import express from "express";
 import bearerToken from "express-bearer-token";
-import { Pool, Client } from "pg";
+import { Pool, PoolClient } from "pg";
 import dotenv from "dotenv";
 import bodyParser from "body-parser";
 import crypto from "crypto";
@@ -43,7 +43,7 @@ var corsOptions = {
     if (corsWhitelist.indexOf(origin!) !== -1) {
       callback(null, true);
     } else {
-      callback(new Error("Not allowed by CORS"));
+      callback(new Error("Not allowed by CORS: " + origin!));
     }
   },
   credentials: true,
@@ -89,28 +89,42 @@ app.post("/sessions", async (req, res) => {
   }
 });
 
+async function validateUserId(req: express.Request, client: PoolClient) {
+  const sessionId = req.token;
+  const { userId } = req.body;
+  const sessionResult = await client.query(
+    `SELECT * FROM ${PG_SCHEMA}.sessions WHERE id=$1`,
+    [sessionId]
+  );
+  if (sessionResult.rows.length === 0) {
+    console.error("could not find sessionId", sessionId);
+  }
+  if (
+    sessionResult.rows.length === 1 &&
+    sessionResult.rows[0]["user_id"] !== userId
+  ) {
+    console.error(
+      "mismatch userId",
+      sessionResult.rows[0]["user_id"] !== userId
+    );
+  }
+  return userId;
+}
+
 app.post("/@me4/items/:itemId/:variant/status", async (req, res) => {
   const sessionId = req.token;
   const client = await pool.connect();
   let errorStatusCode;
   try {
-    const sessionResult = await client.query(
-      `SELECT * FROM ${PG_SCHEMA}.sessions WHERE id=$1`,
-      [sessionId]
-    );
-    if (sessionResult.rows.length === 1) {
-      const userId = sessionResult.rows[0]["user_id"];
-      // TODO assertions
-      const updateResult = await client.query(
-        `INSERT INTO ${PG_SCHEMA}.items (user_id, item_id, variant, status, update_time) VALUES ($1, $2, $3, $4, NOW())
+    const userId = await validateUserId(req, client);
+    // TODO assertions
+    const updateResult = await client.query(
+      `INSERT INTO ${PG_SCHEMA}.items (user_id, item_id, variant, status, update_time) VALUES ($1, $2, $3, $4, NOW())
          ON CONFLICT (user_id, item_id, variant) DO UPDATE SET status=EXCLUDED.status, update_time=EXCLUDED.update_time`,
-        [userId, req.params.itemId, req.params.variant, req.body.status]
-      );
-      if (updateResult.rowCount !== 1) {
-        console.error("Unexpected rowCount", updateResult.rowCount);
-      }
-    } else {
-      errorStatusCode = 401;
+      [userId, req.params.itemId, req.params.variant, req.body.status]
+    );
+    if (updateResult.rowCount !== 1) {
+      console.error("Unexpected rowCount", updateResult.rowCount);
     }
   } catch (e) {
     console.error(e);
@@ -121,31 +135,22 @@ app.post("/@me4/items/:itemId/:variant/status", async (req, res) => {
 });
 
 app.post("/@me4/items/:itemId/batch/status", async (req, res) => {
-  const sessionId = req.token;
   const client = await pool.connect();
   let errorStatusCode;
   try {
-    const sessionResult = await client.query(
-      `SELECT * FROM ${PG_SCHEMA}.sessions WHERE id=$1`,
-      [sessionId]
-    );
-    if (sessionResult.rows.length === 1) {
-      const userId = sessionResult.rows[0]["user_id"];
-      const status: number = req.body.status;
-      const variants: Array<number> = req.body.variants;
-      // TODO assertions
-      await Promise.all(
-        variants.map((variant) => {
-          client.query(
-            `INSERT INTO ${PG_SCHEMA}.items (user_id, item_id, variant, status, update_time) VALUES ($1, $2, $3, $4, NOW())
+    const userId = await validateUserId(req, client);
+    const status: number = req.body.status;
+    const variants: Array<number> = req.body.variants;
+    // TODO assertions
+    await Promise.all(
+      variants.map((variant) => {
+        client.query(
+          `INSERT INTO ${PG_SCHEMA}.items (user_id, item_id, variant, status, update_time) VALUES ($1, $2, $3, $4, NOW())
          ON CONFLICT (user_id, item_id, variant) DO UPDATE SET status=EXCLUDED.status, update_time=EXCLUDED.update_time`,
-            [userId, req.params.itemId, variant, status]
-          );
-        })
-      );
-    } else {
-      errorStatusCode = 401;
-    }
+          [userId, req.params.itemId, variant, status]
+        );
+      })
+    );
   } catch (e) {
     console.error(e);
     errorStatusCode = 400;
@@ -156,28 +161,19 @@ app.post("/@me4/items/:itemId/batch/status", async (req, res) => {
 });
 
 app.post("/@me4/items/:itemId/:variant/note", async (req, res) => {
-  const sessionId = req.token;
   const client = await pool.connect();
   let errorStatusCode;
   try {
-    const sessionResult = await client.query(
-      `SELECT * FROM ${PG_SCHEMA}.sessions WHERE id=$1`,
-      [sessionId]
-    );
-    if (sessionResult.rows.length === 1) {
-      const userId = sessionResult.rows[0]["user_id"];
-      // TODO assertions
-      const updateResult = await client.query(
-        `INSERT INTO ${PG_SCHEMA}.items (user_id, item_id, variant, note, update_time) VALUES ($1, $2, $3, $4, NOW())
+    const userId = await validateUserId(req, client);
+    // TODO assertions
+    const updateResult = await client.query(
+      `INSERT INTO ${PG_SCHEMA}.items (user_id, item_id, variant, note, update_time) VALUES ($1, $2, $3, $4, NOW())
          ON CONFLICT (user_id, item_id, variant) DO UPDATE SET note=EXCLUDED.note, update_time=EXCLUDED.update_time`,
-        [userId, req.params.itemId, req.params.variant, req.body.note]
-      );
-      if (updateResult.rowCount !== 1) {
-        console.error("Unexpected rowCount", updateResult.rowCount);
-        errorStatusCode = 400;
-      }
-    } else {
-      errorStatusCode = 401;
+      [userId, req.params.itemId, req.params.variant, req.body.note]
+    );
+    if (updateResult.rowCount !== 1) {
+      console.error("Unexpected rowCount", updateResult.rowCount);
+      errorStatusCode = 400;
     }
   } catch (e) {
     console.error(e);
@@ -188,24 +184,15 @@ app.post("/@me4/items/:itemId/:variant/note", async (req, res) => {
 });
 
 app.delete("/@me3/items/:itemId/:variant", async (req, res) => {
-  const sessionId = req.token;
   const client = await pool.connect();
   let errorStatusCode;
   try {
-    const sessionResult = await client.query(
-      `SELECT * FROM ${PG_SCHEMA}.sessions WHERE id=$1`,
-      [sessionId]
+    const userId = await validateUserId(req, client);
+    // TODO assertions
+    const deleteResult = await client.query(
+      `DELETE FROM ${PG_SCHEMA}.items WHERE user_id=$1 AND item_id=$2 AND variant=$3`,
+      [userId, req.params.itemId, req.params.variant]
     );
-    if (sessionResult.rows.length === 1) {
-      const userId = sessionResult.rows[0]["user_id"];
-      // TODO assertions
-      const deleteResult = await client.query(
-        `DELETE FROM ${PG_SCHEMA}.items WHERE user_id=$1 AND item_id=$2 AND variant=$3`,
-        [userId, req.params.itemId, req.params.variant]
-      );
-    } else {
-      errorStatusCode = 401;
-    }
   } catch (e) {
     console.error(e);
   } finally {

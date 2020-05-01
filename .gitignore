@@ -8,3 +8,7 @@ npm-debug.log
 *.bs.js
 dist/
 s3/
+
+server/out/
+server/node_modules/
+server/.env

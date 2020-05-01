@@ -1,7 +1,8 @@
 {
   "name": "nook-exchange-server",
   "scripts": {
-    "start": "node out/index.js"
+    "start": "node out/index.js",
+    "build": "tsc"
   },
   "devDependencies": {
     "typescript": "^3.8.3"

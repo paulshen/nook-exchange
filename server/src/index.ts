@@ -4,6 +4,7 @@ import { Pool, Client } from "pg";
 import dotenv from "dotenv";
 import bodyParser from "body-parser";
 import crypto from "crypto";
+import cors from "cors";
 
 dotenv.config();
 
@@ -33,6 +34,22 @@ function hashPassword(password: string, salt: string) {
 const app = express();
 app.use(bearerToken());
 app.use(bodyParser.json());
+var corsWhitelist = ["http://localhost:8080", "https://nook.exchange"];
+var corsOptions = {
+  origin: function (
+    origin: string | undefined,
+    callback: (error: any, success?: boolean) => void
+  ) {
+    if (corsWhitelist.indexOf(origin!) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+};
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 
 app.get("/paullikesnatto", (req, res) => {
   res.send("hrm");

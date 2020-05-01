@@ -1,0 +1,13 @@
+{
+  "name": "nook-exchange-server",
+  "scripts": {
+    "start": "node out/index.js"
+  },
+  "devDependencies": {
+    "typescript": "^3.8.3"
+  },
+  "dependencies": {
+    "@types/express": "^4.17.6",
+    "express": "^4.17.1"
+  }
+}

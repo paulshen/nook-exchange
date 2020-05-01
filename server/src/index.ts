@@ -32,6 +32,10 @@ function hashPassword(password: string, salt: string) {
   return hash.digest("hex");
 }
 
+function logError(message: string, ...args: Array<any>) {
+  console.error(`[${Date.now()}] ${message}`, ...args);
+}
+
 const app = express();
 app.use(bearerToken());
 app.use(bodyParser.json());
@@ -115,7 +119,7 @@ async function validateUserId(
 ) {
   const sessionId = req.token;
   if (!sessionId) {
-    console.error("missing sessionId in req.token");
+    logError("missing sessionId in req.token");
     return false;
   }
   const sessionResult = await client.query(
@@ -123,17 +127,14 @@ async function validateUserId(
     [sessionId]
   );
   if (sessionResult.rows.length === 0) {
-    console.error("could not find sessionId", sessionId);
+    logError("could not find sessionId", sessionId);
     return false;
   }
   if (
     sessionResult.rows.length === 1 &&
     sessionResult.rows[0]["user_id"] !== userId
   ) {
-    console.error(
-      "mismatch userId",
-      sessionResult.rows[0]["user_id"] !== userId
-    );
+    logError("mismatch userId", sessionResult.rows[0]["user_id"], userId);
     return false;
   }
   return true;
@@ -162,7 +163,7 @@ app.post(
         })
       );
     } catch (e) {
-      console.error(e);
+      logError(e);
       errorStatusCode = 400;
     } finally {
       client.release();
@@ -188,10 +189,10 @@ app.post(
         [userId, req.params.itemId, req.params.variant, req.body.status]
       );
       if (updateResult.rowCount !== 1) {
-        console.error("Unexpected rowCount", updateResult.rowCount);
+        logError("Unexpected rowCount", updateResult.rowCount);
       }
     } catch (e) {
-      console.error(e);
+      logError(e);
     } finally {
       client.release();
     }
@@ -215,11 +216,11 @@ app.post(
         [userId, req.params.itemId, req.params.variant, req.body.note]
       );
       if (updateResult.rowCount !== 1) {
-        console.error("Unexpected rowCount", updateResult.rowCount);
+        logError("Unexpected rowCount", updateResult.rowCount);
         errorStatusCode = 400;
       }
     } catch (e) {
-      console.error(e);
+      logError(e);
     } finally {
       client.release();
     }
@@ -242,7 +243,7 @@ app.delete(
         [userId, req.params.itemId, req.params.variant]
       );
     } catch (e) {
-      console.error(e);
+      logError(e);
     } finally {
       client.release();
     }
@@ -340,7 +341,7 @@ app.patch("/@me", cors(corsOptions), async (req, res) => {
       errorStatusCode = 400;
     }
   } catch (e) {
-    console.error(e);
+    logError(e);
   } finally {
     client.release();
   }

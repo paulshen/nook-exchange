@@ -63,32 +63,40 @@ app.post("/register", async (req, res) => {
   const passwordSalt = generatePasswordSalt();
   const passwordHash = hashPassword(password, passwordSalt);
   const client = await pool.connect();
-  const userResult = await client.query(
-    `INSERT INTO ${PG_SCHEMA}.users (id, username, email, password, password_salt, create_time) VALUES ($1, $2, $3, $4, $5, $6)`,
-    [userId, username, email, passwordHash, passwordSalt, createTime]
-  );
-  if (userResult.rowCount === 1) {
-    const sessionResult = await client.query(
-      `INSERT INTO ${PG_SCHEMA}.sessions (id, user_id, create_time) VALUES ($1, $2, $3)`,
-      [sessionId, userId, createTime]
+  try {
+    const userResult = await client.query(
+      `INSERT INTO ${PG_SCHEMA}.users (id, username, email, password, password_salt, create_time) VALUES ($1, $2, $3, $4, $5, $6)`,
+      [userId, username, email, passwordHash, passwordSalt, createTime]
     );
-    res.sendStatus(201);
-  } else {
-    res.sendStatus(400);
+    if (userResult.rowCount === 1) {
+      const sessionResult = await client.query(
+        `INSERT INTO ${PG_SCHEMA}.sessions (id, user_id, create_time) VALUES ($1, $2, $3)`,
+        [sessionId, userId, createTime]
+      );
+      res.sendStatus(201);
+    } else {
+      res.sendStatus(400);
+    }
+  } finally {
+    client.release();
   }
 });
 
 app.post("/sessions", async (req, res) => {
   const { sessionId, userId, createTime } = req.body;
   const client = await pool.connect();
-  const insertResult = await client.query(
-    `INSERT INTO ${PG_SCHEMA}.sessions (id, user_id, create_time) VALUES ($1, $2, $3)`,
-    [sessionId, userId, createTime]
-  );
-  if (insertResult.rowCount === 1) {
-    res.sendStatus(201);
-  } else {
-    res.sendStatus(400);
+  try {
+    const insertResult = await client.query(
+      `INSERT INTO ${PG_SCHEMA}.sessions (id, user_id, create_time) VALUES ($1, $2, $3)`,
+      [sessionId, userId, createTime]
+    );
+    if (insertResult.rowCount === 1) {
+      res.sendStatus(201);
+    } else {
+      res.sendStatus(400);
+    }
+  } finally {
+    client.release();
   }
 });
 

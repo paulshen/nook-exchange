@@ -464,6 +464,12 @@ let updateProfileText = (~profileText) => {
         ),
       );
     handleServerResponse(url, responseResult);
+    BAPI.updateProfileText(
+      ~userId=user.id,
+      ~sessionId=sessionId^,
+      ~profileText,
+    )
+    |> ignore;
     Promise.resolved();
   }
   |> ignore;
@@ -584,6 +590,13 @@ let toggleCatalogCheckboxSetting = (~enabled) => {
         ),
       );
     handleServerResponse(url, responseResult);
+    BAPI.updateSetting(
+      ~userId=user.id,
+      ~sessionId=sessionId^,
+      ~settingKey="enableCatalog",
+      ~settingValue=Js.Json.boolean(enabled),
+    )
+    |> ignore;
     Promise.resolved();
   }
   |> ignore;

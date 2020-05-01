@@ -137,6 +137,69 @@ let removeItem = (~userId, ~sessionId, ~itemId, ~variant) => {
   Promise.resolved();
 };
 
+let updateProfileText = (~userId, ~sessionId, ~profileText) => {
+  let url = Constants.bapiUrl ++ "/@me/profileText";
+  let%Repromise.Js _responseResult =
+    Fetch.fetchWithInit(
+      url,
+      Fetch.RequestInit.make(
+        ~method_=Post,
+        ~body=
+          Fetch.BodyInit.make(
+            Js.Json.stringify(
+              Json.Encode.object_([
+                ("text", Json.Encode.string(profileText)),
+                ("userId", Json.Encode.string(userId)),
+              ]),
+            ),
+          ),
+        ~headers=
+          Fetch.HeadersInit.make({
+            "X-Client-Version": Constants.gitCommitRef,
+            "Content-Type": "application/json",
+            "Authorization":
+              "Bearer " ++ Belt.Option.getWithDefault(sessionId, ""),
+          }),
+        ~credentials=Include,
+        ~mode=CORS,
+        (),
+      ),
+    );
+  Promise.resolved();
+};
+
+let updateSetting = (~userId, ~sessionId, ~settingKey, ~settingValue) => {
+  let url = Constants.bapiUrl ++ "/@me/settings";
+  let%Repromise.Js _responseResult =
+    Fetch.fetchWithInit(
+      url,
+      Fetch.RequestInit.make(
+        ~method_=Patch,
+        ~body=
+          Fetch.BodyInit.make(
+            Js.Json.stringify(
+              Json.Encode.object_([
+                ("key", Json.Encode.string(settingKey)),
+                ("value", settingValue),
+                ("userId", Json.Encode.string(userId)),
+              ]),
+            ),
+          ),
+        ~headers=
+          Fetch.HeadersInit.make({
+            "X-Client-Version": Constants.gitCommitRef,
+            "Content-Type": "application/json",
+            "Authorization":
+              "Bearer " ++ Belt.Option.getWithDefault(sessionId, ""),
+          }),
+        ~credentials=Include,
+        ~mode=CORS,
+        (),
+      ),
+    );
+  Promise.resolved();
+};
+
 let patchMe =
     (~userId, ~sessionId, ~username, ~newPassword, ~email, ~oldPassword) => {
   open Belt;

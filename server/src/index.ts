@@ -1,6 +1,6 @@
 import express from "express";
 import bearerToken from "express-bearer-token";
-import { Pool, PoolClient } from "pg";
+import { Pool, PoolClient, Query } from "pg";
 import dotenv from "dotenv";
 import bodyParser from "body-parser";
 import crypto from "crypto";
@@ -250,6 +250,62 @@ app.delete(
     res.sendStatus(errorStatusCode !== undefined ? errorStatusCode : 204);
   }
 );
+
+app.post("/@me/profileText", cors(corsOptions), async (req, res) => {
+  const client = await pool.connect();
+  let errorStatusCode;
+  try {
+    const userId = req.body.userId;
+    await validateUserId(userId, req, client);
+    // TODO assertions
+    const updateResult = await client.query(
+      `UPDATE ${PG_SCHEMA}.users SET profile_text=$1 WHERE id=$2`,
+      [req.body.text, userId]
+    );
+  } catch (e) {
+    logError(e);
+  } finally {
+    client.release();
+  }
+  res.sendStatus(errorStatusCode !== undefined ? errorStatusCode : 204);
+});
+
+// const submit = Query.prototype.submit;
+// Query.prototype.submit = function () {
+//   // @ts-ignore
+//   const text = this.text;
+//   // @ts-ignore
+//   const values = this.values;
+//   // @ts-ignore
+//   const query = values.reduce((q, v, i) => q.replace(`$${i + 1}`, v), text);
+//   console.log(query);
+//   // @ts-ignore
+//   submit.apply(this, arguments);
+// };
+
+app.patch("/@me/settings", cors(corsOptions), async (req, res) => {
+  const client = await pool.connect();
+  let errorStatusCode;
+  try {
+    const userId = req.body.userId;
+    await validateUserId(userId, req, client);
+    // TODO assertions
+    const { key, value } = req.body;
+    if (key !== "enableCatalog") {
+      errorStatusCode = 400;
+      throw new Error(`Invalid key: ${key}`);
+    }
+    const updateResult = await client.query(
+      `UPDATE ${PG_SCHEMA}.users SET settings=jsonb_set(coalesce(settings::jsonb,'{}'::jsonb), '{${key}}', $1) WHERE id=$2`,
+      [JSON.stringify(value), userId]
+    );
+  } catch (e) {
+    logError(e);
+  } finally {
+    client.release();
+  }
+  res.sendStatus(errorStatusCode !== undefined ? errorStatusCode : 204);
+});
 
 function sanitizeUsername(username: string) {
   return slugify(username).replace('"', "").replace("'", "");

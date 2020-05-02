@@ -111,8 +111,18 @@ let fromAPI = (json: Js.Json.t) => {
           Belt.Option.flatMap(
             value,
             value => {
-              let (itemId, _) = fromItemKey(~key=itemKey);
-              Item.hasItem(~itemId) ? Some((itemKey, value)) : None;
+              let (itemId, variant) = fromItemKey(~key=itemKey);
+              if (Item.hasItem(~itemId)) {
+                let item = Item.getItem(~itemId);
+                let canonicalVariant =
+                  Item.getCanonicalVariant(~item, ~variant);
+                Some((
+                  getItemKey(~itemId, ~variation=canonicalVariant),
+                  value,
+                ));
+              } else {
+                None;
+              };
             },
           )
         })

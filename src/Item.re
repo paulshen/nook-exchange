@@ -19,7 +19,8 @@ type t = {
   isRecipe: bool,
   recipe: option(recipe),
   orderable: bool,
-  customizable: bool,
+  bodyCustomizable: bool,
+  patternCustomizable: bool,
   category: string,
   version: option(string),
   tags: array(string),
@@ -149,7 +150,8 @@ let jsonToItem = (json: Js.Json.t) => {
            ),
          ),
     orderable: flags land 2 !== 0,
-    customizable: flags land (4 lor 8) !== 0,
+    bodyCustomizable: flags land 4 != 0,
+    patternCustomizable: flags land 8 != 0,
     category: json |> field("category", string),
     version: json |> optional(field("v", string)),
     tags:
@@ -172,7 +174,8 @@ let all = {
             buyPrice: None,
             isRecipe: true,
             orderable: false,
-            customizable: false,
+            bodyCustomizable: false,
+            patternCustomizable: false,
           }
         )
     );
@@ -219,6 +222,33 @@ let getNumVariations = (~item) =>
     | TwoDimensions(a, b) => a * b
     };
   };
+
+let getCollapsedVariants = (~item: t) => {
+  switch (item.variations) {
+  | Single => [|0|]
+  | OneDimension(a) =>
+    Array.make(a, None)->Belt.Array.mapWithIndex((i, _) => i)
+  | TwoDimensions(a, b) =>
+    if (item.bodyCustomizable) {
+      [|0|];
+    } else {
+      Array.make(a, None)->Belt.Array.mapWithIndex((i, _) => i * b);
+    }
+  };
+};
+
+let getCanonicalVariant = (~item, ~variant) => {
+  switch (item.variations) {
+  | Single => 0
+  | OneDimension(_a) => variant
+  | TwoDimensions(_a, b) =>
+    if (item.bodyCustomizable) {
+      0;
+    } else {
+      variant / b * b;
+    }
+  };
+};
 
 let loadVariants: (Js.Json.t => unit) => unit = [%raw
   {|function(callback) {
@@ -319,7 +349,7 @@ let getName = (item: t) =>
     );
   };
 
-let getVariantName = (~item: t, ~variant: int) => {
+let getVariantName = (~item: t, ~variant: int, ~hidePattern=false, ()) => {
   Belt.(
     switch (item.variations) {
     | Single => None
@@ -361,7 +391,7 @@ let getVariantName = (~item: t, ~variant: int) => {
             Some(
               Option.getExn(nameA[variant / b])
               ++ (
-                if (b > 1) {
+                if (!hidePattern && b > 1) {
                   " x " ++ Option.getExn(nameB[variant mod b]);
                 } else {
                   "";

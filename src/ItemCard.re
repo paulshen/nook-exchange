@@ -74,6 +74,7 @@ module Styles = {
             media("(hover: none)", [borderColor(hex("c0c0c0"))]),
           ],
         ),
+        selector("& ." ++ ItemImage.Styles.variantButton, [opacity(0.5)]),
       ]),
       media(
         "(max-width: 600px)",
@@ -92,6 +93,7 @@ module Styles = {
       display(flexBox),
       flexDirection(column),
       alignItems(center),
+      width(pct(100.)),
     ]);
   let name =
     style([
@@ -100,22 +102,8 @@ module Styles = {
       padding2(~v=zero, ~h=px(16)),
       textAlign(center),
     ]);
-  let mainImageWrapper = style([marginBottom(px(8)), position(relative)]);
-  let mainImageWrapperRecipe = style([marginBottom(px(16))]);
-  let mainImage =
-    style([display(block), height(px(128)), width(px(128))]);
-  let recipeIcon =
-    style([
-      display(block),
-      height(px(64)),
-      width(px(64)),
-      position(absolute),
-      right(px(-16)),
-      bottom(px(-16)),
-      opacity(0.95),
-      transition(~duration=200, "all"),
-      hover([opacity(1.)]),
-    ]);
+  let itemImage =
+    style([unsafe("alignSelf", "stretch"), marginBottom(px(8))]);
   let variation =
     style([
       display(flexBox),
@@ -354,11 +342,12 @@ let renderStatusButton =
     onClick={_ =>
       if (UserStore.isLoggedIn()) {
         if (useBatchMode && numVariations > 1) {
-          let variations = [||];
-          for (i in 0 to numVariations - 1) {
-            variations |> Js.Array.push(i) |> ignore;
-          };
-          UserStore.setItemStatusBatch(~itemId, ~variations, ~status);
+          let item = Item.getItem(~itemId);
+          UserStore.setItemStatusBatch(
+            ~itemId,
+            ~variations=Item.getCollapsedVariants(~item),
+            ~status,
+          );
         } else {
           UserStore.setItemStatus(~itemId, ~variation, ~status);
         };
@@ -440,28 +429,6 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
     setUseBatchMode(_ => false);
   };
 
-  React.useEffect0(() => {
-    open Webapi.Dom;
-    let onKeyDown = e =>
-      if (KeyboardEvent.key(e) == "Shift") {
-        if (React.Ref.current(numVariationsRef) > 1) {
-          setUseBatchMode(_ => true);
-        };
-      };
-    let onKeyUp = e =>
-      if (KeyboardEvent.key(e) == "Shift") {
-        setUseBatchMode(_ => false);
-      };
-    window |> Window.addKeyDownEventListener(onKeyDown);
-    window |> Window.addKeyUpEventListener(onKeyUp);
-    Some(
-      () => {
-        window |> Window.removeKeyDownEventListener(onKeyDown);
-        window |> Window.removeKeyUpEventListener(onKeyUp);
-      },
-    );
-  });
-
   <div
     className={Cn.make([
       Styles.card,
@@ -469,73 +436,69 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
     ])}>
     <div className=Styles.body>
       <div className=Styles.name> {React.string(Item.getName(item))} </div>
-      <div
-        className={Cn.make([
-          Styles.mainImageWrapper,
-          Cn.ifTrue(Styles.mainImageWrapperRecipe, item.isRecipe),
-        ])}>
-        <img
-          src={Item.getImageUrl(~item, ~variant=variation)}
-          className=Styles.mainImage
-        />
-        {item.isRecipe
-           ? <img
-               src={Constants.cdnUrl ++ "/images/DIYRecipe.png"}
-               className=Styles.recipeIcon
-             />
-           : React.null}
-      </div>
-      {switch (numVariations) {
-       | 1 => React.null
-       | numVariations =>
+      <ItemImage
+        item
+        variant=variation
+        className=Styles.itemImage
+        key={item.id}
+      />
+      {let collapsedVariants = Item.getCollapsedVariants(~item);
+       if (Js.Array.length(collapsedVariants) === 1) {
+         React.null;
+       } else {
          <div
            className={Cn.make([
              Styles.variation,
              Cn.ifTrue(Styles.variationBatch, useBatchMode),
            ])}>
-           {let children = [||];
-            for (v in 0 to numVariations - 1) {
-              let image =
-                <img
-                  src={Item.getImageUrl(~item, ~variant=v)}
-                  className={Cn.make([
-                    Styles.variationImage,
-                    Cn.ifTrue(Styles.variationImageBatch, useBatchMode),
-                    Cn.ifTrue(Styles.variationImageSelected, v == variation),
-                  ])}
-                />;
-              children
-              |> Js.Array.push(
-                   switch (Item.getVariantName(~item, ~variant=v)) {
-                   | Some(variantName) =>
-                     <ReactAtmosphere.Tooltip
-                       text={React.string(variantName)}
-                       key={string_of_int(v)}>
-                       {(
-                          ({onMouseEnter, onMouseLeave, onFocus, onBlur, ref}) =>
-                            <div
-                              onClick={_ => {setVariation(_ => v)}}
-                              onMouseEnter
-                              onMouseLeave
-                              onFocus
-                              onBlur
-                              ref={ReactDOMRe.Ref.domRef(ref)}>
-                              image
-                            </div>
-                        )}
-                     </ReactAtmosphere.Tooltip>
-                   | None =>
-                     <div
-                       onClick={_ => {setVariation(_ => v)}}
-                       key={string_of_int(v)}>
-                       image
-                     </div>
-                   },
-                 )
-              |> ignore;
-            };
-            children->React.array}
-         </div>
+           {collapsedVariants
+            ->Belt.Array.map(v => {
+                let image =
+                  <img
+                    src={Item.getImageUrl(~item, ~variant=v)}
+                    className={Cn.make([
+                      Styles.variationImage,
+                      Cn.ifTrue(Styles.variationImageBatch, useBatchMode),
+                      Cn.ifTrue(
+                        Styles.variationImageSelected,
+                        v == variation,
+                      ),
+                    ])}
+                  />;
+                switch (
+                  Item.getVariantName(
+                    ~item,
+                    ~variant=v,
+                    ~hidePattern=true,
+                    (),
+                  )
+                ) {
+                | Some(variantName) =>
+                  <ReactAtmosphere.Tooltip
+                    text={React.string(variantName)} key={string_of_int(v)}>
+                    {(
+                       ({onMouseEnter, onMouseLeave, onFocus, onBlur, ref}) =>
+                         <div
+                           onClick={_ => {setVariation(_ => v)}}
+                           onMouseEnter
+                           onMouseLeave
+                           onFocus
+                           onBlur
+                           ref={ReactDOMRe.Ref.domRef(ref)}>
+                           image
+                         </div>
+                     )}
+                  </ReactAtmosphere.Tooltip>
+                | None =>
+                  <div
+                    onClick={_ => {setVariation(_ => v)}}
+                    key={string_of_int(v)}>
+                    image
+                  </div>
+                };
+              })
+            ->React.array}
+         </div>;
        }}
       <div className=Styles.metaIcons>
         {switch (item.recipe) {
@@ -605,13 +568,9 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
                       | Some(status) =>
                         let updateItem = () =>
                           if (useBatchMode && numVariations > 1) {
-                            let variations = [||];
-                            for (i in 0 to numVariations - 1) {
-                              variations |> Js.Array.push(i) |> ignore;
-                            };
                             UserStore.setItemStatusBatch(
                               ~itemId=item.id,
-                              ~variations,
+                              ~variations=Item.getCollapsedVariants(~item),
                               ~status,
                             );
                           } else {

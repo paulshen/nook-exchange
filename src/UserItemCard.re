@@ -106,10 +106,41 @@ let make =
           ItemCard.Styles.mainImageWrapper,
           Cn.ifTrue(Styles.mainImageWrapperWithRecipe, item.isRecipe),
         ])}>
-        <img
-          src={Item.getImageUrl(~item, ~variant=variation)}
-          className=ItemCard.Styles.mainImage
-        />
+        {let image =
+           <img
+             src={Item.getImageUrl(~item, ~variant=variation)}
+             className=ItemCard.Styles.mainImage
+           />;
+         if (Item.getNumVariations(~item) > 1) {
+           <ReactAtmosphere.Tooltip
+             text={React.string(
+               Item.getVariantName(~item, ~variant=variation)
+               ->Belt.Option.getExn,
+             )}
+             options={Obj.magic({
+               "modifiers":
+                 Some([|
+                   {
+                     "name": "offset",
+                     "options": {
+                       "offset": [|0, 6|],
+                     },
+                   },
+                 |]),
+             })}>
+             {({onMouseEnter, onMouseLeave, onFocus, onBlur, ref}) =>
+                <div
+                  onMouseEnter
+                  onMouseLeave
+                  onFocus
+                  onBlur
+                  ref={ReactDOMRe.Ref.domRef(ref)}>
+                  image
+                </div>}
+           </ReactAtmosphere.Tooltip>;
+         } else {
+           image;
+         }}
         {item.isRecipe
            ? <img
                src={Constants.cdnUrl ++ "/images/DIYRecipe.png"}

@@ -334,7 +334,7 @@ let setItemNote = (~itemId: string, ~variation: int, ~note: string) => {
   {
     let url =
       Constants.apiUrl
-      ++ "/@me4/items/"
+      ++ "/@me5/items/"
       ++ item.id
       ++ "/"
       ++ string_of_int(variation)

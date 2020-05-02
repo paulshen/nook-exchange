@@ -245,7 +245,7 @@ let getCanonicalVariant = (~item, ~variant) => {
     if (item.bodyCustomizable) {
       0;
     } else {
-      variant / b;
+      variant / b * b;
     }
   };
 };

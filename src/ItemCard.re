@@ -74,6 +74,7 @@ module Styles = {
             media("(hover: none)", [borderColor(hex("c0c0c0"))]),
           ],
         ),
+        selector("& ." ++ ItemImage.Styles.variantButton, [opacity(0.5)]),
       ]),
       media(
         "(max-width: 600px)",
@@ -92,6 +93,7 @@ module Styles = {
       display(flexBox),
       flexDirection(column),
       alignItems(center),
+      width(pct(100.)),
     ]);
   let name =
     style([
@@ -100,22 +102,8 @@ module Styles = {
       padding2(~v=zero, ~h=px(16)),
       textAlign(center),
     ]);
-  let mainImageWrapper = style([marginBottom(px(8)), position(relative)]);
-  let mainImageWrapperRecipe = style([marginBottom(px(16))]);
-  let mainImage =
-    style([display(block), height(px(128)), width(px(128))]);
-  let recipeIcon =
-    style([
-      display(block),
-      height(px(64)),
-      width(px(64)),
-      position(absolute),
-      right(px(-16)),
-      bottom(px(-16)),
-      opacity(0.95),
-      transition(~duration=200, "all"),
-      hover([opacity(1.)]),
-    ]);
+  let itemImage =
+    style([unsafe("alignSelf", "stretch"), marginBottom(px(8))]);
   let variation =
     style([
       display(flexBox),
@@ -445,9 +433,9 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
     open Webapi.Dom;
     let onKeyDown = e =>
       if (KeyboardEvent.key(e) == "Shift") {
-        if (React.Ref.current(numVariationsRef) > 1) {
-          setUseBatchMode(_ => true);
-        };
+        (); //   setUseBatchMode(_ => true);
+ // if (React.Ref.current(numVariationsRef) > 1) {
+          // };
       };
     let onKeyUp = e =>
       if (KeyboardEvent.key(e) == "Shift") {
@@ -470,22 +458,12 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
     ])}>
     <div className=Styles.body>
       <div className=Styles.name> {React.string(Item.getName(item))} </div>
-      <div
-        className={Cn.make([
-          Styles.mainImageWrapper,
-          Cn.ifTrue(Styles.mainImageWrapperRecipe, item.isRecipe),
-        ])}>
-        <img
-          src={Item.getImageUrl(~item, ~variant=variation)}
-          className=Styles.mainImage
-        />
-        {item.isRecipe
-           ? <img
-               src={Constants.cdnUrl ++ "/images/DIYRecipe.png"}
-               className=Styles.recipeIcon
-             />
-           : React.null}
-      </div>
+      <ItemImage
+        item
+        variant=variation
+        className=Styles.itemImage
+        key={item.id}
+      />
       {let collapsedVariants = Item.getCollapsedVariants(~item);
        if (Js.Array.length(collapsedVariants) === 1) {
          React.null;

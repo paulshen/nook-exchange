@@ -55,10 +55,11 @@ module Styles = {
         selector("& ." ++ metaIcons, [opacity(1.)]),
         selector("& ." ++ topRightIcon, [opacity(1.)]),
         selector("& ." ++ catalogStatusButton, [opacity(1.)]),
+        selector("& ." ++ ItemImage.Styles.variantButton, [opacity(0.5)]),
       ]),
     ]);
   let cardOnCatalogPage = style([paddingBottom(px(16))]);
-  let mainImageWrapperWithRecipe = style([marginBottom(px(16))]);
+  let itemImage = style([marginLeft(px(-8)), marginRight(px(-8))]);
   let name =
     style([fontSize(px(16)), marginBottom(px(4)), textAlign(center)]);
   let userNote =
@@ -101,53 +102,13 @@ let make =
       Cn.ifTrue(Styles.cardOnCatalogPage, onCatalogPage),
     ])}>
     <div className=ItemCard.Styles.body>
-      <div
-        className={Cn.make([
-          ItemCard.Styles.mainImageWrapper,
-          Cn.ifTrue(Styles.mainImageWrapperWithRecipe, item.isRecipe),
-        ])}>
-        {let image =
-           <img
-             src={Item.getImageUrl(~item, ~variant=variation)}
-             className=ItemCard.Styles.mainImage
-           />;
-         if (Item.getNumVariations(~item) > 1) {
-           <ReactAtmosphere.Tooltip
-             text={React.string(
-               Item.getVariantName(~item, ~variant=variation, ())
-               ->Belt.Option.getExn,
-             )}
-             options={Obj.magic({
-               "modifiers":
-                 Some([|
-                   {
-                     "name": "offset",
-                     "options": {
-                       "offset": [|0, 6|],
-                     },
-                   },
-                 |]),
-             })}>
-             {({onMouseEnter, onMouseLeave, onFocus, onBlur, ref}) =>
-                <div
-                  onMouseEnter
-                  onMouseLeave
-                  onFocus
-                  onBlur
-                  ref={ReactDOMRe.Ref.domRef(ref)}>
-                  image
-                </div>}
-           </ReactAtmosphere.Tooltip>;
-         } else {
-           image;
-         }}
-        {item.isRecipe
-           ? <img
-               src={Constants.cdnUrl ++ "/images/DIYRecipe.png"}
-               className=ItemCard.Styles.recipeIcon
-             />
-           : React.null}
-      </div>
+      <ItemImage
+        item
+        variant=variation
+        forceTooltip=true
+        narrow=true
+        className={Cn.make([ItemCard.Styles.itemImage, Styles.itemImage])}
+      />
       <div className=Styles.name> {React.string(Item.getName(item))} </div>
       {switch (showRecipe, item.recipe) {
        | (true, Some(recipe)) =>

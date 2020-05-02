@@ -85,12 +85,43 @@ module ResultRowWithItem = {
       </div>;
     };
 
+    let getToggleTogether = v => {
+      [%debugger];
+      switch (item.variations) {
+      | TwoDimensions(a, b) =>
+        if (a > 1 && item.flags land 4 != 0) {
+          Some(
+            Array.make(a, None)
+            ->Array.mapWithIndex((i, _) => i * a + v mod a),
+          );
+        } else if (b > 1 && item.flags land 8 != 0) {
+          Some(
+            Array.make(b, None)->Array.mapWithIndex((i, _) => v / b * b + i),
+          );
+        } else {
+          None;
+        }
+      | _ => None
+      };
+    };
+
     let onClickVariant = v => {
       let selectedVariants =
         if (itemState.selectedVariants |> Js.Array.includes(v)) {
-          itemState.selectedVariants->Array.keep(x => x != v);
+          let itemsToRemove =
+            getToggleTogether(v)->Option.getWithDefault([|v|]);
+          itemState.selectedVariants
+          ->Array.keep(x => !(itemsToRemove |> Js.Array.includes(x)));
         } else {
-          itemState.selectedVariants->Array.concat([|v|]);
+          let itemsToAdd =
+            getToggleTogether(v)->Option.getWithDefault([|v|]);
+          let clone = Js.Array.copy(itemState.selectedVariants);
+          itemsToAdd->Array.forEach(v =>
+            if (!(clone |> Js.Array.includes(v))) {
+              clone |> Js.Array.push(v) |> ignore;
+            }
+          );
+          clone;
         };
       onChange({...itemState, selectedVariants});
     };
@@ -162,18 +193,33 @@ module Results = {
       React.useState(() => {
         Js.Dict.fromArray(
           rows->Array.keepMap(((query, itemOption)) =>
-            itemOption->Option.map(item =>
+            itemOption->Option.map(item => {
               (
                 query,
                 {
                   itemId: item.id,
                   selectedVariants:
-                    Array.make(Item.getNumVariations(~item), None)
-                    ->Array.mapWithIndex((i, _) => i),
+                    switch (item.variations) {
+                    | Single => [|0|]
+                    | OneDimension(a) =>
+                      if (item.customizable) {
+                        Array.make(a, None)->Array.mapWithIndex((i, _) => i);
+                      } else {
+                        [||];
+                      }
+                    | TwoDimensions(a, b) =>
+                      if ((a == 1 || item.flags land 4 != 0)
+                          && (b == 1 || item.flags land 8 != 0)) {
+                        Array.make(a * b, None)
+                        ->Array.mapWithIndex((i, _) => i);
+                      } else {
+                        [||];
+                      }
+                    },
                   destination: `CatalogOnly,
                 }: itemState,
               )
-            )
+            })
           ),
         )
       });

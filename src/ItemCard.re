@@ -354,11 +354,12 @@ let renderStatusButton =
     onClick={_ =>
       if (UserStore.isLoggedIn()) {
         if (useBatchMode && numVariations > 1) {
-          let variations = [||];
-          for (i in 0 to numVariations - 1) {
-            variations |> Js.Array.push(i) |> ignore;
-          };
-          UserStore.setItemStatusBatch(~itemId, ~variations, ~status);
+          let item = Item.getItem(~itemId);
+          UserStore.setItemStatusBatch(
+            ~itemId,
+            ~variations=Item.getCollapsedVariants(~item),
+            ~status,
+          );
         } else {
           UserStore.setItemStatus(~itemId, ~variation, ~status);
         };
@@ -611,13 +612,9 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
                       | Some(status) =>
                         let updateItem = () =>
                           if (useBatchMode && numVariations > 1) {
-                            let variations = [||];
-                            for (i in 0 to numVariations - 1) {
-                              variations |> Js.Array.push(i) |> ignore;
-                            };
                             UserStore.setItemStatusBatch(
                               ~itemId=item.id,
-                              ~variations,
+                              ~variations=Item.getCollapsedVariants(~item),
                               ~status,
                             );
                           } else {

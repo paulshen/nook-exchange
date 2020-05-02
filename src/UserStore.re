@@ -121,9 +121,14 @@ let handleServerResponse = (url, responseResult) =>
     );
   };
 
+exception NotCanonicalVariant(string, int);
 let numItemUpdatesLogged = ref(0);
 let setItemStatus =
     (~itemId: string, ~variation: int, ~status: User.itemStatus) => {
+  let item = Item.getItem(~itemId);
+  if (Item.getCanonicalVariant(~item, ~variant=variation) != variation) {
+    raise(NotCanonicalVariant(itemId, variation));
+  };
   let user = getUser();
   let itemKey = User.getItemKey(~itemId, ~variation);
   let timeUpdated = Some(Js.Date.now() /. 1000.);
@@ -212,6 +217,10 @@ let setItemStatusBatch =
     let clone = Utils.cloneJsDict(user.items);
     variations
     |> Js.Array.forEach(variant => {
+         let item = Item.getItem(~itemId);
+         if (Item.getCanonicalVariant(~item, ~variant) != variant) {
+           raise(NotCanonicalVariant(itemId, variant));
+         };
          let itemKey = User.getItemKey(~itemId, ~variation=variant);
          let timeUpdated = Some(Js.Date.now() /. 1000.);
          let userItem =
@@ -290,6 +299,10 @@ let setItemStatusBatch =
 };
 
 let setItemNote = (~itemId: string, ~variation: int, ~note: string) => {
+  let item = Item.getItem(~itemId);
+  if (Item.getCanonicalVariant(~item, ~variant=variation) != variation) {
+    raise(NotCanonicalVariant(itemId, variation));
+  };
   let user = getUser();
   let itemKey = User.getItemKey(~itemId, ~variation);
   let userItem = {

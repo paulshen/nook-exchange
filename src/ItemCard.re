@@ -429,28 +429,6 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
     setUseBatchMode(_ => false);
   };
 
-  React.useEffect0(() => {
-    open Webapi.Dom;
-    let onKeyDown = e =>
-      if (KeyboardEvent.key(e) == "Shift") {
-        (); //   setUseBatchMode(_ => true);
- // if (React.Ref.current(numVariationsRef) > 1) {
-          // };
-      };
-    let onKeyUp = e =>
-      if (KeyboardEvent.key(e) == "Shift") {
-        setUseBatchMode(_ => false);
-      };
-    window |> Window.addKeyDownEventListener(onKeyDown);
-    window |> Window.addKeyUpEventListener(onKeyUp);
-    Some(
-      () => {
-        window |> Window.removeKeyDownEventListener(onKeyDown);
-        window |> Window.removeKeyUpEventListener(onKeyUp);
-      },
-    );
-  });
-
   <div
     className={Cn.make([
       Styles.card,

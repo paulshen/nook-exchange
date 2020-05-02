@@ -241,11 +241,11 @@ let getCanonicalVariant = (~item, ~variant) => {
   switch (item.variations) {
   | Single => 0
   | OneDimension(_a) => variant
-  | TwoDimensions(a, b) =>
+  | TwoDimensions(_a, b) =>
     if (item.bodyCustomizable) {
       0;
     } else {
-      variant mod b;
+      variant / b;
     }
   };
 };

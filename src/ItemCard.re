@@ -485,57 +485,63 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
              />
            : React.null}
       </div>
-      {switch (numVariations) {
-       | 1 => React.null
-       | numVariations =>
+      {let collapsedVariants = Item.getCollapsedVariants(~item);
+       if (Js.Array.length(collapsedVariants) === 1) {
+         React.null;
+       } else {
          <div
            className={Cn.make([
              Styles.variation,
              Cn.ifTrue(Styles.variationBatch, useBatchMode),
            ])}>
-           {let children = [||];
-            for (v in 0 to numVariations - 1) {
-              let image =
-                <img
-                  src={Item.getImageUrl(~item, ~variant=v)}
-                  className={Cn.make([
-                    Styles.variationImage,
-                    Cn.ifTrue(Styles.variationImageBatch, useBatchMode),
-                    Cn.ifTrue(Styles.variationImageSelected, v == variation),
-                  ])}
-                />;
-              children
-              |> Js.Array.push(
-                   switch (Item.getVariantName(~item, ~variant=v)) {
-                   | Some(variantName) =>
-                     <ReactAtmosphere.Tooltip
-                       text={React.string(variantName)}
-                       key={string_of_int(v)}>
-                       {(
-                          ({onMouseEnter, onMouseLeave, onFocus, onBlur, ref}) =>
-                            <div
-                              onClick={_ => {setVariation(_ => v)}}
-                              onMouseEnter
-                              onMouseLeave
-                              onFocus
-                              onBlur
-                              ref={ReactDOMRe.Ref.domRef(ref)}>
-                              image
-                            </div>
-                        )}
-                     </ReactAtmosphere.Tooltip>
-                   | None =>
-                     <div
-                       onClick={_ => {setVariation(_ => v)}}
-                       key={string_of_int(v)}>
-                       image
-                     </div>
-                   },
-                 )
-              |> ignore;
-            };
-            children->React.array}
-         </div>
+           {collapsedVariants
+            ->Belt.Array.map(v => {
+                let image =
+                  <img
+                    src={Item.getImageUrl(~item, ~variant=v)}
+                    className={Cn.make([
+                      Styles.variationImage,
+                      Cn.ifTrue(Styles.variationImageBatch, useBatchMode),
+                      Cn.ifTrue(
+                        Styles.variationImageSelected,
+                        v == variation,
+                      ),
+                    ])}
+                  />;
+                switch (
+                  Item.getVariantName(
+                    ~item,
+                    ~variant=v,
+                    ~hidePattern=true,
+                    (),
+                  )
+                ) {
+                | Some(variantName) =>
+                  <ReactAtmosphere.Tooltip
+                    text={React.string(variantName)} key={string_of_int(v)}>
+                    {(
+                       ({onMouseEnter, onMouseLeave, onFocus, onBlur, ref}) =>
+                         <div
+                           onClick={_ => {setVariation(_ => v)}}
+                           onMouseEnter
+                           onMouseLeave
+                           onFocus
+                           onBlur
+                           ref={ReactDOMRe.Ref.domRef(ref)}>
+                           image
+                         </div>
+                     )}
+                  </ReactAtmosphere.Tooltip>
+                | None =>
+                  <div
+                    onClick={_ => {setVariation(_ => v)}}
+                    key={string_of_int(v)}>
+                    image
+                  </div>
+                };
+              })
+            ->React.array}
+         </div>;
        }}
       <div className=Styles.metaIcons>
         {switch (item.recipe) {

@@ -349,7 +349,7 @@ let getName = (item: t) =>
     );
   };
 
-let getVariantName = (~item: t, ~variant: int) => {
+let getVariantName = (~item: t, ~variant: int, ~hidePattern=false, ()) => {
   Belt.(
     switch (item.variations) {
     | Single => None
@@ -391,7 +391,7 @@ let getVariantName = (~item: t, ~variant: int) => {
             Some(
               Option.getExn(nameA[variant / b])
               ++ (
-                if (b > 1) {
+                if (!hidePattern && b > 1) {
                   " x " ++ Option.getExn(nameB[variant mod b]);
                 } else {
                   "";

@@ -114,7 +114,7 @@ let make =
          if (Item.getNumVariations(~item) > 1) {
            <ReactAtmosphere.Tooltip
              text={React.string(
-               Item.getVariantName(~item, ~variant=variation)
+               Item.getVariantName(~item, ~variant=variation, ())
                ->Belt.Option.getExn,
              )}
              options={Obj.magic({

@@ -30,9 +30,9 @@ module Styles = {
       transition(~duration=200, "all"),
       outlineStyle(none),
       opacity(0.2),
-      media("(hover: none)", [opacity(0.4)]),
-      hover([important(opacity(1.))]),
+      media("(hover: hover)", [hover([important(opacity(1.))])]),
       disabled([important(opacity(0.1)), cursor(`default)]),
+      unsafe("touchAction", "manipulation"),
     ]);
   let variantButtonLeft = "variant-button-left";
   let variantButtonRight = "variant-button-right";

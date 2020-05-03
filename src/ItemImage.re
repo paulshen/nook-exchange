@@ -31,7 +31,6 @@ module Styles = {
       outlineStyle(none),
       opacity(0.2),
       media("(hover: hover)", [hover([important(opacity(1.))])]),
-      disabled([important(opacity(0.1)), cursor(`default)]),
       unsafe("touchAction", "manipulation"),
     ]);
   let variantButtonLeft = "variant-button-left";
@@ -51,15 +50,13 @@ module Styles = {
   let variantArrowRight = style([backgroundImage(url(variantRightIcon))]);
   let variantButtonNarrow =
     style([
-      selector(
-        "&." ++ variantButtonLeft,
-        [position(relative), left(px(4))],
-      ),
-      selector(
-        "&." ++ variantButtonRight,
-        [position(relative), left(px(-4))],
-      ),
       selector("& ." ++ variantArrow, [width(px(16)), height(px(16))]),
+    ]);
+  let variantButtonDisabled =
+    style([
+      important(opacity(0.1)),
+      cursor(`default),
+      media("(hover: hover)", [hover([important(opacity(0.1))])]),
     ]);
 };
 
@@ -88,12 +85,14 @@ let make =
   <div className={Cn.make([Styles.root, className])}>
     {numCollapsedVariants > 1
        ? <button
-           disabled={offset <= 0}
-           onClick={_ => {setOffset(offset => offset - 1)}}
+           onClick={_ => {
+             setOffset(offset => Js.Math.max_int(offset - 1, 0))
+           }}
            className={Cn.make([
              Styles.variantButton,
              Styles.variantButtonLeft,
              Cn.ifTrue(Styles.variantButtonNarrow, narrow),
+             Cn.ifTrue(Styles.variantButtonDisabled, offset <= 0),
            ])}>
            <span
              className={Cn.make([
@@ -146,12 +145,19 @@ let make =
     </div>
     {numCollapsedVariants > 1
        ? <button
-           disabled={offset >= numCollapsedVariants - 1}
-           onClick={_ => {setOffset(offset => offset + 1)}}
+           onClick={_ => {
+             setOffset(offset =>
+               Js.Math.min_int(offset + 1, numCollapsedVariants - 1)
+             )
+           }}
            className={Cn.make([
              Styles.variantButton,
              Styles.variantButtonRight,
              Cn.ifTrue(Styles.variantButtonNarrow, narrow),
+             Cn.ifTrue(
+               Styles.variantButtonDisabled,
+               offset >= numCollapsedVariants - 1,
+             ),
            ])}>
            <span
              className={Cn.make([

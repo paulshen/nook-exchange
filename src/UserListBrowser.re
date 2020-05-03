@@ -185,6 +185,7 @@ let make =
     );
   let numFiltersChangeLogged = React.useRef(0);
   let setFilters = (filters: ItemFilters.t) => {
+    Js.log(filters);
     let urlSearchParams =
       Webapi.Url.URLSearchParams.makeWithArray(
         ItemFilters.serialize(
@@ -193,7 +194,11 @@ let make =
           ~pageOffset=0,
         ),
       );
-    ReasonReactRouter.push(getUrl(~url, ~urlSearchParams));
+    let url = ReasonReactRouter.dangerouslyGetInitialUrl();
+    let newUrl = getUrl(~url, ~urlSearchParams);
+    Js.log(newUrl);
+    [%debugger];
+    ReasonReactRouter.push(newUrl);
     if (React.Ref.current(numFiltersChangeLogged) < 2) {
       Analytics.Amplitude.logEventWithProperties(
         ~eventName="Filters Changed",

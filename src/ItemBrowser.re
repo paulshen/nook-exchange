@@ -126,7 +126,8 @@ let make = (~showLogin, ~url: ReasonReactRouter.url) => {
                   | ForTrade =>
                     filters.exclude |> Js.Array.includes(ItemFilters.Catalog)
                   }) {
-                let (itemId, variant) = User.fromItemKey(~key=itemKey);
+                let (itemId, variant) =
+                  User.fromItemKey(~key=itemKey)->Belt.Option.getExn;
                 let itemVariantList =
                   switch (Js.Dict.get(userItemMap, string_of_int(itemId))) {
                   | Some(list) => list

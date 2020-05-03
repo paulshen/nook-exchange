@@ -165,7 +165,7 @@ module Loaded = {
           user.items
           ->Js.Dict.entries
           ->Belt.Array.mapU((. (itemKey, item)) =>
-              (User.fromItemKey(~key=itemKey), item)
+              (Belt.Option.getExn(User.fromItemKey(~key=itemKey)), item)
             ),
         [|user.items|],
       );

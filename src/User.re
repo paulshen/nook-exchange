@@ -74,7 +74,23 @@ let getItemKey = (~itemId: int, ~variation: int) => {
 
 let fromItemKey = (~key: string) => {
   let [|itemId, variation|] = key |> Js.String.split("@@");
-  (int_of_string(itemId), int_of_string(variation));
+  let itemId =
+    if (itemId |> Js.String.endsWith("r")) {
+      Item.itemMap
+      ->Js.Dict.get(
+          itemId
+          |> Js.String.slice(~from=0, ~to_=Js.String.length(itemId) - 2),
+        )
+      ->Belt.Option.flatMap(item =>
+          switch (item.type_) {
+          | Item(recipeId) => recipeId
+          | Recipe(_) => None
+          }
+        );
+    } else {
+      int_of_string_opt(itemId);
+    };
+  itemId->Belt.Option.map(itemId => (itemId, int_of_string(variation)));
 };
 
 type t = {
@@ -100,19 +116,22 @@ let fromAPI = (json: Js.Json.t) => {
       (json |> field("items", dict(itemFromJson)))
       ->Js.Dict.entries
       ->Belt.Array.keepMap(((itemKey, value)) => {
-          Belt.Option.flatMap(
-            value,
-            value => {
-              let (itemId, variant) = fromItemKey(~key=itemKey);
-              Item.itemMap
-              ->Js.Dict.get(string_of_int(itemId))
-              ->Belt.Option.map(item => {
-                  let canonicalVariant =
-                    Item.getCanonicalVariant(~item, ~variant);
-                  (getItemKey(~itemId, ~variation=canonicalVariant), value);
-                });
-            },
-          )
+          Belt.Option.flatMap(value, value => {
+            fromItemKey(~key=itemKey)
+            ->Belt.Option.flatMap(((itemId, variant)) =>
+                Item.itemMap
+                ->Js.Dict.get(string_of_int(itemId))
+                ->Belt.Option.map(item => (item, variant))
+              )
+            ->Belt.Option.map(((item, variant)) => {
+                let canonicalVariant =
+                  Item.getCanonicalVariant(~item, ~variant);
+                (
+                  getItemKey(~itemId=item.id, ~variation=canonicalVariant),
+                  value,
+                );
+              })
+          })
         })
       ->Js.Dict.fromArray,
     profileText:

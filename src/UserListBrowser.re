@@ -163,7 +163,9 @@ let make =
         ->Js.Dict.entries
         ->Belt.Array.keepMapU((. (itemKey, item: User.item)) =>
             item.status == listStatus
-              ? Some((User.fromItemKey(~key=itemKey), item)) : None
+              ? User.fromItemKey(~key=itemKey)
+                ->Belt.Option.map(x => (x, item))
+              : None
           ),
       (user, listStatus),
     );

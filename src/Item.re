@@ -249,11 +249,12 @@ let getNumVariations = (~item) =>
   };
 
 let getCollapsedVariants = (~item: t) => {
-  switch (item.variations) {
-  | Single => [|0|]
-  | OneDimension(a) =>
+  switch (item.type_, item.variations) {
+  | (Recipe(_), _)
+  | (_, Single) => [|0|]
+  | (_, OneDimension(a)) =>
     Array.make(a, None)->Belt.Array.mapWithIndex((i, _) => i)
-  | TwoDimensions(a, b) =>
+  | (_, TwoDimensions(a, b)) =>
     if (item.bodyCustomizable) {
       [|0|];
     } else {

@@ -405,11 +405,6 @@ let getCategoryLabel = category => {
 module CategoryButtons = {
   module CategoryStyles = {
     open Css;
-    let root =
-      style([
-        marginBottom(px(8)),
-        media("(min-width: 1200px)", [marginBottom(px(4))]),
-      ]);
     let button =
       style([
         marginRight(px(8)),
@@ -431,6 +426,24 @@ module CategoryButtons = {
     let selectSelected = style([height(px(37)), opacity(1.)]);
     let excludeNotice =
       style([display(inlineBlock), marginBottom(px(12))]);
+    let root =
+      style([
+        marginBottom(px(8)),
+        media("(min-width: 1200px)", [marginBottom(px(4))]),
+        media(
+          "(max-width: 600px)",
+          [
+            display(flexBox),
+            alignItems(center),
+            marginLeft(px(-16)),
+            marginRight(px(-16)),
+            paddingLeft(px(16)),
+            overflowX(auto),
+            selector("& ." ++ button, [marginBottom(zero)]),
+            selector("& ." ++ select, [marginBottom(zero)]),
+          ],
+        ),
+      ]);
   };
 
   [@react.component]

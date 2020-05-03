@@ -62,12 +62,13 @@ module Styles = {
   let itemImage = style([marginLeft(px(-8)), marginRight(px(-8))]);
   let name =
     style([fontSize(px(16)), marginBottom(px(4)), textAlign(center)]);
+  let userItemNote = style([marginTop(px(8))]);
   let userNote =
     style([
       borderTop(px(1), solid, hex("f0f0f0")),
       unsafe("alignSelf", "stretch"),
       lineHeight(px(18)),
-      marginTop(px(8)),
+      marginTop(px(4)),
       padding3(~top=px(8), ~bottom=zero, ~h=px(4)),
     ]);
   let removeButton =
@@ -172,6 +173,7 @@ let make =
                   itemId={item.id}
                   variation
                   userItem
+                  className=Styles.userItemNote
                   key={string_of_int(variation)}
                 />
               : React.null}

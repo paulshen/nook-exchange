@@ -84,7 +84,10 @@ module Styles = {
           width(Calc.(pct(50.) - px(16))),
         ],
       ),
-      media("(max-width: 430px)", [width(pct(100.))]),
+      media(
+        "(max-width: 430px)",
+        [width(pct(100.)), paddingTop(px(16))],
+      ),
     ]);
   let cardSelected = style([backgroundColor(hex("ffffff"))]);
   let body =

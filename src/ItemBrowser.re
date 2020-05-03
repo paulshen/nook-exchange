@@ -79,7 +79,7 @@ let make = (~showLogin, ~url: ReasonReactRouter.url) => {
         ),
       );
     ReasonReactRouter.push(getUrl(~url, ~urlSearchParams));
-    if (React.Ref.current(numFiltersChangeLogged) < 5) {
+    if (React.Ref.current(numFiltersChangeLogged) < 2) {
       Analytics.Amplitude.logEventWithProperties(
         ~eventName="Filters Changed",
         ~eventProperties={

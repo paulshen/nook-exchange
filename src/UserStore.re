@@ -147,9 +147,8 @@ let setItemStatus =
   };
   api.dispatch(UpdateUser(updatedUser));
   let item = Item.getItem(~itemId);
-  if (status == CatalogOnly
-      || numItemUpdatesLogged^ < 5
-      || updatedUser.items->Js.Dict.keys->Js.Array.length < 10) {
+  if (numItemUpdatesLogged^ < 2
+      || updatedUser.items->Js.Dict.keys->Js.Array.length < 4) {
     Analytics.Amplitude.logEventWithProperties(
       ~eventName="Item Status Updated",
       ~eventProperties={
@@ -235,8 +234,8 @@ let setItemStatusBatch =
   let updatedUser = {...user, items: updatedItems};
   api.dispatch(UpdateUser(updatedUser));
   let item = Item.getItem(~itemId);
-  if (numItemUpdatesLogged^ < 5
-      || updatedUser.items->Js.Dict.keys->Js.Array.length < 10) {
+  if (numItemUpdatesLogged^ < 2
+      || updatedUser.items->Js.Dict.keys->Js.Array.length < 4) {
     Analytics.Amplitude.logEventWithProperties(
       ~eventName="Item Status Updated",
       ~eventProperties={
@@ -319,8 +318,8 @@ let setItemNote = (~itemId: string, ~variation: int, ~note: string) => {
   };
   api.dispatch(UpdateUser(updatedUser));
   let item = Item.getItem(~itemId);
-  if (numItemUpdatesLogged^ < 5
-      || updatedUser.items->Js.Dict.keys->Js.Array.length < 10) {
+  if (numItemUpdatesLogged^ < 2
+      || updatedUser.items->Js.Dict.keys->Js.Array.length < 4) {
     Analytics.Amplitude.logEventWithProperties(
       ~eventName="Item Note Updated",
       ~eventProperties={

@@ -109,7 +109,7 @@ let jsonToItem = (json: Js.Json.t) => {
          field("recipe", json => {
            let jsonArray = Js.Json.decodeArray(json)->Belt.Option.getExn;
            (
-             int(jsonArray[0]),
+             - int(jsonArray[0]),
              jsonArray
              |> Js.Array.sliceFrom(1)
              |> Js.Array.map(json => {

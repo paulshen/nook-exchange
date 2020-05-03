@@ -195,7 +195,7 @@ let setItemStatus =
           (),
         ),
       );
-    handleServerResponse(url, responseResult);
+    handleServerResponse("/@me5/items/status", responseResult);
     BAPI.setItemStatus(
       ~userId=user.id,
       ~sessionId=sessionId^,
@@ -283,7 +283,7 @@ let setItemStatusBatch =
           (),
         ),
       );
-    handleServerResponse(url, responseResult);
+    handleServerResponse("/@me4/items/batch/status", responseResult);
     BAPI.setItemStatusBatch(
       ~userId=user.id,
       ~sessionId=sessionId^,
@@ -361,7 +361,7 @@ let setItemNote = (~itemId: string, ~variation: int, ~note: string) => {
           (),
         ),
       );
-    handleServerResponse(url, responseResult);
+    handleServerResponse("/@me5/items/note", responseResult);
     BAPI.setItemNote(
       ~userId=user.id,
       ~sessionId=sessionId^,
@@ -424,7 +424,7 @@ let removeItem = (~itemId, ~variation) => {
             (),
           ),
         );
-      handleServerResponse(url, responseResult);
+      handleServerResponse("/@me3/items/remove", responseResult);
       BAPI.removeItem(
         ~userId=user.id,
         ~sessionId=sessionId^,
@@ -475,7 +475,7 @@ let updateProfileText = (~profileText) => {
           (),
         ),
       );
-    handleServerResponse(url, responseResult);
+    handleServerResponse("/@me/profileText", responseResult);
     BAPI.updateProfileText(
       ~userId=user.id,
       ~sessionId=sessionId^,
@@ -601,7 +601,7 @@ let toggleCatalogCheckboxSetting = (~enabled) => {
           (),
         ),
       );
-    handleServerResponse(url, responseResult);
+    handleServerResponse("/@me/toggleCatalogCheckboxSetting", responseResult);
     BAPI.updateSetting(
       ~userId=user.id,
       ~sessionId=sessionId^,

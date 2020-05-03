@@ -121,6 +121,28 @@ let handleServerResponse = (url, responseResult) =>
     );
   };
 
+let makeAuthenticatedPostRequest = (~url, ~bodyJson) => {
+  Fetch.fetchWithInit(
+    url,
+    Fetch.RequestInit.make(
+      ~method_=Post,
+      ~body=
+        Fetch.BodyInit.make(
+          Js.Json.stringify(Json.Encode.object_(bodyJson)),
+        ),
+      ~headers=
+        Fetch.HeadersInit.make({
+          "X-Client-Version": Constants.gitCommitRef,
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " ++ Option.getWithDefault(sessionId^, ""),
+        }),
+      ~credentials=Include,
+      ~mode=CORS,
+      (),
+    ),
+  );
+};
+
 exception NotCanonicalVariant(string, int);
 let numItemUpdatesLogged = ref(0);
 let setItemStatus =
@@ -147,6 +169,32 @@ let setItemStatus =
   };
   api.dispatch(UpdateUser(updatedUser));
   let item = Item.getItem(~itemId);
+  BAPI.setItemStatus(
+    ~userId=user.id,
+    ~sessionId=sessionId^,
+    ~itemId,
+    ~variant=variation,
+    ~status,
+  )
+  |> ignore;
+  {
+    let%Repromise.Js responseResult =
+      makeAuthenticatedPostRequest(
+        ~url=
+          Constants.apiUrl
+          ++ "/@me5/items/"
+          ++ item.id
+          ++ "/"
+          ++ string_of_int(variation)
+          ++ "/status",
+        ~bodyJson=[
+          ("status", Json.Encode.int(User.itemStatusToJs(status))),
+        ],
+      );
+    handleServerResponse("/@me5/items/status", responseResult);
+    Promise.resolved();
+  }
+  |> ignore;
   if (numItemUpdatesLogged^ < 2
       || updatedUser.items->Js.Dict.keys->Js.Array.length < 4) {
     Analytics.Amplitude.logEventWithProperties(
@@ -162,51 +210,6 @@ let setItemStatus =
   Analytics.Amplitude.setItemCount(
     ~itemCount=Js.Dict.keys(updatedUser.items)->Js.Array.length,
   );
-  {
-    let url =
-      Constants.apiUrl
-      ++ "/@me5/items/"
-      ++ item.id
-      ++ "/"
-      ++ string_of_int(variation)
-      ++ "/status";
-    let%Repromise.Js responseResult =
-      Fetch.fetchWithInit(
-        url,
-        Fetch.RequestInit.make(
-          ~method_=Post,
-          ~body=
-            Fetch.BodyInit.make(
-              Js.Json.stringify(
-                Json.Encode.object_([
-                  ("status", Json.Encode.int(User.itemStatusToJs(status))),
-                ]),
-              ),
-            ),
-          ~headers=
-            Fetch.HeadersInit.make({
-              "X-Client-Version": Constants.gitCommitRef,
-              "Content-Type": "application/json",
-              "Authorization":
-                "Bearer " ++ Option.getWithDefault(sessionId^, ""),
-            }),
-          ~credentials=Include,
-          ~mode=CORS,
-          (),
-        ),
-      );
-    handleServerResponse("/@me5/items/status", responseResult);
-    BAPI.setItemStatus(
-      ~userId=user.id,
-      ~sessionId=sessionId^,
-      ~itemId,
-      ~variant=variation,
-      ~status,
-    )
-    |> ignore;
-    Promise.resolved();
-  }
-  |> ignore;
 };
 
 let setItemStatusBatch =
@@ -234,6 +237,33 @@ let setItemStatusBatch =
   let updatedUser = {...user, items: updatedItems};
   api.dispatch(UpdateUser(updatedUser));
   let item = Item.getItem(~itemId);
+  BAPI.setItemStatusBatch(
+    ~userId=user.id,
+    ~sessionId=sessionId^,
+    ~itemId,
+    ~variants=variations,
+    ~status,
+  )
+  |> ignore;
+  {
+    let%Repromise.Js responseResult =
+      makeAuthenticatedPostRequest(
+        ~url=Constants.apiUrl ++ "/@me4/items/" ++ item.id ++ "/batch/status",
+        ~bodyJson=[
+          ("status", Json.Encode.int(User.itemStatusToJs(status))),
+          (
+            "variants",
+            Json.Encode.array(
+              Json.Encode.string,
+              variations->Belt.Array.map(string_of_int),
+            ),
+          ),
+        ],
+      );
+    handleServerResponse("/@me4/items/batch/status", responseResult);
+    Promise.resolved();
+  }
+  |> ignore;
   if (numItemUpdatesLogged^ < 2
       || updatedUser.items->Js.Dict.keys->Js.Array.length < 4) {
     Analytics.Amplitude.logEventWithProperties(
@@ -249,52 +279,6 @@ let setItemStatusBatch =
   Analytics.Amplitude.setItemCount(
     ~itemCount=Js.Dict.keys(updatedUser.items)->Js.Array.length,
   );
-  {
-    let url = Constants.apiUrl ++ "/@me4/items/" ++ item.id ++ "/batch/status";
-    let%Repromise.Js responseResult =
-      Fetch.fetchWithInit(
-        url,
-        Fetch.RequestInit.make(
-          ~method_=Post,
-          ~body=
-            Fetch.BodyInit.make(
-              Js.Json.stringify(
-                Json.Encode.object_([
-                  ("status", Json.Encode.int(User.itemStatusToJs(status))),
-                  (
-                    "variants",
-                    Json.Encode.array(
-                      Json.Encode.string,
-                      variations->Belt.Array.map(string_of_int),
-                    ),
-                  ),
-                ]),
-              ),
-            ),
-          ~headers=
-            Fetch.HeadersInit.make({
-              "X-Client-Version": Constants.gitCommitRef,
-              "Content-Type": "application/json",
-              "Authorization":
-                "Bearer " ++ Option.getWithDefault(sessionId^, ""),
-            }),
-          ~credentials=Include,
-          ~mode=CORS,
-          (),
-        ),
-      );
-    handleServerResponse("/@me4/items/batch/status", responseResult);
-    BAPI.setItemStatusBatch(
-      ~userId=user.id,
-      ~sessionId=sessionId^,
-      ~itemId,
-      ~variants=variations,
-      ~status,
-    )
-    |> ignore;
-    Promise.resolved();
-  }
-  |> ignore;
 };
 
 let setItemNote = (~itemId: string, ~variation: int, ~note: string) => {
@@ -318,6 +302,30 @@ let setItemNote = (~itemId: string, ~variation: int, ~note: string) => {
   };
   api.dispatch(UpdateUser(updatedUser));
   let item = Item.getItem(~itemId);
+  BAPI.setItemNote(
+    ~userId=user.id,
+    ~sessionId=sessionId^,
+    ~itemId,
+    ~variant=variation,
+    ~note,
+  )
+  |> ignore;
+  {
+    let%Repromise.Js responseResult =
+      makeAuthenticatedPostRequest(
+        ~url=
+          Constants.apiUrl
+          ++ "/@me5/items/"
+          ++ item.id
+          ++ "/"
+          ++ string_of_int(variation)
+          ++ "/note",
+        ~bodyJson=[("note", Json.Encode.string(note))],
+      );
+    handleServerResponse("/@me5/items/note", responseResult);
+    Promise.resolved();
+  }
+  |> ignore;
   if (numItemUpdatesLogged^ < 2
       || updatedUser.items->Js.Dict.keys->Js.Array.length < 4) {
     Analytics.Amplitude.logEventWithProperties(
@@ -330,49 +338,6 @@ let setItemNote = (~itemId: string, ~variation: int, ~note: string) => {
     );
     numItemUpdatesLogged := numItemUpdatesLogged^ + 1;
   };
-  {
-    let url =
-      Constants.apiUrl
-      ++ "/@me5/items/"
-      ++ item.id
-      ++ "/"
-      ++ string_of_int(variation)
-      ++ "/note";
-    let%Repromise.Js responseResult =
-      Fetch.fetchWithInit(
-        url,
-        Fetch.RequestInit.make(
-          ~method_=Post,
-          ~body=
-            Fetch.BodyInit.make(
-              Js.Json.stringify(
-                Json.Encode.object_([("note", Json.Encode.string(note))]),
-              ),
-            ),
-          ~headers=
-            Fetch.HeadersInit.make({
-              "X-Client-Version": Constants.gitCommitRef,
-              "Content-Type": "application/json",
-              "Authorization":
-                "Bearer " ++ Option.getWithDefault(sessionId^, ""),
-            }),
-          ~credentials=Include,
-          ~mode=CORS,
-          (),
-        ),
-      );
-    handleServerResponse("/@me5/items/note", responseResult);
-    BAPI.setItemNote(
-      ~userId=user.id,
-      ~sessionId=sessionId^,
-      ~itemId,
-      ~variant=variation,
-      ~note,
-    )
-    |> ignore;
-    Promise.resolved();
-  }
-  |> ignore;
 };
 
 let numItemRemovesLogged = ref(0);
@@ -397,9 +362,13 @@ let removeItem = (~itemId, ~variation) => {
       );
       numItemRemovesLogged := numItemRemovesLogged^ + 1;
     };
-    Analytics.Amplitude.setItemCount(
-      ~itemCount=Js.Dict.keys(updatedUser.items)->Js.Array.length,
-    );
+    BAPI.removeItem(
+      ~userId=user.id,
+      ~sessionId=sessionId^,
+      ~itemId,
+      ~variant=variation,
+    )
+    |> ignore;
     {
       let url =
         Constants.apiUrl
@@ -425,16 +394,12 @@ let removeItem = (~itemId, ~variation) => {
           ),
         );
       handleServerResponse("/@me3/items/remove", responseResult);
-      BAPI.removeItem(
-        ~userId=user.id,
-        ~sessionId=sessionId^,
-        ~itemId,
-        ~variant=variation,
-      )
-      |> ignore;
       Promise.resolved();
     }
     |> ignore;
+    Analytics.Amplitude.setItemCount(
+      ~itemCount=Js.Dict.keys(updatedUser.items)->Js.Array.length,
+    );
   };
 };
 
@@ -442,49 +407,22 @@ let updateProfileText = (~profileText) => {
   let user = getUser();
   let updatedUser = {...user, profileText};
   api.dispatch(UpdateUser(updatedUser));
+  BAPI.updateProfileText(~userId=user.id, ~sessionId=sessionId^, ~profileText)
+  |> ignore;
+  {
+    let%Repromise.Js responseResult =
+      makeAuthenticatedPostRequest(
+        ~url=Constants.apiUrl ++ "/@me/profileText",
+        ~bodyJson=[("text", Js.Json.string(profileText))],
+      );
+    handleServerResponse("/@me/profileText", responseResult);
+    Promise.resolved();
+  }
+  |> ignore;
   Analytics.Amplitude.logEventWithProperties(
     ~eventName="Profile Text Updated",
     ~eventProperties={"text": profileText},
   );
-  {
-    let url = Constants.apiUrl ++ "/@me/profileText";
-    let%Repromise.Js responseResult =
-      Fetch.fetchWithInit(
-        url,
-        Fetch.RequestInit.make(
-          ~method_=Post,
-          ~body=
-            Fetch.BodyInit.make(
-              Js.Json.stringify(
-                Js.Json.object_(
-                  Js.Dict.fromArray([|
-                    ("text", Js.Json.string(profileText)),
-                  |]),
-                ),
-              ),
-            ),
-          ~headers=
-            Fetch.HeadersInit.make({
-              "X-Client-Version": Constants.gitCommitRef,
-              "Content-Type": "application/json",
-              "Authorization":
-                "Bearer " ++ Option.getWithDefault(sessionId^, ""),
-            }),
-          ~credentials=Include,
-          ~mode=CORS,
-          (),
-        ),
-      );
-    handleServerResponse("/@me/profileText", responseResult);
-    BAPI.updateProfileText(
-      ~userId=user.id,
-      ~sessionId=sessionId^,
-      ~profileText,
-    )
-    |> ignore;
-    Promise.resolved();
-  }
-  |> ignore;
 };
 
 let patchMe = (~username=?, ~newPassword=?, ~email=?, ~oldPassword, ()) => {
@@ -536,14 +474,6 @@ let patchMe = (~username=?, ~newPassword=?, ~email=?, ~oldPassword, ()) => {
     let%Repromise.JsExn json = Fetch.Response.json(response);
     let user = User.fromAPI(json);
     api.dispatch(UpdateUser(user));
-    Analytics.Amplitude.logEventWithProperties(
-      ~eventName="Account Update Succeeded",
-      ~eventProperties={
-        "username": username,
-        "password": newPassword !== None,
-        "email": email,
-      },
-    );
     BAPI.patchMe(
       ~userId=user.id,
       ~sessionId=sessionId^,
@@ -553,6 +483,14 @@ let patchMe = (~username=?, ~newPassword=?, ~email=?, ~oldPassword, ()) => {
       ~oldPassword,
     )
     |> ignore;
+    Analytics.Amplitude.logEventWithProperties(
+      ~eventName="Account Update Succeeded",
+      ~eventProperties={
+        "username": username,
+        "password": newPassword !== None,
+        "email": email,
+      },
+    );
     Promise.resolved(Ok());
   | _ =>
     let%Repromise.JsExn error = Fetch.Response.text(response);
@@ -568,50 +506,27 @@ let toggleCatalogCheckboxSetting = (~enabled) => {
   let user = getUser();
   let updatedUser = {...user, enableCatalogCheckbox: enabled};
   api.dispatch(UpdateUser(updatedUser));
+  BAPI.updateSetting(
+    ~userId=user.id,
+    ~sessionId=sessionId^,
+    ~settingKey="enableCatalog",
+    ~settingValue=Js.Json.boolean(enabled),
+  )
+  |> ignore;
+  {
+    let%Repromise.Js responseResult =
+      makeAuthenticatedPostRequest(
+        ~url=Constants.apiUrl ++ "/@me/toggleCatalogCheckboxSetting",
+        ~bodyJson=[("enabled", Js.Json.boolean(enabled))],
+      );
+    handleServerResponse("/@me/toggleCatalogCheckboxSetting", responseResult);
+    Promise.resolved();
+  }
+  |> ignore;
   Analytics.Amplitude.logEventWithProperties(
     ~eventName="Catalog Checkbox Setting Toggled",
     ~eventProperties={"enabled": enabled},
   );
-  {
-    let url = Constants.apiUrl ++ "/@me/toggleCatalogCheckboxSetting";
-    let%Repromise.Js responseResult =
-      Fetch.fetchWithInit(
-        url,
-        Fetch.RequestInit.make(
-          ~method_=Post,
-          ~body=
-            Fetch.BodyInit.make(
-              Js.Json.stringify(
-                Js.Json.object_(
-                  Js.Dict.fromArray([|
-                    ("enabled", Js.Json.boolean(enabled)),
-                  |]),
-                ),
-              ),
-            ),
-          ~headers=
-            Fetch.HeadersInit.make({
-              "X-Client-Version": Constants.gitCommitRef,
-              "Content-Type": "application/json",
-              "Authorization":
-                "Bearer " ++ Option.getWithDefault(sessionId^, ""),
-            }),
-          ~credentials=Include,
-          ~mode=CORS,
-          (),
-        ),
-      );
-    handleServerResponse("/@me/toggleCatalogCheckboxSetting", responseResult);
-    BAPI.updateSetting(
-      ~userId=user.id,
-      ~sessionId=sessionId^,
-      ~settingKey="enableCatalog",
-      ~settingValue=Js.Json.boolean(enabled),
-    )
-    |> ignore;
-    Promise.resolved();
-  }
-  |> ignore;
 };
 
 let errorQuotationMarksRegex = [%bs.re {|/^"(.*)"$/|}];
@@ -624,13 +539,11 @@ let register = (~username, ~email, ~password) => {
         ~body=
           Fetch.BodyInit.make(
             Js.Json.stringify(
-              Js.Json.object_(
-                Js.Dict.fromArray([|
-                  ("username", Js.Json.string(username)),
-                  ("email", Js.Json.string(email)),
-                  ("password", Js.Json.string(password)),
-                |]),
-              ),
+              Json.Encode.object_([
+                ("username", Js.Json.string(username)),
+                ("email", Js.Json.string(email)),
+                ("password", Js.Json.string(password)),
+              ]),
             ),
           ),
         ~headers=

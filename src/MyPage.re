@@ -202,7 +202,7 @@ let make = (~user: User.t, ~urlRest, ~url) => {
              user.items
              ->Js.Dict.entries
              ->Belt.Array.mapU((. (itemKey, item)) =>
-                 (User.fromItemKey(~key=itemKey), item)
+                 (Belt.Option.getExn(User.fromItemKey(~key=itemKey)), item)
                )
            }
            editable=true

@@ -106,7 +106,7 @@ let make =
     <div
       className={Cn.make([
         Styles.mainImageWrapper,
-        Cn.ifTrue(Styles.mainImageWrapperRecipe, item.isRecipe),
+        Cn.ifTrue(Styles.mainImageWrapperRecipe, Item.isRecipe(~item)),
         className,
       ])}>
       {let image =
@@ -137,7 +137,7 @@ let make =
          </ReactAtmosphere.Tooltip>
        | None => image
        }}
-      {item.isRecipe
+      {Item.isRecipe(~item)
          ? <img
              src={Constants.cdnUrl ++ "/images/DIYRecipe.png"}
              className=Styles.recipeIcon

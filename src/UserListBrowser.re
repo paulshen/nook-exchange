@@ -163,7 +163,9 @@ let make =
         ->Js.Dict.entries
         ->Belt.Array.keepMapU((. (itemKey, item: User.item)) =>
             item.status == listStatus
-              ? Some((User.fromItemKey(~key=itemKey), item)) : None
+              ? User.fromItemKey(~key=itemKey)
+                ->Belt.Option.map(x => (x, item))
+              : None
           ),
       (user, listStatus),
     );
@@ -402,7 +404,7 @@ let make =
                ? <UserProfileBrowser.UserItemCardMini
                    itemId
                    variation
-                   key={itemId ++ string_of_int(variation)}
+                   key={string_of_int(itemId) ++ string_of_int(variation)}
                  />
                : <UserItemCard
                    itemId
@@ -411,7 +413,7 @@ let make =
                    listStatus
                    editable=me
                    showRecipe=showRecipes
-                   key={itemId ++ string_of_int(variation)}
+                   key={string_of_int(itemId) ++ string_of_int(variation)}
                  />
            })
          ->React.array}

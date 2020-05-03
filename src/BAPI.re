@@ -27,7 +27,7 @@ let setItemStatus = (~userId, ~sessionId, ~itemId, ~variant, ~status) => {
       ~url=
         Constants.bapiUrl
         ++ "/@me4/items/"
-        ++ itemId
+        ++ string_of_int(itemId)
         ++ "/"
         ++ string_of_int(variant)
         ++ "/status",
@@ -46,7 +46,7 @@ let setItemNote = (~userId, ~sessionId, ~itemId, ~variant, ~note) => {
       ~url=
         Constants.bapiUrl
         ++ "/@me4/items/"
-        ++ itemId
+        ++ string_of_int(itemId)
         ++ "/"
         ++ string_of_int(variant)
         ++ "/note",
@@ -62,7 +62,11 @@ let setItemNote = (~userId, ~sessionId, ~itemId, ~variant, ~note) => {
 let setItemStatusBatch = (~userId, ~sessionId, ~itemId, ~variants, ~status) => {
   let%Repromise.Js _responseResult =
     makeAuthenticatedPostRequest(
-      ~url=Constants.bapiUrl ++ "/@me4/items/" ++ itemId ++ "/batch/status",
+      ~url=
+        Constants.bapiUrl
+        ++ "/@me4/items/"
+        ++ string_of_int(itemId)
+        ++ "/batch/status",
       ~bodyJson=[
         ("status", Json.Encode.int(User.itemStatusToJs(status))),
         ("variants", Json.Encode.array(Json.Encode.int, variants)),
@@ -77,7 +81,7 @@ let removeItem = (~userId, ~sessionId, ~itemId, ~variant) => {
   let url =
     Constants.bapiUrl
     ++ "/@me3/items/"
-    ++ itemId
+    ++ string_of_int(itemId)
     ++ "/"
     ++ string_of_int(variant);
   let%Repromise.Js _responseResult =

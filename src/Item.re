@@ -9,14 +9,17 @@ type variations =
 type image =
   | Base(string)
   | Array(array(string));
+type type_ =
+  | Item(option(int))
+  | Recipe(int);
 type t = {
-  id: string,
+  id: int,
+  type_,
   name: string,
   image,
   variations,
   sellPrice: option(int),
   buyPrice: option(int),
-  isRecipe: bool,
   recipe: option(recipe),
   orderable: bool,
   bodyCustomizable: bool,
@@ -24,21 +27,6 @@ type t = {
   category: string,
   version: option(string),
   tags: array(string),
-};
-
-let recipeIdRegex = [%bs.re {|/^(\d+)r$/|}];
-let getRecipeIdForItemId = (~itemId) => {
-  itemId ++ "r";
-};
-let getItemIdForRecipeId = (~recipeId) => {
-  let result = recipeId |> Js.Re.exec_(recipeIdRegex);
-  Belt.Option.map(
-    result,
-    result => {
-      let matches = Js.Re.captures(result);
-      matches[1]->Js.Nullable.toOption->Belt.Option.getExn;
-    },
-  );
 };
 
 let categories = [|
@@ -115,8 +103,25 @@ exception Unexpected;
 let jsonToItem = (json: Js.Json.t) => {
   open Json.Decode;
   let flags = json |> field("flags", int);
+  let recipeInfo =
+    json
+    |> optional(
+         field("recipe", json => {
+           let jsonArray = Js.Json.decodeArray(json)->Belt.Option.getExn;
+           (
+             - int(jsonArray[0]),
+             jsonArray
+             |> Js.Array.sliceFrom(1)
+             |> Js.Array.map(json => {
+                  let (quantity, itemName) = json |> tuple2(int, string);
+                  (itemName, quantity);
+                }),
+           );
+         }),
+       );
   {
-    id: json |> field("id", int) |> string_of_int,
+    id: json |> field("id", int),
+    type_: Item(recipeInfo->Belt.Option.map(((recipeId, _)) => recipeId)),
     name: json |> field("name", string),
     image:
       json
@@ -137,18 +142,7 @@ let jsonToItem = (json: Js.Json.t) => {
     },
     sellPrice: json |> optional(field("sell", int)),
     buyPrice: json |> optional(field("buy", int)),
-    isRecipe: false,
-    recipe:
-      json
-      |> optional(
-           field(
-             "recipe",
-             array(json => {
-               let (quantity, itemName) = json |> tuple2(int, string);
-               (itemName, quantity);
-             }),
-           ),
-         ),
+    recipe: recipeInfo->Belt.Option.map(((_, recipe)) => recipe),
     orderable: flags land 2 !== 0,
     bodyCustomizable: flags land 4 != 0,
     patternCustomizable: flags land 8 != 0,
@@ -164,15 +158,20 @@ let all = {
   let allFromJson = itemsJson |> Json.Decode.array(jsonToItem);
   let recipeItems =
     allFromJson->Belt.Array.keepMap(item =>
-      item.recipe
-      ->Belt.Option.map(recipe =>
+      (
+        switch (item.type_) {
+        | Item(recipeId) => recipeId
+        | Recipe(_) => raise(Constants.Uhoh)
+        }
+      )
+      ->Belt.Option.map(recipeId =>
           {
             ...item,
-            id: getRecipeIdForItemId(~itemId=item.id),
+            id: recipeId,
+            type_: Recipe(item.id),
             name: item.name ++ " DIY",
             sellPrice: None,
             buyPrice: None,
-            isRecipe: true,
             orderable: false,
             bodyCustomizable: false,
             patternCustomizable: false,
@@ -181,10 +180,15 @@ let all = {
     );
   allFromJson->Belt.Array.concat(recipeItems);
 };
-let hasItem = (~itemId) =>
-  all->Belt.Array.someU((. item) => item.id == itemId);
+let itemMap = {
+  let itemMap = Js.Dict.empty();
+  all->Belt.Array.forEach(item => {
+    itemMap->Js.Dict.set(string_of_int(item.id), item)
+  });
+  itemMap;
+};
 let getItem = (~itemId) =>
-  all->Belt.Array.getByU((. item) => item.id == itemId)->Belt.Option.getExn;
+  itemMap->Js.Dict.unsafeGet(string_of_int(itemId));
 
 exception UnexpectedVersion(string);
 let getImageUrl = (~item, ~variant) => {
@@ -212,8 +216,29 @@ let getImageUrl = (~item, ~variant) => {
   ++ ".png";
 };
 
+let isRecipe = (~item: t) => {
+  switch (item.type_) {
+  | Item(_) => false
+  | Recipe(_) => true
+  };
+};
+
+let getRecipeIdForItem = (~item: t) => {
+  switch (item.type_) {
+  | Item(recipeId) => recipeId
+  | Recipe(_) => raise(Constants.Uhoh)
+  };
+};
+
+let getItemIdForRecipe = (~recipe: t) => {
+  switch (recipe.type_) {
+  | Recipe(itemId) => itemId
+  | Item(_) => raise(Constants.Uhoh)
+  };
+};
+
 let getNumVariations = (~item) =>
-  if (item.isRecipe) {
+  if (isRecipe(~item)) {
     1;
   } else {
     switch (item.variations) {
@@ -224,11 +249,12 @@ let getNumVariations = (~item) =>
   };
 
 let getCollapsedVariants = (~item: t) => {
-  switch (item.variations) {
-  | Single => [|0|]
-  | OneDimension(a) =>
+  switch (item.type_, item.variations) {
+  | (Recipe(_), _)
+  | (_, Single) => [|0|]
+  | (_, OneDimension(a)) =>
     Array.make(a, None)->Belt.Array.mapWithIndex((i, _) => i)
-  | TwoDimensions(a, b) =>
+  | (_, TwoDimensions(a, b)) =>
     if (item.bodyCustomizable) {
       [|0|];
     } else {
@@ -326,27 +352,25 @@ let clearTranslations = () => {
 };
 
 let getName = (item: t) =>
-  if (item.isRecipe) {
+  switch (item.type_) {
+  | Recipe(itemId) =>
     Belt.(
       (translations^)
       ->Option.flatMap(translations =>
-          Js.Dict.get(
-            translations.items,
-            getItemIdForRecipeId(~recipeId=item.id)->Option.getExn,
-          )
+          Js.Dict.get(translations.items, string_of_int(itemId))
         )
       ->Option.map(translation => translation.name ++ " DIY")
       ->Option.getWithDefault(item.name)
-    );
-  } else {
+    )
+  | Item(_) =>
     Belt.(
       (translations^)
       ->Option.flatMap(translations =>
-          Js.Dict.get(translations.items, item.id)
+          Js.Dict.get(translations.items, string_of_int(item.id))
         )
       ->Option.map(translation => translation.name)
       ->Option.getWithDefault(item.name)
-    );
+    )
   };
 
 let getVariantName = (~item: t, ~variant: int, ~hidePattern=false, ()) => {
@@ -358,12 +382,14 @@ let getVariantName = (~item: t, ~variant: int, ~hidePattern=false, ()) => {
         switch (
           (translations^)
           ->Option.flatMap(translations =>
-              Js.Dict.get(translations.items, item.id)
+              Js.Dict.get(translations.items, string_of_int(item.id))
             )
           ->Option.flatMap(translationItem => translationItem.variants)
         ) {
         | Some(value) => Some(value)
-        | None => (variantNames^)->Option.flatMap(Js.Dict.get(_, item.id))
+        | None =>
+          (variantNames^)
+          ->Option.flatMap(Js.Dict.get(_, string_of_int(item.id)))
         }
       )
       ->Option.flatMap(value =>
@@ -377,12 +403,14 @@ let getVariantName = (~item: t, ~variant: int, ~hidePattern=false, ()) => {
         switch (
           (translations^)
           ->Option.flatMap(translations =>
-              Js.Dict.get(translations.items, item.id)
+              Js.Dict.get(translations.items, string_of_int(item.id))
             )
           ->Option.flatMap(translationItem => translationItem.variants)
         ) {
         | Some(value) => Some(value)
-        | None => (variantNames^)->Option.flatMap(Js.Dict.get(_, item.id))
+        | None =>
+          (variantNames^)
+          ->Option.flatMap(Js.Dict.get(_, string_of_int(item.id)))
         }
       )
       ->Belt.Option.flatMap(value =>

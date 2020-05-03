@@ -126,13 +126,14 @@ let make = (~showLogin, ~url: ReasonReactRouter.url) => {
                   | ForTrade =>
                     filters.exclude |> Js.Array.includes(ItemFilters.Catalog)
                   }) {
-                let (itemId, variant) = User.fromItemKey(~key=itemKey);
+                let (itemId, variant) =
+                  User.fromItemKey(~key=itemKey)->Belt.Option.getExn;
                 let itemVariantList =
-                  switch (Js.Dict.get(userItemMap, itemId)) {
+                  switch (Js.Dict.get(userItemMap, string_of_int(itemId))) {
                   | Some(list) => list
                   | None =>
                     let list = [||];
-                    userItemMap->Js.Dict.set(itemId, list);
+                    userItemMap->Js.Dict.set(string_of_int(itemId), list);
                     list;
                   };
                 itemVariantList |> Js.Array.push(variant) |> ignore;
@@ -141,6 +142,7 @@ let make = (~showLogin, ~url: ReasonReactRouter.url) => {
           userItemMap
           ->Js.Dict.entries
           ->Belt.Array.keepMap(((itemId, variantList)) => {
+              let itemId = int_of_string(itemId);
               let numVariations =
                 Item.getNumVariations(~item=Item.getItem(~itemId));
               // Exclude item only if user has all variants
@@ -192,7 +194,7 @@ let make = (~showLogin, ~url: ReasonReactRouter.url) => {
              item
              showCatalogCheckbox
              showLogin
-             key={item.id ++ string_of_int(i)}
+             key={string_of_int(item.id) ++ string_of_int(i)}
            />
          })
        ->React.array}

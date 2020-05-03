@@ -76,7 +76,7 @@ let make = (~item: Item.t, ~variation, ~className) => {
            }
            render={_renderArgs =>
              <div className=Styles.menu>
-               {!item.isRecipe
+               {!Item.isRecipe(~item)
                   ? <button
                       onClick={_ => {
                         UserStore.setItemStatus(
@@ -92,11 +92,9 @@ let make = (~item: Item.t, ~variation, ~className) => {
                {item.recipe !== None
                   ? <button
                       onClick={_ =>
-                        if (item.isRecipe) {
+                        if (Item.isRecipe(~item)) {
                           UserStore.setItemStatus(
-                            ~itemId=
-                              Item.getItemIdForRecipeId(~recipeId=item.id)
-                              ->Belt.Option.getExn,
+                            ~itemId=Item.getItemIdForRecipe(~recipe=item),
                             ~variation=0,
                             ~status=CanCraft,
                           );
@@ -124,7 +122,7 @@ let make = (~item: Item.t, ~variation, ~className) => {
                       }}
                       className=Styles.menuItem>
                       {React.string(
-                         item.isRecipe
+                         Item.isRecipe(~item)
                            ? "Move DIY to Catalog" : "Move to Catalog",
                        )}
                     </button>

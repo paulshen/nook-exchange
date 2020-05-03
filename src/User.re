@@ -68,21 +68,29 @@ let itemFromJson = json => {
   );
 };
 
-exception InvalidRecipeItemKey(string, int);
-let getItemKey = (~itemId: string, ~variation: int) => {
-  if (Item.getItemIdForRecipeId(~recipeId=itemId) !== None && variation != 0) {
-    raise(InvalidRecipeItemKey(itemId, variation));
-  };
-  itemId ++ "@@" ++ string_of_int(variation);
+let getItemKey = (~itemId: int, ~variation: int) => {
+  string_of_int(itemId) ++ "@@" ++ string_of_int(variation);
 };
 
 let fromItemKey = (~key: string) => {
   let [|itemId, variation|] = key |> Js.String.split("@@");
-  let variation = int_of_string(variation);
-  if (Item.getItemIdForRecipeId(~recipeId=itemId) !== None && variation != 0) {
-    raise(InvalidRecipeItemKey(itemId, variation));
-  };
-  (itemId, variation);
+  let itemId =
+    if (itemId |> Js.String.endsWith("r")) {
+      Item.itemMap
+      ->Js.Dict.get(
+          itemId
+          |> Js.String.slice(~from=0, ~to_=Js.String.length(itemId) - 2),
+        )
+      ->Belt.Option.flatMap(item =>
+          switch (item.type_) {
+          | Item(recipeId) => recipeId
+          | Recipe(_) => None
+          }
+        );
+    } else {
+      int_of_string_opt(itemId);
+    };
+  itemId->Belt.Option.map(itemId => (itemId, int_of_string(variation)));
 };
 
 type t = {
@@ -108,23 +116,22 @@ let fromAPI = (json: Js.Json.t) => {
       (json |> field("items", dict(itemFromJson)))
       ->Js.Dict.entries
       ->Belt.Array.keepMap(((itemKey, value)) => {
-          Belt.Option.flatMap(
-            value,
-            value => {
-              let (itemId, variant) = fromItemKey(~key=itemKey);
-              if (Item.hasItem(~itemId)) {
-                let item = Item.getItem(~itemId);
+          Belt.Option.flatMap(value, value => {
+            fromItemKey(~key=itemKey)
+            ->Belt.Option.flatMap(((itemId, variant)) =>
+                Item.itemMap
+                ->Js.Dict.get(string_of_int(itemId))
+                ->Belt.Option.map(item => (item, variant))
+              )
+            ->Belt.Option.map(((item, variant)) => {
                 let canonicalVariant =
                   Item.getCanonicalVariant(~item, ~variant);
-                Some((
-                  getItemKey(~itemId, ~variation=canonicalVariant),
+                (
+                  getItemKey(~itemId=item.id, ~variation=canonicalVariant),
                   value,
-                ));
-              } else {
-                None;
-              };
-            },
-          )
+                );
+              })
+          })
         })
       ->Js.Dict.fromArray,
     profileText:

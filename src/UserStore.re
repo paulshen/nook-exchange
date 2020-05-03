@@ -143,10 +143,9 @@ let makeAuthenticatedPostRequest = (~url, ~bodyJson) => {
   );
 };
 
-exception NotCanonicalVariant(string, int);
+exception NotCanonicalVariant(int, int);
 let numItemUpdatesLogged = ref(0);
-let setItemStatus =
-    (~itemId: string, ~variation: int, ~status: User.itemStatus) => {
+let setItemStatus = (~itemId: int, ~variation: int, ~status: User.itemStatus) => {
   let item = Item.getItem(~itemId);
   if (Item.getCanonicalVariant(~item, ~variant=variation) != variation) {
     raise(NotCanonicalVariant(itemId, variation));
@@ -183,7 +182,7 @@ let setItemStatus =
         ~url=
           Constants.apiUrl
           ++ "/@me5/items/"
-          ++ item.id
+          ++ string_of_int(item.id)
           ++ "/"
           ++ string_of_int(variation)
           ++ "/status",
@@ -213,7 +212,7 @@ let setItemStatus =
 };
 
 let setItemStatusBatch =
-    (~itemId: string, ~variations: array(int), ~status: User.itemStatus) => {
+    (~itemId: int, ~variations: array(int), ~status: User.itemStatus) => {
   let user = getUser();
   let updatedItems = {
     let clone = Utils.cloneJsDict(user.items);
@@ -248,7 +247,11 @@ let setItemStatusBatch =
   {
     let%Repromise.Js responseResult =
       makeAuthenticatedPostRequest(
-        ~url=Constants.apiUrl ++ "/@me4/items/" ++ item.id ++ "/batch/status",
+        ~url=
+          Constants.apiUrl
+          ++ "/@me4/items/"
+          ++ string_of_int(item.id)
+          ++ "/batch/status",
         ~bodyJson=[
           ("status", Json.Encode.int(User.itemStatusToJs(status))),
           (
@@ -281,7 +284,7 @@ let setItemStatusBatch =
   );
 };
 
-let setItemNote = (~itemId: string, ~variation: int, ~note: string) => {
+let setItemNote = (~itemId: int, ~variation: int, ~note: string) => {
   let item = Item.getItem(~itemId);
   if (Item.getCanonicalVariant(~item, ~variant=variation) != variation) {
     raise(NotCanonicalVariant(itemId, variation));
@@ -316,7 +319,7 @@ let setItemNote = (~itemId: string, ~variation: int, ~note: string) => {
         ~url=
           Constants.apiUrl
           ++ "/@me5/items/"
-          ++ item.id
+          ++ string_of_int(item.id)
           ++ "/"
           ++ string_of_int(variation)
           ++ "/note",
@@ -373,7 +376,7 @@ let removeItem = (~itemId, ~variation) => {
       let url =
         Constants.apiUrl
         ++ "/@me3/items/"
-        ++ item.id
+        ++ string_of_int(item.id)
         ++ "/"
         ++ string_of_int(variation);
       let%Repromise.Js responseResult =

@@ -125,7 +125,7 @@ open Belt;
 
 module UserItemCardMini = {
   [@react.component]
-  let make = (~itemId, ~variation) => {
+  let make = (~itemId: int, ~variation) => {
     let item = Item.getItem(~itemId);
     <div className=Styles.cardMini>
       <ReactAtmosphere.Tooltip text={React.string(Item.getName(item))}>
@@ -142,7 +142,7 @@ module UserItemCardMini = {
              />
            </div>}
       </ReactAtmosphere.Tooltip>
-      {item.isRecipe
+      {Item.isRecipe(~item)
          ? <img
              src={Constants.cdnUrl ++ "/images/DIYRecipe.png"}
              className=Styles.cardMiniRecipe
@@ -175,7 +175,7 @@ module Section = {
       (
         ~username: string,
         ~status: User.itemStatus,
-        ~userItems: array(((string, int), User.item)),
+        ~userItems: array(((int, int), User.item)),
         ~editable,
       ) => {
     let id = React.useMemo0(() => randomString());
@@ -293,7 +293,7 @@ module Section = {
                ? <UserItemCardMini
                    itemId
                    variation
-                   key={itemId ++ string_of_int(variation)}
+                   key={string_of_int(itemId) ++ string_of_int(variation)}
                  />
                : <UserItemCard
                    itemId
@@ -302,7 +302,7 @@ module Section = {
                    editable
                    listStatus=status
                    showRecipe=showRecipes
-                   key={itemId ++ string_of_int(variation)}
+                   key={string_of_int(itemId) ++ string_of_int(variation)}
                  />
            })
          ->(
@@ -351,7 +351,7 @@ module Section = {
 
 [@react.component]
 let make =
-    (~username, ~userItems: array(((string, int), User.item)), ~editable) => {
+    (~username, ~userItems: array(((int, int), User.item)), ~editable) => {
   let wishlist =
     userItems->Array.keepU((. (_, item: User.item)) =>
       item.status == Wishlist

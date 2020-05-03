@@ -68,21 +68,13 @@ let itemFromJson = json => {
   );
 };
 
-exception InvalidRecipeItemKey(string, int);
-let getItemKey = (~itemId: string, ~variation: int) => {
-  if (Item.getItemIdForRecipeId(~recipeId=itemId) !== None && variation != 0) {
-    raise(InvalidRecipeItemKey(itemId, variation));
-  };
-  itemId ++ "@@" ++ string_of_int(variation);
+let getItemKey = (~itemId: int, ~variation: int) => {
+  string_of_int(itemId) ++ "@@" ++ string_of_int(variation);
 };
 
 let fromItemKey = (~key: string) => {
   let [|itemId, variation|] = key |> Js.String.split("@@");
-  let variation = int_of_string(variation);
-  if (Item.getItemIdForRecipeId(~recipeId=itemId) !== None && variation != 0) {
-    raise(InvalidRecipeItemKey(itemId, variation));
-  };
-  (itemId, variation);
+  (int_of_string(itemId), int_of_string(variation));
 };
 
 type t = {
@@ -112,17 +104,13 @@ let fromAPI = (json: Js.Json.t) => {
             value,
             value => {
               let (itemId, variant) = fromItemKey(~key=itemKey);
-              if (Item.hasItem(~itemId)) {
-                let item = Item.getItem(~itemId);
-                let canonicalVariant =
-                  Item.getCanonicalVariant(~item, ~variant);
-                Some((
-                  getItemKey(~itemId, ~variation=canonicalVariant),
-                  value,
-                ));
-              } else {
-                None;
-              };
+              Item.itemMap
+              ->Js.Dict.get(string_of_int(itemId))
+              ->Belt.Option.map(item => {
+                  let canonicalVariant =
+                    Item.getCanonicalVariant(~item, ~variant);
+                  (getItemKey(~itemId, ~variation=canonicalVariant), value);
+                });
             },
           )
         })

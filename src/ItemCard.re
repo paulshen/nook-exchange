@@ -384,13 +384,10 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
     React.useState(() => false);
   let item =
     if (showRecipeAlternate) {
-      if (item.isRecipe) {
-        Item.getItem(
-          ~itemId=
-            Item.getItemIdForRecipeId(~recipeId=item.id)->Belt.Option.getExn,
-        );
-      } else {
-        Item.getItem(~itemId=Item.getRecipeIdForItemId(~itemId=item.id));
+      switch (item.type_) {
+      | Recipe(itemId) => Item.getItem(~itemId)
+      | Item(Some(recipeId)) => Item.getItem(~itemId=recipeId)
+      | Item(None) => raise(Constants.Uhoh)
       };
     } else {
       item;
@@ -440,7 +437,7 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
         item
         variant=variation
         className=Styles.itemImage
-        key={item.id}
+        key={string_of_int(item.id)}
       />
       {let collapsedVariants = Item.getCollapsedVariants(~item);
        if (Js.Array.length(collapsedVariants) === 1) {
@@ -505,9 +502,9 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
          | Some(recipe) =>
            <RecipeIcon
              recipe
-             isRecipe={item.isRecipe}
+             isRecipe={Item.isRecipe(~item)}
              onClick={_ => {setShowRecipeAlternate(show => !show)}}
-             key={item.id}
+             key={string_of_int(item.id)}
            />
          | None => React.null
          }}
@@ -684,7 +681,12 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
             ~numVariations,
             (),
           )}
-         {!item.isRecipe && item.recipe !== None
+         {(
+            switch (item.type_) {
+            | Item(Some(_)) => true
+            | _ => false
+            }
+          )
             ? renderStatusButton(
                 ~itemId=item.id,
                 ~variation,

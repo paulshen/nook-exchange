@@ -169,7 +169,7 @@ let doesItemMatchCategory = (~item: Item.t, ~category: string) => {
     Item.furnitureCategories |> Js.Array.includes(item.category)
   | "clothing" => Item.clothingCategories |> Js.Array.includes(item.category)
   | "other" => Item.otherCategories |> Js.Array.includes(item.category)
-  | "recipes" => item.isRecipe
+  | "recipes" => Item.isRecipe(~item)
   | category => item.category == category
   };
 };
@@ -435,7 +435,7 @@ module CategoryButtons = {
 
   [@react.component]
   let make =
-      (~filters: t, ~onChange, ~userItemIds: option(array(string))=?, ()) => {
+      (~filters: t, ~onChange, ~userItemIds: option(array(int))=?, ()) => {
     let shouldRenderCategory = category => {
       switch (userItemIds) {
       | Some(userItemIds) =>
@@ -566,7 +566,7 @@ module UserCategorySelector = {
   };
 
   [@react.component]
-  let make = (~filters: t, ~onChange, ~userItemIds: array(string)) => {
+  let make = (~filters: t, ~onChange, ~userItemIds: array(int)) => {
     let shouldRenderCategory = category => {
       userItemIds->Belt.Array.some(itemId =>
         doesItemMatchCategory(~item=Item.getItem(~itemId), ~category)
@@ -607,7 +607,7 @@ let make =
     (
       ~filters,
       ~onChange,
-      ~userItemIds: option(array(string))=?,
+      ~userItemIds: option(array(int))=?,
       ~isViewingSelf=false,
       (),
     ) => {

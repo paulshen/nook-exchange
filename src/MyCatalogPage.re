@@ -68,7 +68,7 @@ module Catalog = {
     };
 
   [@react.component]
-  let make = (~userItems: array(((string, int), User.item))) => {
+  let make = (~userItems: array(((int, int), User.item))) => {
     let viewportWidth = Utils.useViewportWidth();
     let numResultsPerPage = getNumResultsPerPage(~viewportWidth);
     let (filters, setFilters) =
@@ -139,7 +139,7 @@ module Catalog = {
                editable=true
                showRecipe=false
                onCatalogPage=true
-               key={itemId ++ string_of_int(variation)}
+               key={string_of_int(itemId) ++ string_of_int(variation)}
              />
            })
          ->React.array}

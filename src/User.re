@@ -79,7 +79,7 @@ let fromItemKey = (~key: string) => {
       Item.itemMap
       ->Js.Dict.get(
           itemId
-          |> Js.String.slice(~from=0, ~to_=Js.String.length(itemId) - 2),
+          |> Js.String.slice(~from=0, ~to_=Js.String.length(itemId) - 1),
         )
       ->Belt.Option.flatMap(item =>
           switch (item.type_) {

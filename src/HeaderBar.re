@@ -177,6 +177,12 @@ module Menu = {
              {React.string("Twitter")}
            </a>
            <a
+             href="https://www.buymeacoffee.com/nookexchange"
+             target="_blank"
+             className=MenuStyles.menuItem>
+             {React.string("Support us")}
+           </a>
+           <a
              href="#"
              className=MenuStyles.menuItem
              onClick={e => {
@@ -202,6 +208,12 @@ module Menu = {
              target="_blank"
              className=MenuStyles.menuItem>
              {React.string("Twitter")}
+           </a>
+           <a
+             href="https://www.buymeacoffee.com/nookexchange"
+             target="_blank"
+             className=MenuStyles.menuItem>
+             {React.string("Support us")}
            </a>
          </>
        }}

@@ -445,7 +445,7 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
         <Link
           path={ItemDetailOverlay.getItemDetailUrl(
             ~itemId=item.id,
-            ~variant=None,
+            ~variant=variation != 0 ? Some(variation) : None,
           )}
           className=Styles.nameLink>
           {React.string(Item.getName(item))}

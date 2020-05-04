@@ -25,7 +25,7 @@ module Styles = {
       overflow(auto),
       maxHeight(vh(100.)),
       minHeight(px(224)),
-      media("(max-width: 400px)", [width(pct(100.)), height(vh(95.))]),
+      media("(max-width: 400px)", [width(pct(100.)), height(vh(85.))]),
     ]);
   let body =
     style([
@@ -101,7 +101,10 @@ module Styles = {
   let variantSection =
     style([
       marginTop(px(24)),
+      marginLeft(px(-16)),
       marginRight(px(-16)),
+      paddingLeft(px(16)),
+      paddingRight(px(16)),
       overflowX(auto),
       overflowY(hidden),
     ]);
@@ -430,7 +433,9 @@ let make = (~item, ~variant) => {
                     <label className=Styles.itemPriceLabel>
                       {React.string("Sell")}
                     </label>
-                    {React.string(string_of_int(sellPrice))}
+                    <span className=Styles.itemPriceValue>
+                      {React.string(string_of_int(sellPrice))}
+                    </span>
                   </div>
                 | None => React.null
                 }}

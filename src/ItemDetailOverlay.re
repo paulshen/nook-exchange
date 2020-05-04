@@ -18,7 +18,9 @@ module Styles = {
       bottom(zero),
       left(zero),
       right(zero),
-      backgroundColor(hex("ffffff80")),
+      opacity(0.),
+      backgroundColor(hex("80808080")),
+      transition(~duration=200, "all"),
     ]);
   let root100VH =
     style([
@@ -38,7 +40,14 @@ module Styles = {
       overflow(auto),
       maxHeight(pct(100.)),
       minHeight(px(256)),
+      opacity(0.),
+      transforms([scale(0.85, 0.85), translate3d(zero, zero, zero)]),
       media("(max-width: 400px)", [maxHeight(pct(90.)), minWidth(zero)]),
+      transition(
+        ~duration=200,
+        ~timingFunction=cubicBezier(0.48, 1.38, 0.71, 0.93),
+        "all",
+      ),
       smallThresholdMediaQuery([width(pct(100.))]),
     ]);
   let body =
@@ -54,7 +63,7 @@ module Styles = {
       flexDirection(column),
       smallThresholdMediaQuery([width(pct(100.))]),
     ]);
-  let itemBodyTop = style([fontSize(px(16))]);
+  let itemBodyTop = style([fontSize(px(16)), paddingRight(px(8))]);
   let itemImageUnit =
     style([
       width(px(128)),
@@ -115,8 +124,8 @@ module Styles = {
     style([
       fontSize(px(24)),
       marginBottom(px(8)),
-      paddingRight(px(24)),
-      smallThresholdMediaQuery([paddingRight(px(12))]),
+      paddingRight(px(16)),
+      smallThresholdMediaQuery([paddingRight(px(8))]),
     ]);
   let itemCategory = style([marginBottom(px(4))]);
   let itemCategoryLink =
@@ -239,6 +248,17 @@ module Styles = {
       transforms([translateX(px(22)), rotate(deg(45.))]),
       transformOrigin(zero, zero),
       whiteSpace(nowrap),
+    ]);
+  let transitionIn =
+    style([
+      selector("& ." ++ backdrop, [opacity(1.)]),
+      selector(
+        "& ." ++ root,
+        [
+          opacity(1.),
+          transforms([scale(1., 1.), translate3d(zero, zero, zero)]),
+        ],
+      ),
     ]);
 };
 
@@ -436,7 +456,7 @@ module ItemRecipe = {
 };
 
 [@react.component]
-let make = (~item: Item.t, ~variant) => {
+let make = (~item: Item.t, ~variant, ~isInitialLoad) => {
   let onClose = () => {
     let url = ReasonReactRouter.dangerouslyGetInitialUrl();
     ReasonReactRouter.push(
@@ -451,6 +471,11 @@ let make = (~item: Item.t, ~variant) => {
     );
   };
   let variant = variant->Belt.Option.getWithDefault(0);
+  let (transitionIn, setTransitionIn) = React.useState(() => isInitialLoad);
+  React.useEffect0(() => {
+    Js.Global.setTimeout(() => {setTransitionIn(_ => true)}, 20) |> ignore;
+    None;
+  });
 
   let viewportWidth = Utils.useViewportWidth();
   let itemImage =
@@ -482,8 +507,12 @@ let make = (~item: Item.t, ~variant) => {
        }}
     </div>;
 
-  <div className=LoginOverlay.Styles.overlay>
-    <div className=LoginOverlay.Styles.backdrop onClick={_ => onClose()} />
+  <div
+    className={Cn.make([
+      LoginOverlay.Styles.overlay,
+      Cn.ifTrue(Styles.transitionIn, transitionIn),
+    ])}>
+    <div className=Styles.backdrop onClick={_ => onClose()} />
     <Div100VH className=Styles.root100VH>
       <div className=Styles.root>
         <div className=Styles.body>

@@ -139,7 +139,9 @@ let make = () => {
     [|language|],
   );
 
+  let isInitialLoadRef = React.useRef(true);
   React.useEffect0(() => {
+    React.Ref.setCurrent(isInitialLoadRef, false);
     Item.loadVariants(json => {
       Item.setVariantNames(json);
       forceUpdate(x => x + 1);
@@ -187,7 +189,12 @@ let make = () => {
          ? <SettingsOverlay onClose={() => setShowSettings(_ => false)} />
          : React.null}
       {switch (itemDetails) {
-       | Some((item, variant)) => <ItemDetailOverlay item variant />
+       | Some((item, variant)) =>
+         <ItemDetailOverlay
+           item
+           variant
+           isInitialLoad={React.Ref.current(isInitialLoadRef)}
+         />
        | None => React.null
        }}
     </TooltipConfigContextProvider>

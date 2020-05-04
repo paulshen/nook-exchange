@@ -12,10 +12,12 @@ type language = [
   | [@bs.as "zh-cn"] `ChineseSimplified
   | [@bs.as "zh-tw"] `ChineseTraditional
   | [@bs.as "en"] `English
+  | [@bs.as "en-gb"] `EnglishEurope
 ];
 
 let languages: array(language) = [|
   `English,
+  `EnglishEurope,
   `SpanishAmerica,
   `SpanishEurope,
   `FrenchAmerica,
@@ -43,6 +45,7 @@ let languageToString = (language: language) => {
   | `ChineseSimplified => {j|中文|j}
   | `ChineseTraditional => {j|繁體中文|j}
   | `English => {j|English|j}
+  | `EnglishEurope => {j|English (UK)|j}
   };
 };
 
@@ -72,6 +75,8 @@ let browserLanguage =
     `ChineseSimplified;
   } else if (browserLanguage |> Js.String.startsWith("zh")) {
     `ChineseTraditional;
+  } else if (Js.String.toLowerCase(browserLanguage) == "en-gb") {
+    `EnglishEurope;
   } else {
     `English;
   };

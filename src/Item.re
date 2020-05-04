@@ -373,7 +373,8 @@ let getName = (item: t) =>
     )
   };
 
-let getVariantName = (~item: t, ~variant: int, ~hidePattern=false, ()) => {
+let getVariantName =
+    (~item: t, ~variant: int, ~hideBody=false, ~hidePattern=false, ()) => {
   Belt.(
     switch (item.variations) {
     | Single => None
@@ -417,10 +418,11 @@ let getVariantName = (~item: t, ~variant: int, ~hidePattern=false, ()) => {
           switch (value) {
           | NameTwoDimensions((nameA, nameB)) =>
             Some(
-              Option.getExn(nameA[variant / b])
+              (!hideBody ? Option.getExn(nameA[variant / b]) : "")
+              ++ (!hideBody && !hidePattern && b > 1 ? " x " : "")
               ++ (
                 if (!hidePattern && b > 1) {
-                  " x " ++ Option.getExn(nameB[variant mod b]);
+                  Option.getExn(nameB[variant mod b]);
                 } else {
                   "";
                 }

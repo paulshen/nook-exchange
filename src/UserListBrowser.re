@@ -185,7 +185,6 @@ let make =
     );
   let numFiltersChangeLogged = React.useRef(0);
   let setFilters = (filters: ItemFilters.t) => {
-    Js.log(filters);
     let urlSearchParams =
       Webapi.Url.URLSearchParams.makeWithArray(
         ItemFilters.serialize(

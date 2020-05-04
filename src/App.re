@@ -72,6 +72,23 @@ let make = () => {
   let url = ReasonReactRouter.useUrl();
   let (showLogin, setShowLogin) = React.useState(() => false);
   let (showSettings, setShowSettings) = React.useState(() => false);
+  let itemDetails = {
+    let result = url.hash |> Js.Re.exec_([%bs.re "/i(-?\d+)(:(\d+))?/g"]);
+    switch (result) {
+    | Some(match) =>
+      let captures = Js.Re.captures(match);
+      let itemId = captures[1]->Js.Nullable.toOption->Belt.Option.getExn;
+      Item.itemMap
+      ->Js.Dict.get(itemId)
+      ->Belt.Option.map(item =>
+          (
+            item,
+            captures[3]->Js.Nullable.toOption->Belt.Option.map(int_of_string),
+          )
+        );
+    | None => None
+    };
+  };
 
   let pathString =
     "/" ++ Js.Array.joinWith("/", Belt.List.toArray(url.path));
@@ -169,6 +186,10 @@ let make = () => {
       {showSettings
          ? <SettingsOverlay onClose={() => setShowSettings(_ => false)} />
          : React.null}
+      {switch (itemDetails) {
+       | Some((item, variant)) => <ItemDetailOverlay item variant />
+       | None => React.null
+       }}
     </TooltipConfigContextProvider>
     <ReactAtmosphere.LayerContainer />
   </div>;

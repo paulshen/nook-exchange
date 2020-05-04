@@ -105,6 +105,12 @@ module Styles = {
       padding2(~v=zero, ~h=px(16)),
       textAlign(center),
     ]);
+  let nameLink =
+    style([
+      color(Colors.charcoal),
+      textDecoration(none),
+      hover([textDecoration(underline)]),
+    ]);
   let itemImage =
     style([unsafe("alignSelf", "stretch"), marginBottom(px(8))]);
   let variation =
@@ -435,7 +441,16 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
       Cn.ifSome(Styles.cardSelected, userItem),
     ])}>
     <div className=Styles.body>
-      <div className=Styles.name> {React.string(Item.getName(item))} </div>
+      <div className=Styles.name>
+        <Link
+          path={ItemDetailOverlay.getItemDetailUrl(
+            ~itemId=item.id,
+            ~variant=None,
+          )}
+          className=Styles.nameLink>
+          {React.string(Item.getName(item))}
+        </Link>
+      </div>
       <ItemImage
         item
         variant=variation

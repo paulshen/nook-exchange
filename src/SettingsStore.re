@@ -3,7 +3,8 @@ type language = [
   | [@bs.as "de"] `German
   | [@bs.as "es-eu"] `SpanishEurope
   | [@bs.as "es-us"] `SpanishAmerica
-  | [@bs.as "fr"] `French
+  | [@bs.as "fr-eu"] `FrenchEurope
+  | [@bs.as "fr-us"] `FrenchAmerica
   | [@bs.as "it"] `Italian
   | [@bs.as "ja"] `Japanese
   | [@bs.as "ko"] `Korean
@@ -17,7 +18,8 @@ let languages: array(language) = [|
   `English,
   `SpanishAmerica,
   `SpanishEurope,
-  `French,
+  `FrenchAmerica,
+  `FrenchEurope,
   `German,
   `Italian,
   `Dutch,
@@ -30,9 +32,10 @@ let languages: array(language) = [|
 let languageToString = (language: language) => {
   switch (language) {
   | `German => {j|Deutsch|j}
-  | `SpanishAmerica => {j|Español (America)|j}
   | `SpanishEurope => {j|Español (Europe)|j}
-  | `French => {j|Français|j}
+  | `SpanishAmerica => {j|Español (America)|j}
+  | `FrenchEurope => {j|Français (Europe)|j}
+  | `FrenchAmerica => {j|Français (America)|j}
   | `Italian => {j|Italiano|j}
   | `Japanese => {j|日本語|j}
   | `Korean => {j|한국어|j}
@@ -49,12 +52,14 @@ external browserLanguage: string = "language";
 let browserLanguage =
   if (browserLanguage == "de") {
     `German;
-  } else if (browserLanguage == "es-ES") {
+  } else if (Js.String.toLowerCase(browserLanguage) == "es-es") {
     `SpanishEurope;
   } else if (browserLanguage |> Js.String.startsWith("es")) {
     `SpanishAmerica;
+  } else if (Js.String.toLowerCase(browserLanguage) == "fr-ca") {
+    `FrenchAmerica;
   } else if (browserLanguage |> Js.String.startsWith("fr")) {
-    `French;
+    `FrenchEurope;
   } else if (browserLanguage |> Js.String.startsWith("it")) {
     `Italian;
   } else if (browserLanguage == "ja") {

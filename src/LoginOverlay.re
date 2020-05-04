@@ -93,6 +93,7 @@ module Styles = {
       cursor(pointer),
       height(px(16)),
       width(px(16)),
+      backgroundSize(cover),
       position(absolute),
       top(px(16)),
       right(px(16)),

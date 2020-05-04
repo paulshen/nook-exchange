@@ -93,7 +93,11 @@ let make = (~item: Item.t, ~userItem: User.item, ~variation, ~className) => {
                    }
                  }
                  className=Styles.menuItem>
-                 {React.string("Favorite")}
+                 {if (userItem.priorityTimestamp != None) {
+                    React.string("Unfavorite");
+                  } else {
+                    React.string("Favorite");
+                  }}
                </button>
                {switch (userItem.status) {
                 | CanCraft

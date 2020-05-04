@@ -581,35 +581,12 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
               },
             )}
          </div>
-         {userItemStatus == Some(Wishlist)
-            ? <WishlistEllipsisButton
-                item
-                userItem
-                variation
-                className=Styles.wishlistEllipsisButton
-              />
-            : <RemoveButton
-                className=Styles.removeButton
-                onClick={_ => {
-                  let status =
-                    switch (showCatalogCheckbox, userItem.status) {
-                    | (_, CatalogOnly) => raise(Constants.Uhoh)
-                    | (false, _) => None
-                    | (true, CanCraft)
-                    | (true, ForTrade) => Some(User.CatalogOnly)
-                    | (true, Wishlist) => None
-                    };
-                  switch (status) {
-                  | Some(status) =>
-                    UserStore.setItemStatus(
-                      ~itemId=item.id,
-                      ~variation,
-                      ~status,
-                    )
-                  | None => UserStore.removeItem(~itemId=item.id, ~variation)
-                  };
-                }}
-              />}
+         <WishlistEllipsisButton
+           item
+           userItem
+           variation
+           className=Styles.wishlistEllipsisButton
+         />
        </>
      | _ =>
        <div className={Cn.make([Styles.bottomBar, Styles.statusButtons])}>

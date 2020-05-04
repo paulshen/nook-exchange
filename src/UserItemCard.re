@@ -8,6 +8,14 @@ module Styles = {
       opacity(0.),
       transition(~duration=200, "all"),
     ]);
+  let starIcon =
+    style([
+      position(absolute),
+      top(px(6)),
+      left(px(8)),
+      opacity(1.),
+      transition(~duration=200, "all"),
+    ]);
   let topRightIcon =
     style([
       position(absolute),

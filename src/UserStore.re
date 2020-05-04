@@ -279,8 +279,72 @@ let setItemNote = (~itemId: int, ~variation: int, ~note: string) => {
 
 let setItemPriorityTimestamp =
     (~itemId: int, ~variation: int, ~priorityTimestamp: option(float)) => {
-  ();
-    //paul will do
+  let user = getUser();
+  let itemKey = User.getItemKey(~itemId, ~variation);
+  let userItem = {
+    ...Belt.Option.getExn(user.items->Js.Dict.get(itemKey)),
+    priorityTimestamp,
+  };
+  let updatedUser = {
+    ...user,
+    items: {
+      let clone = Utils.cloneJsDict(user.items);
+      clone->Js.Dict.set(itemKey, userItem);
+      clone;
+    },
+  };
+  api.dispatch(UpdateUser(updatedUser));
+  let item = Item.getItem(~itemId);
+  Analytics.Amplitude.logEventWithProperties(
+    ~eventName="Item Priority Timestamp Updated",
+    ~eventProperties={
+      "itemId": item.id,
+      "variant": variation,
+      "priorityTimestamp": priorityTimestamp,
+    },
+  );
+  {
+    let url =
+      Constants.apiUrl
+      ++ "/@me4/items/"
+      ++ string_of_int(item.id)
+      ++ "/"
+      ++ string_of_int(variation)
+      ++ "/priorityTimestamp";
+    let%Repromise.Js responseResult =
+      Fetch.fetchWithInit(
+        url,
+        Fetch.RequestInit.make(
+          ~method_=Post,
+          ~body=
+            Fetch.BodyInit.make(
+              Js.Json.stringify(
+                Json.Encode.object_([
+                  (
+                    "timestamp",
+                    Json.Encode.float(
+                      priorityTimestamp->Belt.Option.getWithDefault(0.),
+                    ),
+                  ),
+                ]),
+              ),
+            ),
+          ~headers=
+            Fetch.HeadersInit.make({
+              "X-Client-Version": Constants.gitCommitRef,
+              "Content-Type": "application/json",
+              "Authorization":
+                "Bearer " ++ Option.getWithDefault(sessionId^, ""),
+            }),
+          ~credentials=Include,
+          ~mode=CORS,
+          (),
+        ),
+      );
+    handleServerResponse(url, responseResult);
+    Promise.resolved();
+  }
+  |> ignore;
 };
 
 let numItemRemovesLogged = ref(0);

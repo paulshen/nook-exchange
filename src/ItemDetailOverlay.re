@@ -455,6 +455,8 @@ module ItemRecipe = {
   };
 };
 
+let hasLoggedDetailOverlay = ref(false);
+
 [@react.component]
 let make = (~item: Item.t, ~variant, ~isInitialLoad) => {
   let onClose = () => {
@@ -474,6 +476,18 @@ let make = (~item: Item.t, ~variant, ~isInitialLoad) => {
   let (transitionIn, setTransitionIn) = React.useState(() => isInitialLoad);
   React.useEffect0(() => {
     Js.Global.setTimeout(() => {setTransitionIn(_ => true)}, 20) |> ignore;
+    if (! hasLoggedDetailOverlay^) {
+      Analytics.Amplitude.logEventWithProperties(
+        ~eventName="Item Detail Overlay Shown",
+        ~eventProperties={
+          "isInitialLoad": isInitialLoad,
+          "itemId": item.id,
+          "variant": variant,
+          "pathname": Webapi.Dom.(location |> Location.pathname),
+        },
+      );
+      hasLoggedDetailOverlay := true;
+    };
     None;
   });
 

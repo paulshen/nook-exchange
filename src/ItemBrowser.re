@@ -169,12 +169,18 @@ let make = (~showLogin, ~url: ReasonReactRouter.url) => {
     );
   let numResults = filteredItems->Belt.Array.length;
 
+  let isInitialLoadRef = React.useRef(true);
   React.useEffect1(
     () => {
-      let rootElement = Utils.getElementForDomRef(rootRef);
       open Webapi.Dom;
-      let boundingRect = Element.getBoundingClientRect(rootElement);
-      window |> Window.scrollBy(0., DomRect.top(boundingRect));
+      if (React.Ref.current(isInitialLoadRef)) {
+        window |> Window.scrollTo(0., 0.);
+        React.Ref.setCurrent(isInitialLoadRef, false);
+      } else {
+        let rootElement = Utils.getElementForDomRef(rootRef);
+        let boundingRect = Element.getBoundingClientRect(rootElement);
+        window |> Window.scrollBy(0., DomRect.top(boundingRect));
+      };
       None;
     },
     [|url.search|],

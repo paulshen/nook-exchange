@@ -320,7 +320,7 @@ module OneDimensionVariants = {
        ->Belt.Array.mapWithIndex((i, _) => {
            <VariantWithLabel
              item
-             variant
+             variant=i
              selected={i == variant}
              key={string_of_int(i)}
            />

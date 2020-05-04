@@ -48,6 +48,12 @@ module Styles = {
       backgroundPosition(center),
       opacity(0.5),
     ]);
+  let nameLink =
+    style([
+      color(Colors.charcoal),
+      textDecoration(none),
+      hover([textDecoration(underline)]),
+    ]);
   let card =
     style([
       backgroundColor(hex("fffffff0")),
@@ -75,6 +81,7 @@ module Styles = {
           ],
         ),
         selector("& ." ++ ItemImage.Styles.variantButton, [opacity(0.5)]),
+        selector("& ." ++ nameLink, [textDecoration(underline)]),
       ]),
       media(
         "(max-width: 600px)",
@@ -206,7 +213,7 @@ module RecipeIcon = {
              <div key=itemId>
                {React.string(
                   Item.getMaterialName(itemId)
-                  ++ " x "
+                  ++ {j| × |j}
                   ++ string_of_int(quantity),
                 )}
              </div>
@@ -435,7 +442,16 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
       Cn.ifSome(Styles.cardSelected, userItem),
     ])}>
     <div className=Styles.body>
-      <div className=Styles.name> {React.string(Item.getName(item))} </div>
+      <div className=Styles.name>
+        <Link
+          path={ItemDetailOverlay.getItemDetailUrl(
+            ~itemId=item.id,
+            ~variant=variation != 0 ? Some(variation) : None,
+          )}
+          className=Styles.nameLink>
+          {React.string(Item.getName(item))}
+        </Link>
+      </div>
       <ItemImage
         item
         variant=variation

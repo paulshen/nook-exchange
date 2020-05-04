@@ -109,10 +109,16 @@ let make =
         className,
       ])}>
       {let image =
-         <img
-           src={Item.getImageUrl(~item, ~variant=variant + offset)}
-           className=Styles.image
-         />;
+         <Link
+           path={ItemDetailOverlay.getItemDetailUrl(
+             ~itemId=item.id,
+             ~variant=Some(variant + offset),
+           )}>
+           <img
+             src={Item.getImageUrl(~item, ~variant=variant + offset)}
+             className=Styles.image
+           />
+         </Link>;
        let variantName =
          if (numCollapsedVariants > 1 || forceTooltip) {
            Item.getVariantName(~item, ~variant=variant + offset, ());

@@ -22,8 +22,10 @@ type t = {
   buyPrice: option(int),
   recipe: option(recipe),
   orderable: bool,
+  source: option(string),
   bodyCustomizable: bool,
   patternCustomizable: bool,
+  customizeCost: option(int),
   category: string,
   version: option(string),
   tags: array(string),
@@ -100,7 +102,7 @@ exception UnexpectedType(string);
 let spaceRegex = [%bs.re "/\\s/g"];
 
 exception Unexpected;
-let jsonToItem = (json: Js.Json.t) => {
+let jsonToItems = (json: Js.Json.t) => {
   open Json.Decode;
   let flags = json |> field("flags", int);
   let recipeInfo =
@@ -110,8 +112,9 @@ let jsonToItem = (json: Js.Json.t) => {
            let jsonArray = Js.Json.decodeArray(json)->Belt.Option.getExn;
            (
              - int(jsonArray[0]),
+             string(jsonArray[1]),
              jsonArray
-             |> Js.Array.sliceFrom(1)
+             |> Js.Array.sliceFrom(2)
              |> Js.Array.map(json => {
                   let (quantity, itemName) = json |> tuple2(int, string);
                   (itemName, quantity);
@@ -119,9 +122,10 @@ let jsonToItem = (json: Js.Json.t) => {
            );
          }),
        );
-  {
+  let item = {
     id: json |> field("id", int),
-    type_: Item(recipeInfo->Belt.Option.map(((recipeId, _)) => recipeId)),
+    type_:
+      Item(recipeInfo->Belt.Option.map(((recipeId, _, _)) => recipeId)),
     name: json |> field("name", string),
     image:
       json
@@ -142,44 +146,42 @@ let jsonToItem = (json: Js.Json.t) => {
     },
     sellPrice: json |> optional(field("sell", int)),
     buyPrice: json |> optional(field("buy", int)),
-    recipe: recipeInfo->Belt.Option.map(((_, recipe)) => recipe),
+    recipe: recipeInfo->Belt.Option.map(((_, _, recipe)) => recipe),
     orderable: flags land 2 !== 0,
+    source: json |> optional(field("source", string)),
     bodyCustomizable: flags land 4 != 0,
     patternCustomizable: flags land 8 != 0,
+    customizeCost: json |> optional(field("kitCost", int)),
     category: json |> field("category", string),
     version: json |> optional(field("v", string)),
     tags:
       (json |> optional(field("tags", array(string))))
       ->Belt.Option.getWithDefault([||]),
   };
+  switch (recipeInfo) {
+  | Some((recipeId, recipeSource, _)) => [|
+      item,
+      {
+        ...item,
+        id: recipeId,
+        type_: Recipe(item.id),
+        name: item.name ++ " DIY",
+        sellPrice: None,
+        buyPrice: None,
+        source: Some(recipeSource),
+        customizeCost: None,
+        orderable: false,
+        bodyCustomizable: false,
+        patternCustomizable: false,
+      },
+    |]
+  | None => [|item|]
+  };
 };
 
-let all = {
-  let allFromJson = itemsJson |> Json.Decode.array(jsonToItem);
-  let recipeItems =
-    allFromJson->Belt.Array.keepMap(item =>
-      (
-        switch (item.type_) {
-        | Item(recipeId) => recipeId
-        | Recipe(_) => raise(Constants.Uhoh)
-        }
-      )
-      ->Belt.Option.map(recipeId =>
-          {
-            ...item,
-            id: recipeId,
-            type_: Recipe(item.id),
-            name: item.name ++ " DIY",
-            sellPrice: None,
-            buyPrice: None,
-            orderable: false,
-            bodyCustomizable: false,
-            patternCustomizable: false,
-          }
-        )
-    );
-  allFromJson->Belt.Array.concat(recipeItems);
-};
+let all =
+  itemsJson |> Json.Decode.array(jsonToItems) |> Belt.Array.concatMany;
+
 let itemMap = {
   let itemMap = Js.Dict.empty();
   all->Belt.Array.forEach(item => {
@@ -373,7 +375,8 @@ let getName = (item: t) =>
     )
   };
 
-let getVariantName = (~item: t, ~variant: int, ~hidePattern=false, ()) => {
+let getVariantName =
+    (~item: t, ~variant: int, ~hideBody=false, ~hidePattern=false, ()) => {
   Belt.(
     switch (item.variations) {
     | Single => None
@@ -416,16 +419,21 @@ let getVariantName = (~item: t, ~variant: int, ~hidePattern=false, ()) => {
       ->Belt.Option.flatMap(value =>
           switch (value) {
           | NameTwoDimensions((nameA, nameB)) =>
+            let bodyName = Option.getExn(nameA[variant / b]);
             Some(
-              Option.getExn(nameA[variant / b])
+              (!hideBody ? bodyName : "")
+              ++ (
+                !hideBody && !hidePattern && b > 1 && bodyName != ""
+                  ? " x " : ""
+              )
               ++ (
                 if (!hidePattern && b > 1) {
-                  " x " ++ Option.getExn(nameB[variant mod b]);
+                  Option.getExn(nameB[variant mod b]);
                 } else {
                   "";
                 }
               ),
-            )
+            );
           | _ => None
           }
         )

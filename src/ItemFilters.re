@@ -628,13 +628,11 @@ let make =
   let updateTextTimeoutRef = React.useRef(None);
   React.useEffect1(
     () => {
-      if (filters.text == "") {
-        Webapi.Dom.(
-          Utils.getElementForDomRef(inputTextRef)
-          ->unsafeAsHtmlInputElement
-          ->HtmlInputElement.setValue("")
-        );
-      };
+      Webapi.Dom.(
+        Utils.getElementForDomRef(inputTextRef)
+        ->unsafeAsHtmlInputElement
+        ->HtmlInputElement.setValue(filters.text)
+      );
       Some(
         () => {
           switch (React.Ref.current(updateTextTimeoutRef)) {
@@ -654,7 +652,12 @@ let make =
     let onKeyDown = e => {
       switch (KeyboardEvent.key(e)) {
       | "Esc"
-      | "Escape" => onChange({...filters, text: ""})
+      | "Escape" =>
+        let url = ReasonReactRouter.dangerouslyGetInitialUrl();
+        // don't trigger if ItemDetailOverlay is shown
+        if (!(url.hash |> Js.Re.test_([%bs.re "/i(-?\d+)(:(\d+))?/g"]))) {
+          onChange({...filters, text: ""});
+        };
       | _ => ()
       };
     };
@@ -683,7 +686,7 @@ let make =
                 React.Ref.setCurrent(updateTextTimeoutRef, None);
                 onChange({...filters, text: value});
               },
-              300,
+              500,
             ),
           ),
         );

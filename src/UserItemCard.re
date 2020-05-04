@@ -36,6 +36,12 @@ module Styles = {
       transition(~duration=200, "all"),
       media("(hover: none)", [opacity(0.8)]),
     ]);
+  let nameLink =
+    style([
+      color(Colors.charcoal),
+      textDecoration(none),
+      hover([textDecoration(underline)]),
+    ]);
   let card =
     style([
       backgroundColor(hex("fffffff0")),
@@ -56,6 +62,7 @@ module Styles = {
         selector("& ." ++ topRightIcon, [opacity(1.)]),
         selector("& ." ++ catalogStatusButton, [opacity(1.)]),
         selector("& ." ++ ItemImage.Styles.variantButton, [opacity(0.5)]),
+        selector("& ." ++ nameLink, [textDecoration(underline)]),
       ]),
     ]);
   let cardOnCatalogPage = style([paddingBottom(px(16))]);
@@ -110,7 +117,16 @@ let make =
         narrow=true
         className={Cn.make([ItemCard.Styles.itemImage, Styles.itemImage])}
       />
-      <div className=Styles.name> {React.string(Item.getName(item))} </div>
+      <div className=Styles.name>
+        <Link
+          path={ItemDetailOverlay.getItemDetailUrl(
+            ~itemId=item.id,
+            ~variant=variation != 0 ? Some(variation) : None,
+          )}
+          className=Styles.nameLink>
+          {React.string(Item.getName(item))}
+        </Link>
+      </div>
       {switch (showRecipe, item.recipe) {
        | (true, Some(recipe)) =>
          <div className=Styles.recipe>

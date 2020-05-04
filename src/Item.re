@@ -419,9 +419,13 @@ let getVariantName =
       ->Belt.Option.flatMap(value =>
           switch (value) {
           | NameTwoDimensions((nameA, nameB)) =>
+            let bodyName = Option.getExn(nameA[variant / b]);
             Some(
-              (!hideBody ? Option.getExn(nameA[variant / b]) : "")
-              ++ (!hideBody && !hidePattern && b > 1 ? " x " : "")
+              (!hideBody ? bodyName : "")
+              ++ (
+                !hideBody && !hidePattern && b > 1 && bodyName != ""
+                  ? " x " : ""
+              )
               ++ (
                 if (!hidePattern && b > 1) {
                   Option.getExn(nameB[variant mod b]);
@@ -429,7 +433,7 @@ let getVariantName =
                   "";
                 }
               ),
-            )
+            );
           | _ => None
           }
         )

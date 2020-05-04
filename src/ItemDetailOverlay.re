@@ -1,5 +1,12 @@
 let smallThreshold = 500;
 
+module Div100VH = {
+  [@bs.module "react-div-100vh"] [@react.component]
+  external make:
+    (~children: React.element, ~className: string) => React.element =
+    "default";
+};
+
 module Styles = {
   open Css;
   let smallThresholdMediaQuery = styles =>
@@ -13,29 +20,32 @@ module Styles = {
       right(zero),
       backgroundColor(hex("ffffff80")),
     ]);
+  let root100VH =
+    style([
+      display(flexBox),
+      alignItems(center),
+      justifyContent(center),
+      width(Calc.(vw(100.) - px(16))),
+    ]);
   let root =
     style([
       backgroundColor(hex("ffffff")),
       borderRadius(px(8)),
       position(relative),
       maxWidth(px(640)),
-      minWidth(px(384)),
       boxSizing(borderBox),
       boxShadow(Shadow.box(~blur=px(32), rgba(0, 0, 0, 0.2))),
       overflow(auto),
-      maxHeight(vh(100.)),
-      minHeight(px(224)),
-      media("(max-width: 400px)", [width(pct(100.)), height(vh(85.))]),
+      maxHeight(pct(100.)),
+      minHeight(px(256)),
+      media("(max-width: 400px)", [maxHeight(pct(90.)), minWidth(zero)]),
+      smallThresholdMediaQuery([width(pct(100.))]),
     ]);
   let body =
     style([
       display(flexBox),
       justifyContent(center),
-      padding2(~v=px(32), ~h=px(16)),
-      media(
-        "(max-width: 540px)",
-        [paddingTop(px(24)), paddingBottom(px(24))],
-      ),
+      padding2(~v=px(32), ~h=px(32)),
       smallThresholdMediaQuery([justifyContent(flexStart)]),
     ]);
   let bodyContent =
@@ -44,6 +54,7 @@ module Styles = {
       flexDirection(column),
       smallThresholdMediaQuery([width(pct(100.))]),
     ]);
+  let itemBodyTop = style([fontSize(px(16))]);
   let itemImageUnit =
     style([
       width(px(128)),
@@ -68,7 +79,8 @@ module Styles = {
     ]);
   let itemImage =
     style([display(block), width(px(128)), height(px(128))]);
-  let itemImageUnitBody = style([]);
+  let itemImageUnitBody =
+    style([display(flexBox), flexDirection(column), alignItems(center)]);
   let itemImageLabel =
     style([fontSize(px(16)), textAlign(center), marginTop(px(8))]);
   let itemRecipe =
@@ -97,8 +109,15 @@ module Styles = {
       padding2(~v=px(2), ~h=zero),
     ]);
   let recipeRowMaterial = style([flexGrow(1.)]);
-  let recipeRowQuantity = style([width(px(24))]);
-  let itemName = style([fontSize(px(24)), marginBottom(px(8))]);
+  let recipeRowQuantity =
+    style([width(px(24)), color(Colors.lightGray), textAlign(`right)]);
+  let itemName =
+    style([
+      fontSize(px(24)),
+      marginBottom(px(8)),
+      paddingRight(px(24)),
+      smallThresholdMediaQuery([paddingRight(px(12))]),
+    ]);
   let itemCategory = style([marginBottom(px(4))]);
   let itemCategoryLink =
     style([
@@ -116,8 +135,10 @@ module Styles = {
       width(px(16)),
       height(px(16)),
       backgroundSize(cover),
-      marginRight(px(4)),
+      marginRight(px(6)),
       verticalAlign(`top),
+      position(relative),
+      top(px(1)),
     ]);
   let itemTag =
     style([
@@ -125,9 +146,10 @@ module Styles = {
       display(inlineBlock),
       textDecoration(none),
       hover([textDecoration(underline)]),
-      marginRight(px(6)),
+      marginRight(px(8)),
     ]);
-  let itemPriceIcon = style([marginRight(px(4)), verticalAlign(`top)]);
+  let itemPriceIcon =
+    style([marginRight(px(6)), verticalAlign(`top), top(px(1))]);
   let itemPrices = style([display(flexBox), marginBottom(px(4))]);
   let itemPrice = style([marginRight(px(16)), whiteSpace(nowrap)]);
   let itemPriceLabel = style([color(Colors.gray), marginRight(px(4))]);
@@ -141,8 +163,10 @@ module Styles = {
       width(px(16)),
       height(px(16)),
       backgroundSize(cover),
-      marginRight(px(4)),
+      marginRight(px(6)),
       verticalAlign(`top),
+      position(relative),
+      top(px(1)),
     ]);
   let variantSection =
     style([
@@ -153,6 +177,10 @@ module Styles = {
       paddingRight(px(32)),
       overflowX(auto),
       overflowY(hidden),
+      smallThresholdMediaQuery([
+        marginLeft(px(-32)),
+        marginRight(px(-32)),
+      ]),
     ]);
   let variantTable =
     style([display(flexBox), flexWrap(wrap), maxWidth(px(288))]);
@@ -164,7 +192,8 @@ module Styles = {
       marginBottom(px(4)),
     ]);
   let variantRowLabel = style([alignItems(flexStart)]);
-  let variantLabel = style([width(px(92)), flexShrink(0.)]);
+  let variantLabel =
+    style([width(px(86)), paddingRight(px(6)), flexShrink(0.)]);
   let variantCell = style([fontSize(zero)]);
   let variantImage =
     style([
@@ -293,21 +322,23 @@ module TwoDimensionVariants = {
        ->Belt.Array.mapWithIndex((i, _) =>
            if (b > 1) {
              <div className=Styles.variantRow key={string_of_int(i)}>
-               <div className=Styles.variantLabel>
-                 {switch (
-                    Item.getVariantName(
-                      ~item,
-                      ~variant={
-                        i * b;
-                      },
-                      ~hidePattern=true,
-                      (),
-                    )
-                  ) {
-                  | Some(bodyName) => React.string(bodyName)
-                  | None => React.null
-                  }}
-               </div>
+               {a > 1
+                  ? <div className=Styles.variantLabel>
+                      {switch (
+                         Item.getVariantName(
+                           ~item,
+                           ~variant={
+                             i * b;
+                           },
+                           ~hidePattern=true,
+                           (),
+                         )
+                       ) {
+                       | Some(bodyName) => React.string(bodyName)
+                       | None => React.null
+                       }}
+                    </div>
+                  : React.null}
                {Belt.Array.make(b, None)
                 ->Belt.Array.mapWithIndex((j, _) => {
                     let v = i * b + j;
@@ -346,7 +377,7 @@ module TwoDimensionVariants = {
       {b > 1
          ? <div
              className={Cn.make([Styles.variantRow, Styles.variantRowLabel])}>
-             <div className=Styles.variantLabel />
+             {a > 1 ? <div className=Styles.variantLabel /> : React.null}
              {Belt.Array.make(b, None)
               ->Belt.Array.mapWithIndex((j, _) => {
                   <div className=Styles.patternCell key={string_of_int(j)}>
@@ -453,118 +484,125 @@ let make = (~item: Item.t, ~variant) => {
 
   <div className=LoginOverlay.Styles.overlay>
     <div className=LoginOverlay.Styles.backdrop onClick={_ => onClose()} />
-    <div className=Styles.root>
-      <div className=Styles.body>
-        {viewportWidth > 500 ? itemImage : React.null}
-        <div className=Styles.bodyContent>
-          <div className=Styles.itemName>
-            {React.string(Item.getName(item))}
-          </div>
-          <div className=Styles.itemCategory>
-            <Link
-              path={"/?c=" ++ item.category} className=Styles.itemCategoryLink>
-              {React.string(Utils.capitalizeFirstLetter(item.category))}
-            </Link>
-            {switch (item.source) {
-             | Some(itemSource) =>
-               <>
-                 <span className=Styles.itemSourceFrom>
-                   {React.string(" from ")}
-                 </span>
-                 {React.string(itemSource)}
-               </>
-             | None => React.null
+    <Div100VH className=Styles.root100VH>
+      <div className=Styles.root>
+        <div className=Styles.body>
+          {viewportWidth > 500 ? itemImage : React.null}
+          <div className=Styles.bodyContent>
+            <div className=Styles.itemBodyTop>
+              <div className=Styles.itemName>
+                {React.string(Item.getName(item))}
+              </div>
+              <div className=Styles.itemCategory>
+                <Link
+                  path={"/?c=" ++ item.category}
+                  className=Styles.itemCategoryLink>
+                  {React.string(Utils.capitalizeFirstLetter(item.category))}
+                </Link>
+                {switch (item.source) {
+                 | Some(itemSource) =>
+                   <>
+                     <span className=Styles.itemSourceFrom>
+                       {React.string(" from ")}
+                     </span>
+                     {React.string(itemSource)}
+                   </>
+                 | None => React.null
+                 }}
+              </div>
+              {if (item.tags->Js.Array.length > 0) {
+                 <div className=Styles.itemTags>
+                   <span className=Styles.itemTagIcon />
+                   {item.tags
+                    ->Belt.Array.map(tag =>
+                        <Link
+                          path={"/?q=" ++ tag}
+                          className=Styles.itemTag
+                          key=tag>
+                          {React.string(Utils.capitalizeFirstLetter(tag))}
+                        </Link>
+                      )
+                    ->React.array}
+                 </div>;
+               } else {
+                 React.null;
+               }}
+              {if (item.buyPrice != None && item.sellPrice != None) {
+                 <div className=Styles.itemPrices>
+                   {switch (item.buyPrice) {
+                    | Some(buyPrice) =>
+                      <div className=Styles.itemPrice>
+                        <span
+                          className={Cn.make([
+                            Emoji.Styles.bell,
+                            Styles.itemPriceIcon,
+                          ])}
+                        />
+                        <label className=Styles.itemPriceLabel>
+                          {React.string("Buy")}
+                        </label>
+                        <span className=Styles.itemPriceValue>
+                          {React.string(string_of_int(buyPrice))}
+                        </span>
+                      </div>
+                    | None => React.null
+                    }}
+                   {switch (item.sellPrice) {
+                    | Some(sellPrice) =>
+                      <div className=Styles.itemPrice>
+                        <span
+                          className={Cn.make([
+                            Emoji.Styles.bell,
+                            Styles.itemPriceIcon,
+                          ])}
+                        />
+                        <label className=Styles.itemPriceLabel>
+                          {React.string("Sell")}
+                        </label>
+                        <span className=Styles.itemPriceValue>
+                          {React.string(string_of_int(sellPrice))}
+                        </span>
+                      </div>
+                    | None => React.null
+                    }}
+                 </div>;
+               } else {
+                 React.null;
+               }}
+              {switch (item.customizeCost) {
+               | Some(customizeCost) =>
+                 <div className=Styles.itemCustomizeCost>
+                   <span className=Styles.itemRemakeIcon />
+                   {React.string(
+                      switch (item.bodyCustomizable, item.patternCustomizable) {
+                      | (true, true) => "Body and Pattern Customizable "
+                      | (false, true) => "Pattern Customizable "
+                      | (true, false) => "Body Customizable "
+                      | _ => ""
+                      },
+                    )}
+                   {React.string(
+                      {j|(×|j} ++ string_of_int(customizeCost) ++ ")",
+                    )}
+                 </div>
+               | None => React.null
+               }}
+            </div>
+            {viewportWidth <= 500 ? itemImage : React.null}
+            {switch (item.type_, item.variations) {
+             | (Recipe(_), _) => React.null
+             | (_, Single) => React.null
+             | (_, OneDimension(a)) => <OneDimensionVariants item a variant />
+             | (_, TwoDimensions(a, b)) =>
+               <TwoDimensionVariants item a b variant />
              }}
           </div>
-          {if (item.tags->Js.Array.length > 0) {
-             <div className=Styles.itemTags>
-               <span className=Styles.itemTagIcon />
-               {item.tags
-                ->Belt.Array.map(tag =>
-                    <Link
-                      path={"/?q=" ++ tag} className=Styles.itemTag key=tag>
-                      {React.string(Utils.capitalizeFirstLetter(tag))}
-                    </Link>
-                  )
-                ->React.array}
-             </div>;
-           } else {
-             React.null;
-           }}
-          {if (item.buyPrice != None && item.sellPrice != None) {
-             <div className=Styles.itemPrices>
-               {switch (item.buyPrice) {
-                | Some(buyPrice) =>
-                  <div className=Styles.itemPrice>
-                    <span
-                      className={Cn.make([
-                        Emoji.Styles.bell,
-                        Styles.itemPriceIcon,
-                      ])}
-                    />
-                    <label className=Styles.itemPriceLabel>
-                      {React.string("Buy")}
-                    </label>
-                    <span className=Styles.itemPriceValue>
-                      {React.string(string_of_int(buyPrice))}
-                    </span>
-                  </div>
-                | None => React.null
-                }}
-               {switch (item.sellPrice) {
-                | Some(sellPrice) =>
-                  <div className=Styles.itemPrice>
-                    <span
-                      className={Cn.make([
-                        Emoji.Styles.bell,
-                        Styles.itemPriceIcon,
-                      ])}
-                    />
-                    <label className=Styles.itemPriceLabel>
-                      {React.string("Sell")}
-                    </label>
-                    <span className=Styles.itemPriceValue>
-                      {React.string(string_of_int(sellPrice))}
-                    </span>
-                  </div>
-                | None => React.null
-                }}
-             </div>;
-           } else {
-             React.null;
-           }}
-          {switch (item.customizeCost) {
-           | Some(customizeCost) =>
-             <div className=Styles.itemCustomizeCost>
-               <span className=Styles.itemRemakeIcon />
-               {React.string(
-                  switch (item.bodyCustomizable, item.patternCustomizable) {
-                  | (true, true) => "Body and Pattern Customizable "
-                  | (false, true) => "Pattern Customizable "
-                  | (true, false) => "Body Customizable "
-                  | _ => ""
-                  },
-                )}
-               {React.string(
-                  {j|(×|j} ++ string_of_int(customizeCost) ++ ")",
-                )}
-             </div>
-           | None => React.null
-           }}
-          {viewportWidth <= 500 ? itemImage : React.null}
-          {switch (item.type_, item.variations) {
-           | (Recipe(_), _) => React.null
-           | (_, Single) => React.null
-           | (_, OneDimension(a)) => <OneDimensionVariants item a variant />
-           | (_, TwoDimensions(a, b)) =>
-             <TwoDimensionVariants item a b variant />
-           }}
         </div>
+        <button
+          onClick={_ => onClose()}
+          className=LoginOverlay.Styles.closeButton
+        />
       </div>
-      <button
-        onClick={_ => onClose()}
-        className=LoginOverlay.Styles.closeButton
-      />
-    </div>
+    </Div100VH>
   </div>;
 };

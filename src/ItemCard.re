@@ -48,6 +48,12 @@ module Styles = {
       backgroundPosition(center),
       opacity(0.5),
     ]);
+  let nameLink =
+    style([
+      color(Colors.charcoal),
+      textDecoration(none),
+      hover([textDecoration(underline)]),
+    ]);
   let card =
     style([
       backgroundColor(hex("fffffff0")),
@@ -75,6 +81,7 @@ module Styles = {
           ],
         ),
         selector("& ." ++ ItemImage.Styles.variantButton, [opacity(0.5)]),
+        selector("& ." ++ nameLink, [textDecoration(underline)]),
       ]),
       media(
         "(max-width: 600px)",
@@ -104,12 +111,6 @@ module Styles = {
       marginBottom(px(8)),
       padding2(~v=zero, ~h=px(16)),
       textAlign(center),
-    ]);
-  let nameLink =
-    style([
-      color(Colors.charcoal),
-      textDecoration(none),
-      hover([textDecoration(underline)]),
     ]);
   let itemImage =
     style([unsafe("alignSelf", "stretch"), marginBottom(px(8))]);

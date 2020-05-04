@@ -112,7 +112,7 @@ let make =
          <Link
            path={ItemDetailOverlay.getItemDetailUrl(
              ~itemId=item.id,
-             ~variant=variant != 0 ? Some(variant) : None,
+             ~variant=Some(variant + offset),
            )}>
            <img
              src={Item.getImageUrl(~item, ~variant=variant + offset)}

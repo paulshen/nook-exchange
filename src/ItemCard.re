@@ -212,7 +212,7 @@ module RecipeIcon = {
              <div key=itemId>
                {React.string(
                   Item.getMaterialName(itemId)
-                  ++ " x "
+                  ++ {j| × |j}
                   ++ string_of_int(quantity),
                 )}
              </div>

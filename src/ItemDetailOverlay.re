@@ -18,9 +18,9 @@ module Styles = {
       backgroundColor(hex("ffffff")),
       borderRadius(px(8)),
       position(relative),
-      maxWidth(px(512)),
+      maxWidth(px(640)),
+      minWidth(px(384)),
       boxSizing(borderBox),
-      width(pct(90.)),
       boxShadow(Shadow.box(~blur=px(32), rgba(0, 0, 0, 0.2))),
       overflow(auto),
       maxHeight(vh(100.)),
@@ -47,23 +47,57 @@ module Styles = {
   let itemImageUnit =
     style([
       width(px(128)),
-      marginRight(px(32)),
+      marginRight(px(48)),
       smallThresholdMediaQuery([
         display(flexBox),
         marginTop(px(16)),
         marginRight(zero),
         width(auto),
+        justifyContent(center),
+      ]),
+    ]);
+  let itemImageUnitWithRecipe =
+    style([
+      smallThresholdMediaQuery([
+        display(flexBox),
+        marginTop(px(16)),
+        marginRight(zero),
+        width(auto),
+        justifyContent(spaceBetween),
       ]),
     ]);
   let itemImage =
     style([display(block), width(px(128)), height(px(128))]);
+  let itemImageUnitBody = style([]);
   let itemImageLabel =
+    style([fontSize(px(16)), textAlign(center), marginTop(px(8))]);
+  let itemRecipe =
     style([
-      fontSize(px(16)),
-      textAlign(center),
-      marginTop(px(8)),
-      smallThresholdMediaQuery([marginLeft(px(16)), textAlign(`left)]),
+      marginTop(px(16)),
+      smallThresholdMediaQuery([width(pct(50.)), marginTop(zero)]),
     ]);
+  let itemRecipeTitle = style([marginBottom(px(2))]);
+  [@bs.module "./assets/recipe_icon.png"]
+  external recipeIcon: string = "default";
+  let recipeIcon =
+    style([
+      display(inlineBlock),
+      backgroundImage(url(recipeIcon)),
+      width(px(16)),
+      height(px(16)),
+      backgroundSize(cover),
+      marginLeft(px(4)),
+      verticalAlign(`top),
+    ]);
+  let recipeRow =
+    style([
+      color(Colors.gray),
+      display(flexBox),
+      borderTop(px(1), dashed, Colors.faintGray),
+      padding2(~v=px(2), ~h=zero),
+    ]);
+  let recipeRowMaterial = style([flexGrow(1.)]);
+  let recipeRowQuantity = style([width(px(24))]);
   let itemName = style([fontSize(px(24)), marginBottom(px(8))]);
   let itemCategory = style([marginBottom(px(4))]);
   let itemCategoryLink =
@@ -72,6 +106,7 @@ module Styles = {
       textDecoration(none),
       hover([textDecoration(underline)]),
     ]);
+  let itemSourceFrom = style([color(Colors.lightGray)]);
   let itemTags = style([marginBottom(px(4))]);
   [@bs.module "./assets/tag.png"] external tagIcon: string = "default";
   let itemTagIcon =
@@ -82,8 +117,7 @@ module Styles = {
       height(px(16)),
       backgroundSize(cover),
       marginRight(px(4)),
-      position(relative),
-      top(px(2)),
+      verticalAlign(`top),
     ]);
   let itemTag =
     style([
@@ -93,18 +127,30 @@ module Styles = {
       hover([textDecoration(underline)]),
       marginRight(px(6)),
     ]);
-  let itemPriceIcon = style([marginRight(px(4))]);
-  let itemPrices = style([display(flexBox)]);
+  let itemPriceIcon = style([marginRight(px(4)), verticalAlign(`top)]);
+  let itemPrices = style([display(flexBox), marginBottom(px(4))]);
   let itemPrice = style([marginRight(px(16)), whiteSpace(nowrap)]);
   let itemPriceLabel = style([color(Colors.gray), marginRight(px(4))]);
   let itemPriceValue = style([fontWeight(`num(700))]);
+  let itemCustomizeCost = style([marginBottom(px(4))]);
+  [@bs.module "./assets/remake.png"] external remakeIcon: string = "default";
+  let itemRemakeIcon =
+    style([
+      display(inlineBlock),
+      backgroundImage(url(remakeIcon)),
+      width(px(16)),
+      height(px(16)),
+      backgroundSize(cover),
+      marginRight(px(4)),
+      verticalAlign(`top),
+    ]);
   let variantSection =
     style([
       marginTop(px(24)),
       marginLeft(px(-16)),
       marginRight(px(-16)),
       paddingLeft(px(16)),
-      paddingRight(px(16)),
+      paddingRight(px(32)),
       overflowX(auto),
       overflowY(hidden),
     ]);
@@ -334,8 +380,32 @@ module TwoDimensionVariants = {
   };
 };
 
+module ItemRecipe = {
+  [@react.component]
+  let make = (~recipe) => {
+    <div className=Styles.itemRecipe>
+      <div className=Styles.itemRecipeTitle>
+        {React.string("DIY")}
+        <span className=Styles.recipeIcon />
+      </div>
+      {recipe
+       ->Belt.Array.map(((itemId, quantity)) =>
+           <div className=Styles.recipeRow key=itemId>
+             <div className=Styles.recipeRowMaterial>
+               {React.string(Item.getMaterialName(itemId))}
+             </div>
+             <div className=Styles.recipeRowQuantity>
+               {React.string({j|×|j} ++ string_of_int(quantity))}
+             </div>
+           </div>
+         )
+       ->React.array}
+    </div>;
+  };
+};
+
 [@react.component]
-let make = (~item, ~variant) => {
+let make = (~item: Item.t, ~variant) => {
   let onClose = () => {
     let url = ReasonReactRouter.dangerouslyGetInitialUrl();
     ReasonReactRouter.push(
@@ -353,21 +423,31 @@ let make = (~item, ~variant) => {
 
   let viewportWidth = Utils.useViewportWidth();
   let itemImage =
-    <div className=Styles.itemImageUnit>
-      <img
-        src={Item.getImageUrl(~item, ~variant)}
-        className=Styles.itemImage
-      />
-      {if (Item.getNumVariations(~item) > 1) {
-         switch (Item.getVariantName(~item, ~variant, ())) {
-         | Some(variantName) =>
-           <div className=Styles.itemImageLabel>
-             {React.string(variantName)}
-           </div>
-         | None => React.null
-         };
-       } else {
-         React.null;
+    <div
+      className={Cn.make([
+        Styles.itemImageUnit,
+        Cn.ifTrue(Styles.itemImageUnitWithRecipe, item.recipe != None),
+      ])}>
+      <div className=Styles.itemImageUnitBody>
+        <img
+          src={Item.getImageUrl(~item, ~variant)}
+          className=Styles.itemImage
+        />
+        {if (Item.getNumVariations(~item) > 1) {
+           switch (Item.getVariantName(~item, ~variant, ())) {
+           | Some(variantName) =>
+             <div className=Styles.itemImageLabel>
+               {React.string(variantName)}
+             </div>
+           | None => React.null
+           };
+         } else {
+           React.null;
+         }}
+      </div>
+      {switch (item.recipe) {
+       | Some(recipe) => <ItemRecipe recipe />
+       | None => React.null
        }}
     </div>;
 
@@ -385,6 +465,16 @@ let make = (~item, ~variant) => {
               path={"/?c=" ++ item.category} className=Styles.itemCategoryLink>
               {React.string(Utils.capitalizeFirstLetter(item.category))}
             </Link>
+            {switch (item.source) {
+             | Some(itemSource) =>
+               <>
+                 <span className=Styles.itemSourceFrom>
+                   {React.string(" from ")}
+                 </span>
+                 {React.string(itemSource)}
+               </>
+             | None => React.null
+             }}
           </div>
           {if (item.tags->Js.Array.length > 0) {
              <div className=Styles.itemTags>
@@ -443,11 +533,31 @@ let make = (~item, ~variant) => {
            } else {
              React.null;
            }}
+          {switch (item.customizeCost) {
+           | Some(customizeCost) =>
+             <div className=Styles.itemCustomizeCost>
+               <span className=Styles.itemRemakeIcon />
+               {React.string(
+                  switch (item.bodyCustomizable, item.patternCustomizable) {
+                  | (true, true) => "Body and Pattern Customizable "
+                  | (false, true) => "Pattern Customizable "
+                  | (true, false) => "Body Customizable "
+                  | _ => ""
+                  },
+                )}
+               {React.string(
+                  {j|(×|j} ++ string_of_int(customizeCost) ++ ")",
+                )}
+             </div>
+           | None => React.null
+           }}
           {viewportWidth <= 500 ? itemImage : React.null}
-          {switch (item.variations) {
-           | Single => React.null
-           | OneDimension(a) => <OneDimensionVariants item a variant />
-           | TwoDimensions(a, b) => <TwoDimensionVariants item a b variant />
+          {switch (item.type_, item.variations) {
+           | (Recipe(_), _) => React.null
+           | (_, Single) => React.null
+           | (_, OneDimension(a)) => <OneDimensionVariants item a variant />
+           | (_, TwoDimensions(a, b)) =>
+             <TwoDimensionVariants item a b variant />
            }}
         </div>
       </div>

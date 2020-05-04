@@ -40,6 +40,7 @@ type item = {
   status: itemStatus,
   note: string,
   timeUpdated: option(float),
+  priorityTimestamp: option(float),
 };
 
 let itemToJson = (item: item) => {
@@ -64,6 +65,7 @@ let itemFromJson = json => {
         (json |> optional(field("note", string)))
         ->Belt.Option.getWithDefault(""),
       timeUpdated: json |> optional(field("t", Json.Decode.float)),
+      priorityTimestamp: json |> optional(field("priorityTimestamp", Json.Decode.float)),
     }
   );
 };

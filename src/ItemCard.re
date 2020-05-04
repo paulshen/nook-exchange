@@ -584,6 +584,7 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
          {userItemStatus == Some(Wishlist)
             ? <WishlistEllipsisButton
                 item
+                userItem
                 variation
                 className=Styles.wishlistEllipsisButton
               />

@@ -131,6 +131,11 @@ let make =
             ~variant=variation != 0 ? Some(variation) : None,
           )}
           className=Styles.nameLink>
+          {if (userItem.priorityTimestamp != None) {
+             React.string({j|⭐️|j});
+           } else {
+             React.null;
+           }}
           {React.string(Item.getName(item))}
         </Link>
       </div>
@@ -200,42 +205,12 @@ let make =
                   key={string_of_int(variation)}
                 />
               : React.null}
-           {userItem.status == Wishlist
-              ? <WishlistEllipsisButton
-                  item
-                  variation
-                  className=Styles.wishlistEllipsisButton
-                />
-              : <ReactAtmosphere.Tooltip text={React.string("Remove item")}>
-                  {({onMouseEnter, onMouseLeave, onFocus, onBlur, ref}) =>
-                     <RemoveButton
-                       className=Styles.removeButton
-                       onMouseEnter
-                       onMouseLeave
-                       onFocus
-                       onBlur
-                       onClick={_ =>
-                         if (onCatalogPage) {
-                           switch (userItem.status) {
-                           | CanCraft
-                           | ForTrade =>
-                             DeleteFromCatalog.confirm(~onConfirm=() =>
-                               UserStore.removeItem(
-                                 ~itemId=item.id,
-                                 ~variation,
-                               )
-                             )
-                           | CatalogOnly =>
-                             UserStore.removeItem(~itemId=item.id, ~variation)
-                           | Wishlist => raise(Constants.Uhoh)
-                           };
-                         } else {
-                           UserStore.removeItem(~itemId=item.id, ~variation);
-                         }
-                       }
-                       ref
-                     />}
-                </ReactAtmosphere.Tooltip>}
+           <WishlistEllipsisButton
+             item
+             userItem
+             variation
+             className=Styles.wishlistEllipsisButton
+           />
          </>
        : <>
            {if (userItem.note->Js.String.length > 0) {

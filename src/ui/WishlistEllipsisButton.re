@@ -43,7 +43,7 @@ module Styles = {
 };
 
 [@react.component]
-let make = (~item: Item.t, ~variation, ~className) => {
+let make = (~item: Item.t, ~userItem: User.item, ~variation, ~className) => {
   let me = UserStore.useMe()->Belt.Option.getExn;
   let ellipsisButtonRef = React.useRef(Js.Nullable.null);
   let (showEllipsisMenu, setShowEllipsisMenu) = React.useState(() => false);
@@ -76,41 +76,72 @@ let make = (~item: Item.t, ~variation, ~className) => {
            }
            render={_renderArgs =>
              <div className=Styles.menu>
-               {!Item.isRecipe(~item)
-                  ? <button
-                      onClick={_ => {
-                        UserStore.setItemStatus(
-                          ~itemId=item.id,
-                          ~variation,
-                          ~status=ForTrade,
-                        )
-                      }}
-                      className=Styles.menuItem>
-                      {React.string("Move to For Trade")}
-                    </button>
-                  : React.null}
-               {item.recipe !== None
-                  ? <button
-                      onClick={_ =>
-                        if (Item.isRecipe(~item)) {
-                          UserStore.setItemStatus(
-                            ~itemId=Item.getItemIdForRecipe(~recipe=item),
-                            ~variation=0,
-                            ~status=CanCraft,
-                          );
-                          UserStore.removeItem(~itemId=item.id, ~variation);
-                        } else {
-                          UserStore.setItemStatus(
-                            ~itemId=item.id,
-                            ~variation,
-                            ~status=CanCraft,
-                          );
-                        }
-                      }
-                      className=Styles.menuItem>
-                      {React.string("Move to Can Craft")}
-                    </button>
-                  : React.null}
+               <button
+                 onClick={_ =>
+                   if (userItem.priorityTimestamp !== None) {
+                     UserStore.setItemPriorityTimestamp(
+                       ~itemId=item.id,
+                       ~variation,
+                       ~priorityTimestamp=None,
+                     );
+                   } else {
+                     UserStore.setItemPriorityTimestamp(
+                       ~itemId=item.id,
+                       ~variation,
+                       ~priorityTimestamp=Some(Js.Date.now()),
+                     );
+                   }
+                 }
+                 className=Styles.menuItem>
+                 {React.string("Favorite")}
+               </button>
+               {switch (userItem.status) {
+                | CanCraft
+                | ForTrade
+                | CatalogOnly => React.null
+                | Wishlist =>
+                  <>
+                    {!Item.isRecipe(~item)
+                       ? <button
+                           onClick={_ => {
+                             UserStore.setItemStatus(
+                               ~itemId=item.id,
+                               ~variation,
+                               ~status=ForTrade,
+                             )
+                           }}
+                           className=Styles.menuItem>
+                           {React.string("Move to For Trade")}
+                         </button>
+                       : React.null}
+                    {item.recipe !== None
+                       ? <button
+                           onClick={_ =>
+                             if (Item.isRecipe(~item)) {
+                               UserStore.setItemStatus(
+                                 ~itemId=
+                                   Item.getItemIdForRecipe(~recipe=item),
+                                 ~variation=0,
+                                 ~status=CanCraft,
+                               );
+                               UserStore.removeItem(
+                                 ~itemId=item.id,
+                                 ~variation,
+                               );
+                             } else {
+                               UserStore.setItemStatus(
+                                 ~itemId=item.id,
+                                 ~variation,
+                                 ~status=CanCraft,
+                               );
+                             }
+                           }
+                           className=Styles.menuItem>
+                           {React.string("Move to Can Craft")}
+                         </button>
+                       : React.null}
+                  </>
+                }}
                {me.enableCatalogCheckbox
                   ? <button
                       onClick={_ => {
@@ -132,7 +163,7 @@ let make = (~item: Item.t, ~variation, ~className) => {
                    UserStore.removeItem(~itemId=item.id, ~variation)
                  }}
                  className={Cn.make([Styles.menuItem, Styles.menuItemRemove])}>
-                 {React.string("Remove from Wishlist")}
+                 {React.string("Remove")}
                </button>
              </div>
            }

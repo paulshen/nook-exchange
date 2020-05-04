@@ -156,7 +156,7 @@ let setItemStatus = (~itemId: int, ~variation: int, ~status: User.itemStatus) =>
   let userItem =
     switch (user.items->Js.Dict.get(itemKey)) {
     | Some(item) => {...item, status, timeUpdated}
-    | None => {status, note: "", timeUpdated}
+    | None => {status, note: "", priorityTimestamp: None, timeUpdated}
     };
   let updatedUser = {
     ...user,
@@ -275,6 +275,12 @@ let setItemNote = (~itemId: int, ~variation: int, ~note: string) => {
     );
     numItemUpdatesLogged := numItemUpdatesLogged^ + 1;
   };
+};
+
+let setItemPriorityTimestamp =
+    (~itemId: int, ~variation: int, ~priorityTimestamp: option(float)) => {
+  ();
+    //paul will do
 };
 
 let numItemRemovesLogged = ref(0);

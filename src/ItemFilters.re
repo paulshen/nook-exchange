@@ -406,11 +406,7 @@ module CategoryButtons = {
   module CategoryStyles = {
     open Css;
     let button =
-      style([
-        marginRight(px(8)),
-        marginBottom(px(8)),
-        transition(~duration=200, "all"),
-      ]);
+      style([marginRight(px(8)), transition(~duration=200, "all")]);
     let buttonNotSelected =
       style([
         backgroundColor(hex("8fcaa3e0")),
@@ -421,6 +417,7 @@ module CategoryButtons = {
         height(px(37)),
         opacity(0.7),
         marginRight(px(16)),
+        marginBottom(zero),
         hover([opacity(1.)]),
       ]);
     let selectSelected = style([height(px(37)), opacity(1.)]);
@@ -428,8 +425,7 @@ module CategoryButtons = {
       style([display(inlineBlock), marginBottom(px(12))]);
     let root =
       style([
-        marginBottom(px(8)),
-        media("(min-width: 1200px)", [marginBottom(px(4))]),
+        paddingBottom(px(8)),
         media(
           "(max-width: 600px)",
           [

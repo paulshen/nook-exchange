@@ -8,6 +8,7 @@ module Styles = {
     ]);
   let username =
     style([fontSize(px(36)), textAlign(center), marginBottom(px(16))]);
+  let userBodySpacer = style([height(px(16))]);
   let userBody =
     style([
       backgroundColor(hex("ffffffc0")),
@@ -95,7 +96,7 @@ let make = (~username, ~urlRest, ~url: ReasonReactRouter.url, ~showLogin) => {
      | Some(user) =>
        <div>
          {switch (user.profileText) {
-          | "" => React.null
+          | "" => <div className=Styles.userBodySpacer />
           | profileText =>
             <div className=Styles.userBody>
               {Emoji.parseText(profileText)}

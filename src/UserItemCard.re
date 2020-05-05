@@ -62,7 +62,6 @@ module Styles = {
         selector("& ." ++ topRightIcon, [opacity(1.)]),
         selector("& ." ++ catalogStatusButton, [opacity(1.)]),
         selector("& ." ++ ItemImage.Styles.variantButton, [opacity(0.5)]),
-        selector("& ." ++ nameLink, [textDecoration(underline)]),
       ]),
     ]);
   let cardOnCatalogPage = style([paddingBottom(px(16))]);

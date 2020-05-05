@@ -81,7 +81,6 @@ module Styles = {
           ],
         ),
         selector("& ." ++ ItemImage.Styles.variantButton, [opacity(0.5)]),
-        selector("& ." ++ nameLink, [textDecoration(underline)]),
       ]),
       media(
         "(max-width: 600px)",

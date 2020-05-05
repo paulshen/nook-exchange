@@ -6,7 +6,7 @@ module Styles = {
   let tagline =
     style([
       textAlign(center),
-      marginBottom(px(48)),
+      marginBottom(px(32)),
       media("(max-width: 500px)", [marginBottom(px(32))]),
     ]);
   let tooltip =

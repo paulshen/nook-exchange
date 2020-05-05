@@ -179,7 +179,12 @@ let make = (~showLogin, ~url: ReasonReactRouter.url) => {
       } else {
         let rootElement = Utils.getElementForDomRef(rootRef);
         let boundingRect = Element.getBoundingClientRect(rootElement);
-        window |> Window.scrollBy(0., DomRect.top(boundingRect));
+        window
+        |> Window.scrollBy(
+             0.,
+             DomRect.top(boundingRect)
+             -. float_of_int(Constants.headerHeight),
+           );
       };
       None;
     },

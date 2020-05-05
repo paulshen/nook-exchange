@@ -549,37 +549,39 @@ let logout = () => {
 };
 
 let init = () => {
-  {
-    let%Repromise.JsExn response =
-      Fetch.fetchWithInit(
-        Constants.bapiUrl ++ "/@me",
-        Fetch.RequestInit.make(
-          ~method_=Get,
-          ~headers=?
-            Option.map(sessionId^, sessionId =>
+  switch (sessionId^) {
+  | Some(sessionId) =>
+    {
+      let%Repromise.JsExn response =
+        Fetch.fetchWithInit(
+          Constants.bapiUrl ++ "/@me",
+          Fetch.RequestInit.make(
+            ~method_=Get,
+            ~headers=
               Fetch.HeadersInit.make({
                 "X-Client-Version": Constants.gitCommitRef,
                 "Authorization": "Bearer " ++ sessionId,
-              })
-            ),
-          ~credentials=Include,
-          ~mode=CORS,
-          (),
-        ),
-      );
-    if (Fetch.Response.status(response) < 400) {
-      let%Repromise.JsExn json = Fetch.Response.json(response);
-      updateSessionId(
-        json |> Json.Decode.(optional(field("sessionId", string))),
-      );
-      let user = User.fromAPI(json);
-      api.dispatch(Login(user));
-      Analytics.Amplitude.setUserId(~userId=Some(user.id));
-      Promise.resolved();
-    } else {
-      api.dispatch(FetchMeFailed);
-      Promise.resolved();
-    };
-  }
-  |> ignore;
+              }),
+            ~credentials=Include,
+            ~mode=CORS,
+            (),
+          ),
+        );
+      if (Fetch.Response.status(response) < 400) {
+        let%Repromise.JsExn json = Fetch.Response.json(response);
+        updateSessionId(
+          json |> Json.Decode.(optional(field("sessionId", string))),
+        );
+        let user = User.fromAPI(json);
+        api.dispatch(Login(user));
+        Analytics.Amplitude.setUserId(~userId=Some(user.id));
+        Promise.resolved();
+      } else {
+        api.dispatch(FetchMeFailed);
+        Promise.resolved();
+      };
+    }
+    |> ignore
+  | None => ()
+  };
 };

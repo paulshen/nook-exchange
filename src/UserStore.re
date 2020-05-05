@@ -121,6 +121,28 @@ let handleServerResponse = (url, responseResult) =>
     );
   };
 
+let makeAuthenticatedPostRequest = (~url, ~bodyJson) => {
+  Fetch.fetchWithInit(
+    url,
+    Fetch.RequestInit.make(
+      ~method_=Post,
+      ~body=
+        Fetch.BodyInit.make(
+          Js.Json.stringify(Json.Encode.object_(bodyJson)),
+        ),
+      ~headers=
+        Fetch.HeadersInit.make({
+          "X-Client-Version": Constants.gitCommitRef,
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " ++ Option.getWithDefault(sessionId^, ""),
+        }),
+      ~credentials=Include,
+      ~mode=CORS,
+      (),
+    ),
+  );
+};
+
 exception NotCanonicalVariant(int, int);
 let numItemUpdatesLogged = ref(0);
 let setItemStatus = (~itemId: int, ~variation: int, ~status: User.itemStatus) => {
@@ -158,57 +180,20 @@ let setItemStatus = (~itemId: int, ~variation: int, ~status: User.itemStatus) =>
     Promise.resolved();
   }
   |> ignore;
-  if (numItemUpdatesLogged^ < 2
-      || updatedUser.items->Js.Dict.keys->Js.Array.length < 4) {
-    Analytics.Amplitude.logEventWithProperties(
-      ~eventName="Item Status Updated",
-      ~eventProperties={
-        "itemId": itemId,
-        "variant": variation,
-        "status": User.itemStatusToJs(status),
-      },
-    );
-    numItemUpdatesLogged := numItemUpdatesLogged^ + 1;
-  };
-  Analytics.Amplitude.setItemCount(
-    ~itemCount=Js.Dict.keys(updatedUser.items)->Js.Array.length,
-  );
-};
-
-let setItemStatusBatch =
-    (~itemId: int, ~variations: array(int), ~status: User.itemStatus) => {
-  let user = getUser();
-  let updatedItems = {
-    let clone = Utils.cloneJsDict(user.items);
-    variations
-    |> Js.Array.forEach(variant => {
-         let item = Item.getItem(~itemId);
-         if (Item.getCanonicalVariant(~item, ~variant) != variant) {
-           raise(NotCanonicalVariant(itemId, variant));
-         };
-         let itemKey = User.getItemKey(~itemId, ~variation=variant);
-         let timeUpdated = Some(Js.Date.now() /. 1000.);
-         let userItem =
-           switch (user.items->Js.Dict.get(itemKey)) {
-           | Some(item) => {...item, status, timeUpdated}
-           | None => {status, note: "", timeUpdated}
-           };
-         clone->Js.Dict.set(itemKey, userItem);
-       });
-    clone;
-  };
-  let updatedUser = {...user, items: updatedItems};
-  api.dispatch(UpdateUser(updatedUser));
   {
-    let%Repromise responseResult =
-      BAPI.setItemStatusBatch(
-        ~userId=user.id,
-        ~sessionId=sessionId^,
-        ~itemId,
-        ~variants=variations,
-        ~status,
+    let%Repromise.Js _responseResult =
+      makeAuthenticatedPostRequest(
+        ~url=
+          Constants.apiUrl
+          ++ "/@me5/items/"
+          ++ string_of_int(item.id)
+          ++ "/"
+          ++ string_of_int(variation)
+          ++ "/status",
+        ~bodyJson=[
+          ("status", Json.Encode.int(User.itemStatusToJs(status))),
+        ],
       );
-    handleServerResponse("/@me/items/batch/status", responseResult);
     Promise.resolved();
   }
   |> ignore;
@@ -218,7 +203,7 @@ let setItemStatusBatch =
       ~eventName="Item Status Updated",
       ~eventProperties={
         "itemId": itemId,
-        "variants": variations,
+        "variant": variation,
         "status": User.itemStatusToJs(status),
       },
     );

@@ -120,7 +120,6 @@ module Styles = {
       justifyContent(center),
       marginBottom(px(8)),
     ]);
-  let variationBatch = style([borderRadius(px(4)), overflow(hidden)]);
   let variationImage =
     style([
       display(block),
@@ -130,8 +129,6 @@ module Styles = {
       borderRadius(px(4)),
       hover([backgroundColor(hex("00000010"))]),
     ]);
-  let variationImageBatch =
-    style([backgroundColor(hex("3aa56320")), borderRadius(zero)]);
   let variationImageSelected = style([backgroundColor(hex("3aa56320"))]);
   let metaIcons = style([position(absolute), top(px(8)), left(px(6))]);
   let topRightIcons =
@@ -139,16 +136,6 @@ module Styles = {
   let bottomBar = style([fontSize(px(12))]);
   let bottomBarStatus = style([alignSelf(flexStart), paddingTop(px(4))]);
   let statusButtons = style([display(flexBox), alignItems(center)]);
-  let batchIndicator =
-    style([
-      backgroundColor(Colors.green),
-      color(Colors.white),
-      fontSize(px(12)),
-      padding3(~top=px(5), ~bottom=px(3), ~h=px(4)),
-      borderRadius(px(4)),
-      textTransform(uppercase),
-      marginRight(px(4)),
-    ]);
   let statusButtonSelected =
     style([backgroundColor(Colors.green), color(Colors.white)]);
   let removeButton =
@@ -334,24 +321,13 @@ let renderStatusButton =
       ~status,
       ~userItem: option(User.item),
       ~showLogin=?,
-      ~useBatchMode,
-      ~numVariations,
       (),
     ) => {
   let userItemStatus = Option.map(userItem, userItem => userItem.status);
   <button
     onClick={_ =>
       if (UserStore.isLoggedIn()) {
-        if (useBatchMode && numVariations > 1) {
-          let item = Item.getItem(~itemId);
-          UserStore.setItemStatusBatch(
-            ~itemId,
-            ~variations=Item.getCollapsedVariants(~item),
-            ~status,
-          );
-        } else {
-          UserStore.setItemStatus(~itemId, ~variation, ~status);
-        };
+        UserStore.setItemStatus(~itemId, ~variation, ~status);
       } else {
         Option.map(showLogin, showLogin => showLogin()) |> ignore;
       }
@@ -395,7 +371,6 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
     };
 
   let (variation, setVariation) = React.useState(() => 0);
-  let (useBatchMode, setUseBatchMode) = React.useState(() => false);
   let numVariations = Item.getNumVariations(~item);
   let numVariationsRef = React.useRef(numVariations);
   React.useEffect1(
@@ -410,22 +385,6 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
   };
   let variation = Js.Math.min_int(variation, numVariations - 1);
   let userItem = UserStore.useItem(~itemId=item.id, ~variation);
-
-  if (useBatchMode
-      && (
-        numVariations === 1
-        || (
-          switch (userItem->Belt.Option.map(userItem => userItem.status)) {
-          | Some(ForTrade)
-          | Some(CanCraft)
-          | Some(Wishlist) => true
-          | Some(CatalogOnly)
-          | None => false
-          }
-        )
-      )) {
-    setUseBatchMode(_ => false);
-  };
 
   <div
     className={Cn.make([
@@ -453,11 +412,7 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
        if (Js.Array.length(collapsedVariants) === 1) {
          React.null;
        } else {
-         <div
-           className={Cn.make([
-             Styles.variation,
-             Cn.ifTrue(Styles.variationBatch, useBatchMode),
-           ])}>
+         <div className={Cn.make([Styles.variation])}>
            {collapsedVariants
             ->Belt.Array.map(v => {
                 let image =
@@ -465,7 +420,6 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
                     src={Item.getImageUrl(~item, ~variant=v)}
                     className={Cn.make([
                       Styles.variationImage,
-                      Cn.ifTrue(Styles.variationImageBatch, useBatchMode),
                       Cn.ifTrue(
                         Styles.variationImageSelected,
                         v == variation,
@@ -574,19 +528,11 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
                       switch (status) {
                       | Some(status) =>
                         let updateItem = () =>
-                          if (useBatchMode && numVariations > 1) {
-                            UserStore.setItemStatusBatch(
-                              ~itemId=item.id,
-                              ~variations=Item.getCollapsedVariants(~item),
-                              ~status,
-                            );
-                          } else {
-                            UserStore.setItemStatus(
-                              ~itemId=item.id,
-                              ~variation,
-                              ~status,
-                            );
-                          };
+                          UserStore.setItemStatus(
+                            ~itemId=item.id,
+                            ~variation,
+                            ~status,
+                          );
                         if (Option.map(userItem, userItem => userItem.status)
                             == Some(Wishlist)) {
                           WishlistToCatalog.confirm(~onConfirm=updateItem);
@@ -666,19 +612,12 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
        </>
      | _ =>
        <div className={Cn.make([Styles.bottomBar, Styles.statusButtons])}>
-         {useBatchMode && numVariations > 1
-            ? <div className=Styles.batchIndicator>
-                {React.string("All")}
-              </div>
-            : React.null}
          {renderStatusButton(
             ~itemId=item.id,
             ~variation,
             ~status=Wishlist,
             ~userItem,
             ~showLogin,
-            ~useBatchMode,
-            ~numVariations,
             (),
           )}
          {renderStatusButton(
@@ -687,8 +626,6 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
             ~status=ForTrade,
             ~userItem,
             ~showLogin,
-            ~useBatchMode,
-            ~numVariations,
             (),
           )}
          {(
@@ -703,8 +640,6 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
                 ~status=CanCraft,
                 ~userItem,
                 ~showLogin,
-                ~useBatchMode,
-                ~numVariations,
                 (),
               )
             : React.null}

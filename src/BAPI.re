@@ -59,24 +59,6 @@ let setItemNote = (~userId, ~sessionId, ~itemId, ~variant, ~note) => {
   Promise.resolved(responseResult);
 };
 
-let setItemStatusBatch = (~userId, ~sessionId, ~itemId, ~variants, ~status) => {
-  let%Repromise.Js responseResult =
-    makeAuthenticatedPostRequest(
-      ~url=
-        Constants.bapiUrl
-        ++ "/@me/items/"
-        ++ string_of_int(itemId)
-        ++ "/batch/status",
-      ~bodyJson=[
-        ("status", Json.Encode.int(User.itemStatusToJs(status))),
-        ("variants", Json.Encode.array(Json.Encode.int, variants)),
-        ("userId", Json.Encode.string(userId)),
-      ],
-      ~sessionId,
-    );
-  Promise.resolved(responseResult);
-};
-
 let removeItem = (~userId, ~sessionId, ~itemId, ~variant) => {
   let url =
     Constants.bapiUrl

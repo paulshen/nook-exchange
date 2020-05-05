@@ -22,11 +22,11 @@ let makeAuthenticatedPostRequest = (~url, ~bodyJson, ~sessionId) => {
 };
 
 let setItemStatus = (~userId, ~sessionId, ~itemId, ~variant, ~status) => {
-  let%Repromise.Js _responseResult =
+  let%Repromise.Js responseResult =
     makeAuthenticatedPostRequest(
       ~url=
         Constants.bapiUrl
-        ++ "/@me4/items/"
+        ++ "/@me/items/"
         ++ string_of_int(itemId)
         ++ "/"
         ++ string_of_int(variant)
@@ -37,15 +37,15 @@ let setItemStatus = (~userId, ~sessionId, ~itemId, ~variant, ~status) => {
       ],
       ~sessionId,
     );
-  Promise.resolved();
+  Promise.resolved(responseResult);
 };
 
 let setItemNote = (~userId, ~sessionId, ~itemId, ~variant, ~note) => {
-  let%Repromise.Js _responseResult =
+  let%Repromise.Js responseResult =
     makeAuthenticatedPostRequest(
       ~url=
         Constants.bapiUrl
-        ++ "/@me4/items/"
+        ++ "/@me/items/"
         ++ string_of_int(itemId)
         ++ "/"
         ++ string_of_int(variant)
@@ -56,15 +56,15 @@ let setItemNote = (~userId, ~sessionId, ~itemId, ~variant, ~note) => {
       ],
       ~sessionId,
     );
-  Promise.resolved();
+  Promise.resolved(responseResult);
 };
 
 let setItemStatusBatch = (~userId, ~sessionId, ~itemId, ~variants, ~status) => {
-  let%Repromise.Js _responseResult =
+  let%Repromise.Js responseResult =
     makeAuthenticatedPostRequest(
       ~url=
         Constants.bapiUrl
-        ++ "/@me4/items/"
+        ++ "/@me/items/"
         ++ string_of_int(itemId)
         ++ "/batch/status",
       ~bodyJson=[
@@ -74,17 +74,17 @@ let setItemStatusBatch = (~userId, ~sessionId, ~itemId, ~variants, ~status) => {
       ],
       ~sessionId,
     );
-  Promise.resolved();
+  Promise.resolved(responseResult);
 };
 
 let removeItem = (~userId, ~sessionId, ~itemId, ~variant) => {
   let url =
     Constants.bapiUrl
-    ++ "/@me3/items/"
+    ++ "/@me/items/"
     ++ string_of_int(itemId)
     ++ "/"
     ++ string_of_int(variant);
-  let%Repromise.Js _responseResult =
+  let%Repromise.Js responseResult =
     Fetch.fetchWithInit(
       url,
       Fetch.RequestInit.make(
@@ -107,11 +107,11 @@ let removeItem = (~userId, ~sessionId, ~itemId, ~variant) => {
         (),
       ),
     );
-  Promise.resolved();
+  Promise.resolved(responseResult);
 };
 
 let updateProfileText = (~userId, ~sessionId, ~profileText) => {
-  let%Repromise.Js _responseResult =
+  let%Repromise.Js responseResult =
     makeAuthenticatedPostRequest(
       ~url=Constants.bapiUrl ++ "/@me/profileText",
       ~bodyJson=[
@@ -120,12 +120,12 @@ let updateProfileText = (~userId, ~sessionId, ~profileText) => {
       ],
       ~sessionId,
     );
-  Promise.resolved();
+  Promise.resolved(responseResult);
 };
 
 let updateSetting = (~userId, ~sessionId, ~settingKey, ~settingValue) => {
   let url = Constants.bapiUrl ++ "/@me/settings";
-  let%Repromise.Js _responseResult =
+  let%Repromise.Js responseResult =
     Fetch.fetchWithInit(
       url,
       Fetch.RequestInit.make(
@@ -152,14 +152,14 @@ let updateSetting = (~userId, ~sessionId, ~settingKey, ~settingValue) => {
         (),
       ),
     );
-  Promise.resolved();
+  Promise.resolved(responseResult);
 };
 
 let patchMe =
     (~userId, ~sessionId, ~username, ~newPassword, ~email, ~oldPassword) => {
   open Belt;
   let url = Constants.bapiUrl ++ "/@me";
-  let%Repromise.Js _responseResult =
+  let%Repromise.JsExn response =
     Fetch.fetchWithInit(
       url,
       Fetch.RequestInit.make(
@@ -202,5 +202,5 @@ let patchMe =
         (),
       ),
     );
-  Promise.resolved();
+  Promise.resolved(response);
 };

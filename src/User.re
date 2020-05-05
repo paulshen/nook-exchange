@@ -104,7 +104,7 @@ type t = {
 
 let fromAPI = (json: Js.Json.t) => {
   Json.Decode.{
-    id: json |> field("uuid", string),
+    id: json |> oneOf([field("id", string), field("uuid", string)]),
     username: json |> field("username", string),
     email:
       switch (json |> optional(field("email", string))) {
@@ -135,20 +135,26 @@ let fromAPI = (json: Js.Json.t) => {
         })
       ->Js.Dict.fromArray,
     profileText:
-      (
-        json
-        |> field("metadata", json =>
-             json |> optional(field("profileText", string))
-           )
-      )
-      ->Belt.Option.getWithDefault(""),
+      json
+      |> oneOf([
+           field("profileText", string),
+           field("metadata", json =>
+             (json |> optional(field("profileText", string)))
+             ->Belt.Option.getWithDefault("")
+           ),
+           _ => "",
+         ]),
     enableCatalogCheckbox:
-      (
-        json
-        |> field("metadata", json =>
-             json |> optional(field("enableCatalogCheckbox", bool))
-           )
-      )
-      ->Belt.Option.getWithDefault(false),
+      json
+      |> oneOf([
+           field("settings", json =>
+             (json |> optional(field("enableCatalog", bool)))
+             ->Belt.Option.getWithDefault(false)
+           ),
+           field("metadata", json =>
+             (json |> optional(field("enableCatalogCheckbox", bool)))
+             ->Belt.Option.getWithDefault(false)
+           ),
+         ]),
   };
 };

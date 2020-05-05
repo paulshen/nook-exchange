@@ -52,7 +52,7 @@ module Styles = {
     style([
       color(Colors.charcoal),
       textDecoration(none),
-      hover([textDecoration(underline)]),
+      media("(hover: hover)", [hover([textDecoration(underline)])]),
     ]);
   let card =
     style([
@@ -235,14 +235,6 @@ module RecipeIcon = {
   [@bs.module "./assets/recipe_icon.png"]
   external recipeIcon: string = "default";
 
-  [@bs.get]
-  external mediaQueryListMatches: Webapi.Dom.Window.mediaQueryList => bool =
-    "matches";
-  let browserSupportsHover = {
-    Webapi.Dom.(window |> Window.matchMedia("(hover: hover)"))
-    ->mediaQueryListMatches;
-  };
-
   [@react.component]
   let make = (~recipe: Item.recipe, ~isRecipe=?, ~onClick=?, ()) => {
     let (showLayer, setShowLayer) = React.useState(() => false);
@@ -273,7 +265,7 @@ module RecipeIcon = {
         }}
         onClick=?{
           Belt.Option.map(onClick, (onClick, e) =>
-            if (browserSupportsHover) {
+            if (Utils.browserSupportsHover) {
               onClick();
             }
           )

@@ -125,8 +125,8 @@ let make =
          } else {
            None;
          };
-       switch (variantName) {
-       | Some(variantName) =>
+       switch (Utils.browserSupportsHover, variantName) {
+       | (true, Some(variantName)) =>
          <ReactAtmosphere.Tooltip text={React.string(variantName)}>
            {(
               ({onMouseEnter, onMouseLeave, onFocus, onBlur, ref}) =>
@@ -140,7 +140,7 @@ let make =
                 </div>
             )}
          </ReactAtmosphere.Tooltip>
-       | None => image
+       | _ => image
        }}
       {Item.isRecipe(~item)
          ? <img

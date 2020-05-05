@@ -68,3 +68,11 @@ let useViewportWidth = () => {
   });
   viewportWidth;
 };
+
+[@bs.get]
+external mediaQueryListMatches: Webapi.Dom.Window.mediaQueryList => bool =
+  "matches";
+let browserSupportsHover = {
+  Webapi.Dom.(window |> Window.matchMedia("(hover: hover)"))
+  ->mediaQueryListMatches;
+};

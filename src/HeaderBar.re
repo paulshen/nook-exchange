@@ -25,17 +25,30 @@ module Styles = {
         [textDecoration(none), hover([textDecoration(underline)])],
       ),
       media("(max-width: 600px)", [paddingBottom(zero)]),
-      hover([opacity(1.), backgroundColor(hex("fffffff0"))]),
+      media("(hover: none)", [pointerEvents(none)]),
+      media(
+        "(hover: hover)",
+        [hover([opacity(1.), backgroundColor(hex("fffffff0"))])],
+      ),
     ]);
   let rootWithMenu =
-    style([opacity(1.), backgroundColor(hex("fffffff0"))]);
+    style([
+      opacity(1.),
+      backgroundColor(hex("fffffff0")),
+      media("(hover: none)", [pointerEvents(auto)]),
+    ]);
   let rootIsScrollingUp =
     style([
       opacity(1.),
+      media("(hover: none)", [pointerEvents(auto)]),
       media("(max-width: 600px)", [backgroundColor(hex("fffffff0"))]),
     ]);
   let rootIsNearTop =
-    style([opacity(1.), important(backgroundColor(transparent))]);
+    style([
+      opacity(1.),
+      media("(hover: none)", [pointerEvents(auto)]),
+      important(backgroundColor(transparent)),
+    ]);
   let standardViewport =
     style([media("(max-width: 500px)", [display(none)])]);
   let smallViewport =

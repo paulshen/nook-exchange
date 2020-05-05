@@ -40,7 +40,7 @@ module Styles = {
     style([
       color(Colors.charcoal),
       textDecoration(none),
-      hover([textDecoration(underline)]),
+      media("(hover: hover)", [hover([textDecoration(underline)])]),
     ]);
   let card =
     style([
@@ -57,12 +57,20 @@ module Styles = {
       width(Calc.(pct(50.) - px(16))),
       transition(~duration=200, "all"),
       media("(min-width: 660px)", [width(px(176))]),
-      hover([
-        selector("& ." ++ metaIcons, [opacity(1.)]),
-        selector("& ." ++ topRightIcon, [opacity(1.)]),
-        selector("& ." ++ catalogStatusButton, [opacity(1.)]),
-        selector("& ." ++ ItemImage.Styles.variantButton, [opacity(0.5)]),
-      ]),
+      media(
+        "(hover: hover)",
+        [
+          hover([
+            selector("& ." ++ metaIcons, [opacity(1.)]),
+            selector("& ." ++ topRightIcon, [opacity(1.)]),
+            selector("& ." ++ catalogStatusButton, [opacity(1.)]),
+            selector(
+              "& ." ++ ItemImage.Styles.variantButton,
+              [opacity(0.5)],
+            ),
+          ]),
+        ],
+      ),
     ]);
   let cardOnCatalogPage = style([paddingBottom(px(16))]);
   let itemImage = style([marginLeft(px(-8)), marginRight(px(-8))]);

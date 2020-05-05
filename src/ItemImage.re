@@ -30,6 +30,7 @@ module Styles = {
       transition(~duration=200, "all"),
       outlineStyle(none),
       opacity(0.2),
+      media("(hover: none)", [opacity(0.5)]),
       media("(hover: hover)", [hover([important(opacity(1.))])]),
       unsafe("touchAction", "manipulation"),
     ]);

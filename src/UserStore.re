@@ -248,6 +248,21 @@ let setItemNote = (~itemId: int, ~variation: int, ~note: string) => {
     Promise.resolved();
   }
   |> ignore;
+  {
+    let%Repromise.Js _responseResult =
+      makeAuthenticatedPostRequest(
+        ~url=
+          Constants.apiUrl
+          ++ "/@me5/items/"
+          ++ string_of_int(item.id)
+          ++ "/"
+          ++ string_of_int(variation)
+          ++ "/note",
+        ~bodyJson=[("note", Json.Encode.string(note))],
+      );
+    Promise.resolved();
+  }
+  |> ignore;
   if (numItemUpdatesLogged^ < 2
       || updatedUser.items->Js.Dict.keys->Js.Array.length < 4) {
     Analytics.Amplitude.logEventWithProperties(
@@ -293,6 +308,33 @@ let removeItem = (~itemId, ~variation) => {
           ~variant=variation,
         );
       handleServerResponse("/@me/items/remove", responseResult);
+      Promise.resolved();
+    }
+    |> ignore;
+    {
+      let url =
+        Constants.apiUrl
+        ++ "/@me3/items/"
+        ++ string_of_int(item.id)
+        ++ "/"
+        ++ string_of_int(variation);
+      let%Repromise.Js _responseResult =
+        Fetch.fetchWithInit(
+          url,
+          Fetch.RequestInit.make(
+            ~method_=Delete,
+            ~headers=?
+              Option.map(sessionId^, sessionId =>
+                Fetch.HeadersInit.make({
+                  "X-Client-Version": Constants.gitCommitRef,
+                  "Authorization": "Bearer " ++ sessionId,
+                })
+              ),
+            ~credentials=Include,
+            ~mode=CORS,
+            (),
+          ),
+        );
       Promise.resolved();
     }
     |> ignore;

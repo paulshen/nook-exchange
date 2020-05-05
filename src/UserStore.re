@@ -96,7 +96,7 @@ let updateSessionId = newValue => {
 let handleServerResponse = (url, responseResult) =>
   if (switch (responseResult) {
       | Error(_) => true
-      | Ok(response) => Fetch.Response.status(response) != 200
+      | Ok(response) => Fetch.Response.status(response) >= 400
       }) {
     Error.showPopup(
       ~message=
@@ -167,17 +167,21 @@ let setItemStatus = (~itemId: int, ~variation: int, ~status: User.itemStatus) =>
     },
   };
   api.dispatch(UpdateUser(updatedUser));
-  let item = Item.getItem(~itemId);
-  BAPI.setItemStatus(
-    ~userId=user.id,
-    ~sessionId=sessionId^,
-    ~itemId,
-    ~variant=variation,
-    ~status,
-  )
+  {
+    let%Repromise responseResult =
+      BAPI.setItemStatus(
+        ~userId=user.id,
+        ~sessionId=sessionId^,
+        ~itemId,
+        ~variant=variation,
+        ~status,
+      );
+    handleServerResponse("/@me/items/status", responseResult);
+    Promise.resolved();
+  }
   |> ignore;
   {
-    let%Repromise.Js responseResult =
+    let%Repromise.Js _responseResult =
       makeAuthenticatedPostRequest(
         ~url=
           Constants.apiUrl
@@ -190,7 +194,6 @@ let setItemStatus = (~itemId: int, ~variation: int, ~status: User.itemStatus) =>
           ("status", Json.Encode.int(User.itemStatusToJs(status))),
         ],
       );
-    handleServerResponse("/@me5/items/status", responseResult);
     Promise.resolved();
   }
   |> ignore;
@@ -199,81 +202,8 @@ let setItemStatus = (~itemId: int, ~variation: int, ~status: User.itemStatus) =>
     Analytics.Amplitude.logEventWithProperties(
       ~eventName="Item Status Updated",
       ~eventProperties={
-        "itemId": item.id,
+        "itemId": itemId,
         "variant": variation,
-        "status": User.itemStatusToJs(status),
-      },
-    );
-    numItemUpdatesLogged := numItemUpdatesLogged^ + 1;
-  };
-  Analytics.Amplitude.setItemCount(
-    ~itemCount=Js.Dict.keys(updatedUser.items)->Js.Array.length,
-  );
-};
-
-let setItemStatusBatch =
-    (~itemId: int, ~variations: array(int), ~status: User.itemStatus) => {
-  let user = getUser();
-  let updatedItems = {
-    let clone = Utils.cloneJsDict(user.items);
-    variations
-    |> Js.Array.forEach(variant => {
-         let item = Item.getItem(~itemId);
-         if (Item.getCanonicalVariant(~item, ~variant) != variant) {
-           raise(NotCanonicalVariant(itemId, variant));
-         };
-         let itemKey = User.getItemKey(~itemId, ~variation=variant);
-         let timeUpdated = Some(Js.Date.now() /. 1000.);
-         let userItem =
-           switch (user.items->Js.Dict.get(itemKey)) {
-           | Some(item) => {...item, status, timeUpdated}
-           | None => {status, note: "", timeUpdated}
-           };
-         clone->Js.Dict.set(itemKey, userItem);
-       });
-    clone;
-  };
-  let updatedUser = {...user, items: updatedItems};
-  api.dispatch(UpdateUser(updatedUser));
-  let item = Item.getItem(~itemId);
-  BAPI.setItemStatusBatch(
-    ~userId=user.id,
-    ~sessionId=sessionId^,
-    ~itemId,
-    ~variants=variations,
-    ~status,
-  )
-  |> ignore;
-  {
-    let%Repromise.Js responseResult =
-      makeAuthenticatedPostRequest(
-        ~url=
-          Constants.apiUrl
-          ++ "/@me4/items/"
-          ++ string_of_int(item.id)
-          ++ "/batch/status",
-        ~bodyJson=[
-          ("status", Json.Encode.int(User.itemStatusToJs(status))),
-          (
-            "variants",
-            Json.Encode.array(
-              Json.Encode.string,
-              variations->Belt.Array.map(string_of_int),
-            ),
-          ),
-        ],
-      );
-    handleServerResponse("/@me4/items/batch/status", responseResult);
-    Promise.resolved();
-  }
-  |> ignore;
-  if (numItemUpdatesLogged^ < 2
-      || updatedUser.items->Js.Dict.keys->Js.Array.length < 4) {
-    Analytics.Amplitude.logEventWithProperties(
-      ~eventName="Item Status Updated",
-      ~eventProperties={
-        "itemId": item.id,
-        "variants": variations,
         "status": User.itemStatusToJs(status),
       },
     );
@@ -305,16 +235,21 @@ let setItemNote = (~itemId: int, ~variation: int, ~note: string) => {
   };
   api.dispatch(UpdateUser(updatedUser));
   let item = Item.getItem(~itemId);
-  BAPI.setItemNote(
-    ~userId=user.id,
-    ~sessionId=sessionId^,
-    ~itemId,
-    ~variant=variation,
-    ~note,
-  )
+  {
+    let%Repromise responseResult =
+      BAPI.setItemNote(
+        ~userId=user.id,
+        ~sessionId=sessionId^,
+        ~itemId,
+        ~variant=variation,
+        ~note,
+      );
+    handleServerResponse("/@me/items/note", responseResult);
+    Promise.resolved();
+  }
   |> ignore;
   {
-    let%Repromise.Js responseResult =
+    let%Repromise.Js _responseResult =
       makeAuthenticatedPostRequest(
         ~url=
           Constants.apiUrl
@@ -325,7 +260,6 @@ let setItemNote = (~itemId: int, ~variation: int, ~note: string) => {
           ++ "/note",
         ~bodyJson=[("note", Json.Encode.string(note))],
       );
-    handleServerResponse("/@me5/items/note", responseResult);
     Promise.resolved();
   }
   |> ignore;
@@ -365,12 +299,17 @@ let removeItem = (~itemId, ~variation) => {
       );
       numItemRemovesLogged := numItemRemovesLogged^ + 1;
     };
-    BAPI.removeItem(
-      ~userId=user.id,
-      ~sessionId=sessionId^,
-      ~itemId,
-      ~variant=variation,
-    )
+    {
+      let%Repromise responseResult =
+        BAPI.removeItem(
+          ~userId=user.id,
+          ~sessionId=sessionId^,
+          ~itemId,
+          ~variant=variation,
+        );
+      handleServerResponse("/@me/items/remove", responseResult);
+      Promise.resolved();
+    }
     |> ignore;
     {
       let url =
@@ -379,7 +318,7 @@ let removeItem = (~itemId, ~variation) => {
         ++ string_of_int(item.id)
         ++ "/"
         ++ string_of_int(variation);
-      let%Repromise.Js responseResult =
+      let%Repromise.Js _responseResult =
         Fetch.fetchWithInit(
           url,
           Fetch.RequestInit.make(
@@ -396,7 +335,6 @@ let removeItem = (~itemId, ~variation) => {
             (),
           ),
         );
-      handleServerResponse("/@me3/items/remove", responseResult);
       Promise.resolved();
     }
     |> ignore;
@@ -410,13 +348,12 @@ let updateProfileText = (~profileText) => {
   let user = getUser();
   let updatedUser = {...user, profileText};
   api.dispatch(UpdateUser(updatedUser));
-  BAPI.updateProfileText(~userId=user.id, ~sessionId=sessionId^, ~profileText)
-  |> ignore;
   {
-    let%Repromise.Js responseResult =
-      makeAuthenticatedPostRequest(
-        ~url=Constants.apiUrl ++ "/@me/profileText",
-        ~bodyJson=[("text", Js.Json.string(profileText))],
+    let%Repromise responseResult =
+      BAPI.updateProfileText(
+        ~userId=user.id,
+        ~sessionId=sessionId^,
+        ~profileText,
       );
     handleServerResponse("/@me/profileText", responseResult);
     Promise.resolved();
@@ -429,54 +366,8 @@ let updateProfileText = (~profileText) => {
 };
 
 let patchMe = (~username=?, ~newPassword=?, ~email=?, ~oldPassword, ()) => {
-  let url = Constants.apiUrl ++ "/@me";
-  let%Repromise.JsExn response =
-    Fetch.fetchWithInit(
-      url,
-      Fetch.RequestInit.make(
-        ~method_=Patch,
-        ~body=
-          Fetch.BodyInit.make(
-            Js.Json.stringify(
-              Js.Json.object_(
-                Js.Dict.fromArray(
-                  Belt.Array.keepMap(
-                    [|
-                      Option.map(username, username =>
-                        ("username", Js.Json.string(username))
-                      ),
-                      Option.map(newPassword, newPassword =>
-                        ("password", Js.Json.string(newPassword))
-                      ),
-                      Option.map(email, email =>
-                        ("email", Js.Json.string(email))
-                      ),
-                      Some(("oldPassword", Js.Json.string(oldPassword))),
-                    |],
-                    x =>
-                    x
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ~headers=
-          Fetch.HeadersInit.make({
-            "X-Client-Version": Constants.gitCommitRef,
-            "Content-Type": "application/json",
-            "Authorization":
-              "Bearer " ++ Option.getWithDefault(sessionId^, ""),
-          }),
-        ~credentials=Include,
-        ~mode=CORS,
-        (),
-      ),
-    );
-  switch (Fetch.Response.status(response)) {
-  | 200 =>
-    let%Repromise.JsExn json = Fetch.Response.json(response);
-    let user = User.fromAPI(json);
-    api.dispatch(UpdateUser(user));
+  let user = getUser();
+  let%Repromise response =
     BAPI.patchMe(
       ~userId=user.id,
       ~sessionId=sessionId^,
@@ -484,8 +375,19 @@ let patchMe = (~username=?, ~newPassword=?, ~email=?, ~oldPassword, ()) => {
       ~newPassword,
       ~email,
       ~oldPassword,
-    )
-    |> ignore;
+    );
+  if (Fetch.Response.status(response) < 300) {
+    let user = getUser();
+    let updatedUser = {
+      ...user,
+      username: username->Belt.Option.getWithDefault(user.username),
+      email:
+        switch (email) {
+        | Some(email) => email != "" ? Some(email) : None
+        | None => user.email
+        },
+    };
+    api.dispatch(UpdateUser(updatedUser));
     Analytics.Amplitude.logEventWithProperties(
       ~eventName="Account Update Succeeded",
       ~eventProperties={
@@ -495,7 +397,7 @@ let patchMe = (~username=?, ~newPassword=?, ~email=?, ~oldPassword, ()) => {
       },
     );
     Promise.resolved(Ok());
-  | _ =>
+  } else {
     let%Repromise.JsExn error = Fetch.Response.text(response);
     Analytics.Amplitude.logEventWithProperties(
       ~eventName="Account Update Failed",
@@ -509,18 +411,13 @@ let toggleCatalogCheckboxSetting = (~enabled) => {
   let user = getUser();
   let updatedUser = {...user, enableCatalogCheckbox: enabled};
   api.dispatch(UpdateUser(updatedUser));
-  BAPI.updateSetting(
-    ~userId=user.id,
-    ~sessionId=sessionId^,
-    ~settingKey="enableCatalog",
-    ~settingValue=Js.Json.boolean(enabled),
-  )
-  |> ignore;
   {
-    let%Repromise.Js responseResult =
-      makeAuthenticatedPostRequest(
-        ~url=Constants.apiUrl ++ "/@me/toggleCatalogCheckboxSetting",
-        ~bodyJson=[("enabled", Js.Json.boolean(enabled))],
+    let%Repromise responseResult =
+      BAPI.updateSetting(
+        ~userId=user.id,
+        ~sessionId=sessionId^,
+        ~settingKey="enableCatalog",
+        ~settingValue=Js.Json.boolean(enabled),
       );
     handleServerResponse("/@me/toggleCatalogCheckboxSetting", responseResult);
     Promise.resolved();
@@ -536,7 +433,7 @@ let errorQuotationMarksRegex = [%bs.re {|/^"(.*)"$/|}];
 let register = (~username, ~email, ~password) => {
   let%Repromise.JsExn response =
     Fetch.fetchWithInit(
-      Constants.apiUrl ++ "/register",
+      Constants.bapiUrl ++ "/register2",
       Fetch.RequestInit.make(
         ~method_=Post,
         ~body=
@@ -559,8 +456,7 @@ let register = (~username, ~email, ~password) => {
         (),
       ),
     );
-  switch (Fetch.Response.status(response)) {
-  | 200 =>
+  if (Fetch.Response.status(response) < 300) {
     let%Repromise.JsExn json = Fetch.Response.json(response);
     updateSessionId(
       json |> Json.Decode.(optional(field("sessionId", string))),
@@ -570,7 +466,7 @@ let register = (~username, ~email, ~password) => {
     Analytics.Amplitude.setUserId(~userId=Some(user.id));
     Analytics.Amplitude.setUsername(~username, ~email);
     Promise.resolved(Ok(user));
-  | _ =>
+  } else {
     let%Repromise.JsExn text = Fetch.Response.text(response);
     let result = text |> Js.Re.exec_(errorQuotationMarksRegex);
     let text =
@@ -587,7 +483,7 @@ let register = (~username, ~email, ~password) => {
 let login = (~username, ~password) => {
   let%Repromise.JsExn response =
     Fetch.fetchWithInit(
-      Constants.apiUrl ++ "/login2",
+      Constants.bapiUrl ++ "/login",
       Fetch.RequestInit.make(
         ~method_=Post,
         ~body=
@@ -611,8 +507,7 @@ let login = (~username, ~password) => {
         (),
       ),
     );
-  switch (Fetch.Response.status(response)) {
-  | 200 =>
+  if (Fetch.Response.status(response) < 300) {
     let%Repromise.JsExn json = Fetch.Response.json(response);
     updateSessionId(
       json |> Json.Decode.(optional(field("sessionId", string))),
@@ -621,7 +516,8 @@ let login = (~username, ~password) => {
     api.dispatch(Login(user));
     Analytics.Amplitude.setUserId(~userId=Some(user.id));
     Promise.resolved(Ok(user));
-  | _ => Promise.resolved(Error())
+  } else {
+    Promise.resolved(Error());
   };
 };
 
@@ -629,15 +525,16 @@ let logout = () => {
   api.dispatch(Logout);
   Dom.Storage.localStorage |> Dom.Storage.removeItem("sessionId");
   Analytics.Amplitude.setUserId(~userId=None);
-  updateSessionId(None);
   ReasonReactRouter.push("/");
+  let sessionId = sessionId^;
+  updateSessionId(None);
   let%Repromise.JsExn response =
     Fetch.fetchWithInit(
-      Constants.apiUrl ++ "/logout",
+      Constants.bapiUrl ++ "/logout",
       Fetch.RequestInit.make(
         ~method_=Post,
         ~headers=?
-          Option.map(sessionId^, sessionId =>
+          Option.map(sessionId, sessionId =>
             Fetch.HeadersInit.make({
               "X-Client-Version": Constants.gitCommitRef,
               "Authorization": "Bearer " ++ sessionId,
@@ -652,38 +549,39 @@ let logout = () => {
 };
 
 let init = () => {
-  {
-    let%Repromise.JsExn response =
-      Fetch.fetchWithInit(
-        Constants.apiUrl ++ "/@me2",
-        Fetch.RequestInit.make(
-          ~method_=Get,
-          ~headers=?
-            Option.map(sessionId^, sessionId =>
+  switch (sessionId^) {
+  | Some(sessionId) =>
+    {
+      let%Repromise.JsExn response =
+        Fetch.fetchWithInit(
+          Constants.bapiUrl ++ "/@me",
+          Fetch.RequestInit.make(
+            ~method_=Get,
+            ~headers=
               Fetch.HeadersInit.make({
                 "X-Client-Version": Constants.gitCommitRef,
                 "Authorization": "Bearer " ++ sessionId,
-              })
-            ),
-          ~credentials=Include,
-          ~mode=CORS,
-          (),
-        ),
-      );
-    switch (Fetch.Response.status(response)) {
-    | 200 =>
-      let%Repromise.JsExn json = Fetch.Response.json(response);
-      updateSessionId(
-        json |> Json.Decode.(optional(field("sessionId", string))),
-      );
-      let user = User.fromAPI(json);
-      api.dispatch(Login(user));
-      Analytics.Amplitude.setUserId(~userId=Some(user.id));
-      Promise.resolved();
-    | _ =>
-      api.dispatch(FetchMeFailed);
-      Promise.resolved();
-    };
-  }
-  |> ignore;
+              }),
+            ~credentials=Include,
+            ~mode=CORS,
+            (),
+          ),
+        );
+      if (Fetch.Response.status(response) < 400) {
+        let%Repromise.JsExn json = Fetch.Response.json(response);
+        updateSessionId(
+          json |> Json.Decode.(optional(field("sessionId", string))),
+        );
+        let user = User.fromAPI(json);
+        api.dispatch(Login(user));
+        Analytics.Amplitude.setUserId(~userId=Some(user.id));
+        Promise.resolved();
+      } else {
+        api.dispatch(FetchMeFailed);
+        Promise.resolved();
+      };
+    }
+    |> ignore
+  | None => ()
+  };
 };

@@ -92,12 +92,30 @@ let make = () => {
 
   let pathString =
     "/" ++ Js.Array.joinWith("/", Belt.List.toArray(url.path));
+  React.useEffect0(() => {
+    Analytics.Amplitude.logEventWithProperties(
+      ~eventName="Session Started",
+      ~eventProperties={
+        "path":
+          pathString
+          ++ (
+            switch (url.search) {
+            | "" => ""
+            | search => "?" ++ search
+            }
+          )
+          ++ (
+            switch (url.hash) {
+            | "" => ""
+            | hash => "#" ++ hash
+            }
+          ),
+      },
+    );
+    None;
+  });
   React.useEffect1(
     () => {
-      Analytics.Amplitude.logEventWithProperties(
-        ~eventName="Page Viewed",
-        ~eventProperties={"path": pathString},
-      );
       switch (gtag) {
       | Some(gtag) =>
         gtag(. "config", Constants.gtagId, {"page_path": pathString})

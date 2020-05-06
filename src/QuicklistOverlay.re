@@ -26,7 +26,7 @@ module Styles = {
     ]);
   let button =
     style([
-      backgroundColor(hex("e6f2e8")),
+      backgroundColor(Colors.white),
       color(Colors.green),
       borderWidth(zero),
       borderRadius(px(4)),
@@ -87,7 +87,10 @@ let make = () => {
   <div
     className={Cn.make([
       Styles.root,
-      Cn.ifTrue(Styles.shown, visibility != Hidden && url.path != []),
+      Cn.ifTrue(
+        Styles.shown,
+        quicklist != None || visibility != Hidden && url.path != [],
+      ),
       Cn.ifTrue(Styles.shownPanel, visibility == Panel),
       Cn.ifTrue(Styles.rootWithQuicklist, quicklist != None),
     ])}>

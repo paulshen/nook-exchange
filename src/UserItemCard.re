@@ -92,6 +92,8 @@ module Styles = {
     ]);
   let recipe =
     style([marginTop(px(6)), textAlign(center), fontSize(px(12))]);
+  let quicklistButton =
+    style([position(absolute), top(px(8)), right(px(8))]);
 };
 
 module StarIcon = {
@@ -127,6 +129,7 @@ let make =
     ) => {
   let item = Item.getItem(~itemId);
   let viewerItem = UserStore.useItem(~itemId, ~variation);
+  let hasQuicklist = QuicklistStore.useHasQuicklist();
 
   <div
     className={Cn.make([
@@ -271,5 +274,12 @@ let make =
             | None => React.null
             }}
          </>}
+    {hasQuicklist
+       ? <QuicklistButton
+           itemId
+           variant=variation
+           className=Styles.quicklistButton
+         />
+       : React.null}
   </div>;
 };

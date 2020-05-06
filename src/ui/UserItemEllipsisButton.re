@@ -106,8 +106,8 @@ let make = (~item: Item.t, ~userItem: User.item, ~variation, ~className) => {
                </button>
                {switch (userItem.status) {
                 | CanCraft
-                | ForTrade
-                | CatalogOnly => React.null
+                | ForTrade => React.null
+                | CatalogOnly
                 | Wishlist =>
                   <>
                     {!Item.isRecipe(~item)
@@ -149,7 +149,7 @@ let make = (~item: Item.t, ~userItem: User.item, ~variation, ~className) => {
                            {React.string("Move to Can Craft")}
                          </button>
                        : React.null}
-                    {me.enableCatalogCheckbox
+                    {me.enableCatalogCheckbox && userItem.status != CatalogOnly
                        ? <button
                            onClick={_ => {
                              UserStore.setItemStatus(

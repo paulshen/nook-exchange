@@ -28,7 +28,7 @@ module Styles = {
   let catalogStatusButton =
     style([
       fontSize(px(14)),
-      opacity(0.),
+      opacity(0.5),
       cursor(`default),
       transition(~duration=200, "all"),
       media("(hover: none)", [opacity(0.8)]),

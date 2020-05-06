@@ -146,7 +146,7 @@ module Styles = {
       right(px(10)),
       selector("." ++ card ++ ":hover &", [opacity(0.8)]),
     ]);
-  let wishlistEllipsisButton =
+  let ellipsisButton =
     style([
       position(absolute),
       bottom(px(8)),
@@ -583,11 +583,11 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
               },
             )}
          </div>
-         <WishlistEllipsisButton
+         <UserItemEllipsisButton
            item
            userItem
            variation
-           className=Styles.wishlistEllipsisButton
+           className=Styles.ellipsisButton
          />
        </>
      | _ =>

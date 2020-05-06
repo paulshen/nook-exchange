@@ -149,24 +149,24 @@ let make = (~item: Item.t, ~userItem: User.item, ~variation, ~className) => {
                            {React.string("Move to Can Craft")}
                          </button>
                        : React.null}
+                    {me.enableCatalogCheckbox
+                       ? <button
+                           onClick={_ => {
+                             UserStore.setItemStatus(
+                               ~itemId=item.id,
+                               ~variation,
+                               ~status=CatalogOnly,
+                             )
+                           }}
+                           className=Styles.menuItem>
+                           {React.string(
+                              Item.isRecipe(~item)
+                                ? "Move DIY to Catalog" : "Move to Catalog",
+                            )}
+                         </button>
+                       : React.null}
                   </>
                 }}
-               {me.enableCatalogCheckbox
-                  ? <button
-                      onClick={_ => {
-                        UserStore.setItemStatus(
-                          ~itemId=item.id,
-                          ~variation,
-                          ~status=CatalogOnly,
-                        )
-                      }}
-                      className=Styles.menuItem>
-                      {React.string(
-                         Item.isRecipe(~item)
-                           ? "Move DIY to Catalog" : "Move to Catalog",
-                       )}
-                    </button>
-                  : React.null}
                <button
                  onClick={_ => {
                    UserStore.removeItem(~itemId=item.id, ~variation)

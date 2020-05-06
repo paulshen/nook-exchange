@@ -45,6 +45,7 @@ module Styles = {
       margin2(~v=zero, ~h=px(16)),
       top(zero),
       media("(max-width: 640px)", [margin2(~v=zero, ~h=px(8))]),
+      media("(max-width: 400px)", [margin2(~v=zero, ~h=px(4))]),
     ]);
   let listLinkEmoji =
     style([

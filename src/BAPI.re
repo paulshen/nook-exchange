@@ -59,6 +59,22 @@ let setItemNote = (~userId, ~sessionId, ~itemId, ~variant, ~note) => {
   Promise.resolved(responseResult);
 };
 
+let setItemPriority = (~sessionId, ~itemId, ~variant, ~isPriority) => {
+  let%Repromise.Js responseResult =
+    makeAuthenticatedPostRequest(
+      ~url=
+        Constants.bapiUrl
+        ++ "/@me/items/"
+        ++ string_of_int(itemId)
+        ++ "/"
+        ++ string_of_int(variant)
+        ++ "/priority",
+      ~bodyJson=[("isPriority", Json.Encode.bool(isPriority))],
+      ~sessionId,
+    );
+  Promise.resolved(responseResult);
+};
+
 let removeItem = (~userId, ~sessionId, ~itemId, ~variant) => {
   let url =
     Constants.bapiUrl

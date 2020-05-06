@@ -278,12 +278,12 @@ let setItemNote = (~itemId: int, ~variation: int, ~note: string) => {
 };
 
 let setItemPriorityTimestamp =
-    (~itemId: int, ~variation: int, ~priorityTimestamp: option(float)) => {
+    (~itemId: int, ~variant: int, ~isPriority: bool) => {
   let user = getUser();
-  let itemKey = User.getItemKey(~itemId, ~variation);
+  let itemKey = User.getItemKey(~itemId, ~variation=variant);
   let userItem = {
     ...Belt.Option.getExn(user.items->Js.Dict.get(itemKey)),
-    priorityTimestamp,
+    priorityTimestamp: isPriority ? Some(Js.Date.now()) : None,
   };
   let updatedUser = {
     ...user,
@@ -295,12 +295,24 @@ let setItemPriorityTimestamp =
   };
   api.dispatch(UpdateUser(updatedUser));
   let item = Item.getItem(~itemId);
+  {
+    let%Repromise responseResult =
+      BAPI.setItemPriority(
+        ~sessionId=sessionId^,
+        ~itemId,
+        ~variant,
+        ~isPriority,
+      );
+    handleServerResponse("/@me/items/priority", responseResult);
+    Promise.resolved();
+  }
+  |> ignore;
   Analytics.Amplitude.logEventWithProperties(
-    ~eventName="Item Priority Timestamp Updated",
+    ~eventName="Item Priority Updated",
     ~eventProperties={
       "itemId": item.id,
-      "variant": variation,
-      "priorityTimestamp": priorityTimestamp,
+      "variant": variant,
+      "isPriority": isPriority,
     },
   );
   {
@@ -309,8 +321,8 @@ let setItemPriorityTimestamp =
       ++ "/@me4/items/"
       ++ string_of_int(item.id)
       ++ "/"
-      ++ string_of_int(variation)
-      ++ "/priorityTimestamp";
+      ++ string_of_int(variant)
+      ++ "/priority";
     let%Repromise.Js responseResult =
       Fetch.fetchWithInit(
         url,
@@ -320,12 +332,7 @@ let setItemPriorityTimestamp =
             Fetch.BodyInit.make(
               Js.Json.stringify(
                 Json.Encode.object_([
-                  (
-                    "timestamp",
-                    Json.Encode.float(
-                      priorityTimestamp->Belt.Option.getWithDefault(0.),
-                    ),
-                  ),
+                  ("isPriority", Json.Encode.bool(isPriority)),
                 ]),
               ),
             ),

@@ -313,7 +313,7 @@ let getUserItemSort =
                 ? (-1.) : 0.
             | None => 0.
             },
-            Option.getWithDefault(aPriorityTimestamp, max_float),
+            -. Option.getWithDefault(aPriorityTimestamp, 0.),
             Item.categories
             |> Js.Array.indexOf(aItem.category)
             |> float_of_int,
@@ -328,7 +328,7 @@ let getUserItemSort =
                 ? (-1.) : 0.
             | None => 0.
             },
-            Option.getWithDefault(bPriorityTimestamp, max_float),
+            -. Option.getWithDefault(bPriorityTimestamp, 0.),
             Item.categories
             |> Js.Array.indexOf(bItem.category)
             |> float_of_int,

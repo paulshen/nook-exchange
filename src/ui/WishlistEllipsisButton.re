@@ -39,6 +39,13 @@ module Styles = {
       padding2(~v=px(4), ~h=px(12)),
       hover([backgroundColor(Colors.faintGray)]),
     ]);
+  let menuItemStar =
+    style([
+      marginLeft(px(6)),
+      fontSize(px(10)),
+      position(relative),
+      top(px(-1)),
+    ]);
   let menuItemRemove = style([color(Colors.red)]);
 };
 
@@ -77,26 +84,24 @@ let make = (~item: Item.t, ~userItem: User.item, ~variation, ~className) => {
            render={_renderArgs =>
              <div className=Styles.menu>
                <button
-                 onClick={_ =>
-                   if (userItem.priorityTimestamp !== None) {
-                     UserStore.setItemPriorityTimestamp(
-                       ~itemId=item.id,
-                       ~variation,
-                       ~priorityTimestamp=None,
-                     );
-                   } else {
-                     UserStore.setItemPriorityTimestamp(
-                       ~itemId=item.id,
-                       ~variation,
-                       ~priorityTimestamp=Some(Js.Date.now()),
-                     );
-                   }
-                 }
+                 onClick={_ => {
+                   UserStore.setItemPriorityTimestamp(
+                     ~itemId=item.id,
+                     ~variant=variation,
+                     ~isPriority=userItem.priorityTimestamp == None,
+                   );
+                   setShowEllipsisMenu(_ => false);
+                 }}
                  className=Styles.menuItem>
                  {if (userItem.priorityTimestamp != None) {
-                    React.string("Unfavorite");
+                    React.string("Remove star");
                   } else {
-                    React.string("Favorite");
+                    <>
+                      {React.string("Move to front")}
+                      <span className=Styles.menuItemStar>
+                        {React.string({j|⭐️|j})}
+                      </span>
+                    </>;
                   }}
                </button>
                {switch (userItem.status) {

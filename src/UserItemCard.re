@@ -5,17 +5,9 @@ module Styles = {
       position(absolute),
       top(px(6)),
       left(px(6)),
-      opacity(0.),
-      transition(~duration=200, "all"),
+      display(flexBox),
     ]);
-  let starIcon =
-    style([
-      position(absolute),
-      top(px(6)),
-      left(px(8)),
-      opacity(1.),
-      transition(~duration=200, "all"),
-    ]);
+  let metaIcon = style([opacity(0.), transition(~duration=200, "all")]);
   let topRightIcon =
     style([
       position(absolute),
@@ -69,7 +61,7 @@ module Styles = {
         "(hover: hover)",
         [
           hover([
-            selector("& ." ++ metaIcons, [opacity(1.)]),
+            selector("& ." ++ metaIcon, [opacity(1.)]),
             selector("& ." ++ topRightIcon, [opacity(1.)]),
             selector("& ." ++ catalogStatusButton, [opacity(1.)]),
             selector(
@@ -102,6 +94,23 @@ module Styles = {
     ]);
   let recipe =
     style([marginTop(px(6)), textAlign(center), fontSize(px(12))]);
+};
+
+module StarIcon = {
+  module Styles = {
+    open Css;
+    let icon =
+      style([
+        height(px(24)),
+        padding2(~v=zero, ~h=px(1)),
+        cursor(`default),
+      ]);
+  };
+
+  [@react.component]
+  let make = () => {
+    <div className=Styles.icon> {React.string({j|⭐️|j})} </div>;
+  };
 };
 
 [@react.component]
@@ -139,11 +148,6 @@ let make =
             ~variant=variation != 0 ? Some(variation) : None,
           )}
           className=Styles.nameLink>
-          {if (userItem.priorityTimestamp != None) {
-             React.string({j|⭐️|j});
-           } else {
-             React.null;
-           }}
           {React.string(Item.getName(item))}
         </Link>
       </div>
@@ -163,12 +167,18 @@ let make =
     </div>
     {!onCatalogPage
        ? <div className=Styles.metaIcons>
+           {if (userItem.priorityTimestamp !== None) {
+              <StarIcon />;
+            } else {
+              React.null;
+            }}
            {switch (item.recipe) {
-            | Some(recipe) => <ItemCard.RecipeIcon recipe />
+            | Some(recipe) =>
+              <ItemCard.RecipeIcon recipe className=Styles.metaIcon />
             | None => React.null
             }}
            {if (item.orderable) {
-              <ItemCard.OrderableIcon />;
+              <ItemCard.OrderableIcon className=Styles.metaIcon />;
             } else {
               React.null;
             }}

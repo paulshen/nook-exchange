@@ -32,7 +32,9 @@ let getNumResultsPerPage = () => {
   open Webapi.Dom;
   let windowWidth = window |> Window.innerWidth;
   if (windowWidth >= 1520) {
-    30;
+    40;
+  } else if (windowWidth >= 1200) {
+    32;
   } else {
     24;
   };

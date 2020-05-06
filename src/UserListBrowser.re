@@ -109,13 +109,13 @@ let getUrl =
 
 let getNumResultsPerPage = (~viewportWidth) =>
   if (viewportWidth >= 1440) {
-    35;
+    49;
   } else if (viewportWidth >= 1240) {
-    30;
+    42;
   } else if (viewportWidth >= 1040) {
-    25;
+    35;
   } else if (viewportWidth >= 860) {
-    24;
+    28;
   } else if (viewportWidth >= 640) {
     21;
   } else {

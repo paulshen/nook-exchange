@@ -277,8 +277,8 @@ let setItemNote = (~itemId: int, ~variation: int, ~note: string) => {
   };
 };
 
-let setItemPriorityTimestamp =
-    (~itemId: int, ~variant: int, ~isPriority: bool) => {
+let didLogItemPriority = ref(false);
+let setItemPriority = (~itemId: int, ~variant: int, ~isPriority: bool) => {
   let user = getUser();
   let itemKey = User.getItemKey(~itemId, ~variation=variant);
   let userItem = {
@@ -307,14 +307,17 @@ let setItemPriorityTimestamp =
     Promise.resolved();
   }
   |> ignore;
-  Analytics.Amplitude.logEventWithProperties(
-    ~eventName="Item Priority Updated",
-    ~eventProperties={
-      "itemId": item.id,
-      "variant": variant,
-      "isPriority": isPriority,
-    },
-  );
+  if (! didLogItemPriority^) {
+    Analytics.Amplitude.logEventWithProperties(
+      ~eventName="Item Priority Updated",
+      ~eventProperties={
+        "itemId": item.id,
+        "variant": variant,
+        "isPriority": isPriority,
+      },
+    );
+    didLogItemPriority := true;
+  };
   {
     let url =
       Constants.apiUrl

@@ -85,7 +85,7 @@ let make = (~item: Item.t, ~userItem: User.item, ~variation, ~className) => {
              <div className=Styles.menu>
                <button
                  onClick={_ => {
-                   UserStore.setItemPriorityTimestamp(
+                   UserStore.setItemPriority(
                      ~itemId=item.id,
                      ~variant=variation,
                      ~isPriority=userItem.priorityTimestamp == None,

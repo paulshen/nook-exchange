@@ -22,6 +22,7 @@ module Styles = {
       justifyContent(spaceBetween),
       alignItems(center),
       padding2(~v=px(8), ~h=px(8)),
+      height(px(33)),
       transition(~duration=200, "all"),
     ]);
   let button =
@@ -39,6 +40,13 @@ module Styles = {
       color(Colors.white),
       marginRight(px(8)),
       textDecoration(none),
+      hover([textDecoration(underline)]),
+    ]);
+  let hidePanelLink =
+    style([
+      marginLeft(px(8)),
+      textDecoration(none),
+      hover([textDecoration(underline)]),
     ]);
   let shownPanel =
     style([
@@ -95,36 +103,40 @@ let make = () => {
       Cn.ifTrue(Styles.rootWithQuicklist, quicklist != None),
     ])}>
     <div className=Styles.introBar>
-      {switch (quicklist) {
-       | Some(quicklist) =>
-         let numItems = quicklist.itemIds->Js.Array.length;
-         <button
-           onClick={_ => {
-             setVisibility(visibility =>
-               switch (visibility) {
-               | Bar => Panel
-               | _ => Bar
-               }
-             )
-           }}
-           className=Styles.button>
-           {React.string(
-              visibility == Panel
-                ? "Hide Panel"
-                : numItems > 0
+      {visibility == Panel
+         ? <a
+             href="#"
+             onClick={e => {
+               ReactEvent.Mouse.preventDefault(e);
+               setVisibility(_ => Bar);
+             }}
+             className=Styles.hidePanelLink>
+             {React.string("Hide Panel")}
+           </a>
+         : (
+           switch (quicklist) {
+           | Some(quicklist) =>
+             let numItems = quicklist.itemIds->Js.Array.length;
+             <button
+               onClick={_ => {setVisibility(_ => Panel)}}
+               className=Styles.button>
+               {React.string(
+                  numItems > 0
                     ? "See "
                       ++ string_of_int(numItems)
                       ++ " item"
                       ++ (numItems == 1 ? "" : "s")
                     : "Select items!",
-            )}
-         </button>;
-       | None =>
-         <button
-           onClick={_ => {QuicklistStore.startList()}} className=Styles.button>
-           {React.string("Start a quick list")}
-         </button>
-       }}
+                )}
+             </button>;
+           | None =>
+             <button
+               onClick={_ => {QuicklistStore.startList()}}
+               className=Styles.button>
+               {React.string("Start a quick list")}
+             </button>
+           }
+         )}
       {switch (quicklist) {
        | Some(_quicklist) =>
          <a
@@ -132,9 +144,10 @@ let make = () => {
            onClick={e => {
              ReactEvent.Mouse.preventDefault(e);
              QuicklistStore.removeList();
+             setVisibility(_ => Bar);
            }}
            className=Styles.barLink>
-           {React.string("Cancel")}
+           {React.string(visibility == Panel ? "Discard list" : "Cancel")}
          </a>
        | None =>
          <a
@@ -168,8 +181,10 @@ let make = () => {
          }}
       </div>
       <div className=Styles.saveRow>
-        <button onClick={_ => {Js.log("hi")}} className=Styles.saveButton>
-          {React.string("Save and generate URL")}
+        <button
+          onClick={_ => {QuicklistStore.saveList() |> ignore}}
+          className=Styles.saveButton>
+          {React.string("Save and share quick list")}
         </button>
       </div>
     </div>

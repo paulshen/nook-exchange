@@ -72,3 +72,15 @@ let removeItem = (~itemId, ~variant) => {
 let removeList = () => {
   api.dispatch(RemoveList);
 };
+
+let saveList = () => {
+  let list = api.getState()->Belt.Option.getExn;
+  let%Repromise responseResult =
+    BAPI.createItemList(~sessionId=UserStore.sessionId^, ~items=list.itemIds);
+  UserStore.handleServerResponse("/item-lists", responseResult);
+  let response = Belt.Result.getExn(responseResult);
+  let%Repromise.JsExn json = Fetch.Response.json(response);
+  let listId = json |> Json.Decode.(field("id", string));
+  api.dispatch(SaveList(listId));
+  Promise.resolved();
+};

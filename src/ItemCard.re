@@ -14,6 +14,7 @@ module Styles = {
       padding3(~top=px(5), ~bottom=px(3), ~h=px(4)),
       transition(~duration=200, "all"),
       cursor(pointer),
+      whiteSpace(nowrap),
       lastChild([marginRight(zero)]),
       hover([
         important(backgroundColor(Colors.green)),
@@ -145,7 +146,7 @@ module Styles = {
       right(px(10)),
       selector("." ++ card ++ ":hover &", [opacity(0.8)]),
     ]);
-  let wishlistEllipsisButton =
+  let ellipsisButton =
     style([
       position(absolute),
       bottom(px(8)),
@@ -223,7 +224,7 @@ module RecipeIcon = {
   external recipeIcon: string = "default";
 
   [@react.component]
-  let make = (~recipe: Item.recipe, ~isRecipe=?, ~onClick=?, ()) => {
+  let make = (~recipe: Item.recipe, ~isRecipe=?, ~onClick=?, ~className=?, ()) => {
     let (showLayer, setShowLayer) = React.useState(() => false);
     let iconRef = React.useRef(Js.Nullable.null);
     let isMountedRef = React.useRef(true);
@@ -236,6 +237,7 @@ module RecipeIcon = {
         className={Cn.make([
           MetaIconStyles.icon,
           Cn.ifTrue(MetaIconStyles.iconClickable, onClick !== None),
+          Cn.unpack(className),
         ])}
         onMouseEnter={_ => {
           Js.Global.setTimeout(() => setShowLayer(_ => true), 10) |> ignore
@@ -298,14 +300,14 @@ module OrderableIcon = {
   external orderableIcon: string = "default";
 
   [@react.component]
-  let make = () => {
+  let make = (~className=?, ()) => {
     <ReactAtmosphere.Tooltip
       text={<OrderableLayer />}
       options={Obj.magic({"placement": "bottom-start"})}>
       {({onMouseEnter, onMouseLeave, ref}) =>
          <img
            src=orderableIcon
-           className=MetaIconStyles.icon
+           className={Cn.make([MetaIconStyles.icon, Cn.unpack(className)])}
            onMouseEnter
            onMouseLeave
            ref={ReactDOMRe.Ref.domRef(ref)}
@@ -581,34 +583,12 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
               },
             )}
          </div>
-         {userItemStatus == Some(Wishlist)
-            ? <WishlistEllipsisButton
-                item
-                variation
-                className=Styles.wishlistEllipsisButton
-              />
-            : <RemoveButton
-                className=Styles.removeButton
-                onClick={_ => {
-                  let status =
-                    switch (showCatalogCheckbox, userItem.status) {
-                    | (_, CatalogOnly) => raise(Constants.Uhoh)
-                    | (false, _) => None
-                    | (true, CanCraft)
-                    | (true, ForTrade) => Some(User.CatalogOnly)
-                    | (true, Wishlist) => None
-                    };
-                  switch (status) {
-                  | Some(status) =>
-                    UserStore.setItemStatus(
-                      ~itemId=item.id,
-                      ~variation,
-                      ~status,
-                    )
-                  | None => UserStore.removeItem(~itemId=item.id, ~variation)
-                  };
-                }}
-              />}
+         <UserItemEllipsisButton
+           item
+           userItem
+           variation
+           className=Styles.ellipsisButton
+         />
        </>
      | _ =>
        <div className={Cn.make([Styles.bottomBar, Styles.statusButtons])}>

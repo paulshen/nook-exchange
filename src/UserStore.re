@@ -156,7 +156,7 @@ let setItemStatus = (~itemId: int, ~variation: int, ~status: User.itemStatus) =>
   let userItem =
     switch (user.items->Js.Dict.get(itemKey)) {
     | Some(item) => {...item, status, timeUpdated}
-    | None => {status, note: "", timeUpdated}
+    | None => {status, note: "", priorityTimestamp: None, timeUpdated}
     };
   let updatedUser = {
     ...user,
@@ -275,6 +275,86 @@ let setItemNote = (~itemId: int, ~variation: int, ~note: string) => {
     );
     numItemUpdatesLogged := numItemUpdatesLogged^ + 1;
   };
+};
+
+let didLogItemPriority = ref(false);
+let setItemPriority = (~itemId: int, ~variant: int, ~isPriority: bool) => {
+  let user = getUser();
+  let itemKey = User.getItemKey(~itemId, ~variation=variant);
+  let userItem = {
+    ...Belt.Option.getExn(user.items->Js.Dict.get(itemKey)),
+    priorityTimestamp: isPriority ? Some(Js.Date.now()) : None,
+  };
+  let updatedUser = {
+    ...user,
+    items: {
+      let clone = Utils.cloneJsDict(user.items);
+      clone->Js.Dict.set(itemKey, userItem);
+      clone;
+    },
+  };
+  api.dispatch(UpdateUser(updatedUser));
+  let item = Item.getItem(~itemId);
+  {
+    let%Repromise responseResult =
+      BAPI.setItemPriority(
+        ~sessionId=sessionId^,
+        ~itemId,
+        ~variant,
+        ~isPriority,
+      );
+    handleServerResponse("/@me/items/priority", responseResult);
+    Promise.resolved();
+  }
+  |> ignore;
+  if (! didLogItemPriority^) {
+    Analytics.Amplitude.logEventWithProperties(
+      ~eventName="Item Priority Updated",
+      ~eventProperties={
+        "itemId": item.id,
+        "variant": variant,
+        "isPriority": isPriority,
+      },
+    );
+    didLogItemPriority := true;
+  };
+  {
+    let url =
+      Constants.apiUrl
+      ++ "/@me4/items/"
+      ++ string_of_int(item.id)
+      ++ "/"
+      ++ string_of_int(variant)
+      ++ "/priority";
+    let%Repromise.Js responseResult =
+      Fetch.fetchWithInit(
+        url,
+        Fetch.RequestInit.make(
+          ~method_=Post,
+          ~body=
+            Fetch.BodyInit.make(
+              Js.Json.stringify(
+                Json.Encode.object_([
+                  ("isPriority", Json.Encode.bool(isPriority)),
+                ]),
+              ),
+            ),
+          ~headers=
+            Fetch.HeadersInit.make({
+              "X-Client-Version": Constants.gitCommitRef,
+              "Content-Type": "application/json",
+              "Authorization":
+                "Bearer " ++ Option.getWithDefault(sessionId^, ""),
+            }),
+          ~credentials=Include,
+          ~mode=CORS,
+          (),
+        ),
+      );
+    handleServerResponse(url, responseResult);
+    Promise.resolved();
+  }
+  |> ignore;
 };
 
 let numItemRemovesLogged = ref(0);

@@ -5,9 +5,9 @@ module Styles = {
       position(absolute),
       top(px(6)),
       left(px(6)),
-      opacity(0.),
-      transition(~duration=200, "all"),
+      display(flexBox),
     ]);
+  let metaIcon = style([opacity(0.), transition(~duration=200, "all")]);
   let topRightIcon =
     style([
       position(absolute),
@@ -23,13 +23,10 @@ module Styles = {
       transition(~duration=200, "all"),
     ]);
   let topRightIconSelected = style([opacity(1.)]);
-  let wishlistEllipsisButton =
+  let ellipsisButton =
     style([position(absolute), top(px(8)), right(px(8))]);
   let catalogStatusButton =
     style([
-      position(absolute),
-      top(px(8)),
-      left(px(8)),
       fontSize(px(14)),
       opacity(0.),
       cursor(`default),
@@ -61,7 +58,7 @@ module Styles = {
         "(hover: hover)",
         [
           hover([
-            selector("& ." ++ metaIcons, [opacity(1.)]),
+            selector("& ." ++ metaIcon, [opacity(1.)]),
             selector("& ." ++ topRightIcon, [opacity(1.)]),
             selector("& ." ++ catalogStatusButton, [opacity(1.)]),
             selector(
@@ -94,6 +91,25 @@ module Styles = {
     ]);
   let recipe =
     style([marginTop(px(6)), textAlign(center), fontSize(px(12))]);
+};
+
+module StarIcon = {
+  module Styles = {
+    open Css;
+    let icon =
+      style([
+        height(px(24)),
+        padding2(~v=zero, ~h=px(2)),
+        fontSize(px(12)),
+        lineHeight(px(26)),
+        cursor(`default),
+      ]);
+  };
+
+  [@react.component]
+  let make = () => {
+    <div className=Styles.icon> {React.string({j|⭐️|j})} </div>;
+  };
 };
 
 [@react.component]
@@ -148,47 +164,63 @@ let make =
        | _ => React.null
        }}
     </div>
-    {!onCatalogPage
-       ? <div className=Styles.metaIcons>
-           {switch (item.recipe) {
-            | Some(recipe) => <ItemCard.RecipeIcon recipe />
-            | None => React.null
-            }}
-           {if (item.orderable) {
-              <ItemCard.OrderableIcon />;
-            } else {
-              React.null;
-            }}
-         </div>
-       : (
-         switch (userItem.status) {
-         | CanCraft
-         | ForTrade =>
-           <ReactAtmosphere.Tooltip
-             text={React.string(
-               "In "
-               ++ (userItem.status == ForTrade ? "For Trade" : "Can Craft"),
-             )}
-             options={Obj.magic({"modifiers": None})}>
-             {(
-                ({onMouseEnter, onMouseLeave, onFocus, onBlur, ref}) =>
-                  <div
-                    onMouseEnter
-                    onMouseLeave
-                    onFocus
-                    onBlur
-                    className=Styles.catalogStatusButton
-                    ref={ReactDOMRe.Ref.domRef(ref)}>
-                    {React.string(
-                       userItem.status == ForTrade ? {j|🤝|j} : {j|🔨|j},
-                     )}
-                  </div>
-              )}
-           </ReactAtmosphere.Tooltip>
-         | CatalogOnly => React.null
-         | Wishlist => raise(Constants.Uhoh)
-         }
-       )}
+    <div className=Styles.metaIcons>
+      {!onCatalogPage
+         ? <>
+             {if (userItem.priorityTimestamp !== None) {
+                <StarIcon />;
+              } else {
+                React.null;
+              }}
+             {switch (item.recipe) {
+              | Some(recipe) =>
+                <ItemCard.RecipeIcon recipe className=Styles.metaIcon />
+              | None => React.null
+              }}
+             {if (item.orderable) {
+                <ItemCard.OrderableIcon className=Styles.metaIcon />;
+              } else {
+                React.null;
+              }}
+           </>
+         : <>
+             {if (userItem.priorityTimestamp !== None) {
+                <StarIcon />;
+              } else {
+                React.null;
+              }}
+             {switch (userItem.status) {
+              | CanCraft
+              | ForTrade =>
+                <ReactAtmosphere.Tooltip
+                  text={React.string(
+                    "In "
+                    ++ (
+                      userItem.status == ForTrade ? "For Trade" : "Can Craft"
+                    ),
+                  )}
+                  options={Obj.magic({"modifiers": None})}>
+                  {(
+                     ({onMouseEnter, onMouseLeave, onFocus, onBlur, ref}) =>
+                       <div
+                         onMouseEnter
+                         onMouseLeave
+                         onFocus
+                         onBlur
+                         className=Styles.catalogStatusButton
+                         ref={ReactDOMRe.Ref.domRef(ref)}>
+                         {React.string(
+                            userItem.status == ForTrade
+                              ? {j|🤝|j} : {j|🔨|j},
+                          )}
+                       </div>
+                   )}
+                </ReactAtmosphere.Tooltip>
+              | CatalogOnly => React.null
+              | Wishlist => raise(Constants.Uhoh)
+              }}
+           </>}
+    </div>
     {editable
        ? <>
            {!onCatalogPage
@@ -200,42 +232,12 @@ let make =
                   key={string_of_int(variation)}
                 />
               : React.null}
-           {userItem.status == Wishlist
-              ? <WishlistEllipsisButton
-                  item
-                  variation
-                  className=Styles.wishlistEllipsisButton
-                />
-              : <ReactAtmosphere.Tooltip text={React.string("Remove item")}>
-                  {({onMouseEnter, onMouseLeave, onFocus, onBlur, ref}) =>
-                     <RemoveButton
-                       className=Styles.removeButton
-                       onMouseEnter
-                       onMouseLeave
-                       onFocus
-                       onBlur
-                       onClick={_ =>
-                         if (onCatalogPage) {
-                           switch (userItem.status) {
-                           | CanCraft
-                           | ForTrade =>
-                             DeleteFromCatalog.confirm(~onConfirm=() =>
-                               UserStore.removeItem(
-                                 ~itemId=item.id,
-                                 ~variation,
-                               )
-                             )
-                           | CatalogOnly =>
-                             UserStore.removeItem(~itemId=item.id, ~variation)
-                           | Wishlist => raise(Constants.Uhoh)
-                           };
-                         } else {
-                           UserStore.removeItem(~itemId=item.id, ~variation);
-                         }
-                       }
-                       ref
-                     />}
-                </ReactAtmosphere.Tooltip>}
+           <UserItemEllipsisButton
+             item
+             userItem
+             variation
+             className=Styles.ellipsisButton
+           />
          </>
        : <>
            {if (userItem.note->Js.String.length > 0) {

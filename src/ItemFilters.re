@@ -292,7 +292,17 @@ let getUserItemSort =
         )
       )
     | UserDefault =>
-      wrapWithVariantSort((((aId, aVariant), _), ((bId, bVariant), _)) => {
+      wrapWithVariantSort(
+        (
+          (
+            (aId, aVariant),
+            {priorityTimestamp: aPriorityTimestamp}: User.item,
+          ),
+          (
+            (bId, bVariant),
+            {priorityTimestamp: bPriorityTimestamp}: User.item,
+          ),
+        ) => {
         let aItem = Item.getItem(~itemId=aId);
         let bItem = Item.getItem(~itemId=bId);
         compareArrays(
@@ -300,26 +310,30 @@ let getUserItemSort =
             switch (UserStore.getItem(~itemId=aId, ~variation=aVariant)) {
             | Some(aUserItem) =>
               prioritizeViewerStatuses |> Js.Array.includes(aUserItem.status)
-                ? (-1) : 0
-            | None => 0
+                ? (-1.) : 0.
+            | None => 0.
             },
-            Item.categories |> Js.Array.indexOf(aItem.category),
-            - Option.getWithDefault(aItem.sellPrice, 0),
-            int_of_float(
-              Item.getName(aItem)
-              |> Js.String.localeCompare(Item.getName(bItem)),
-            ),
+            -. Option.getWithDefault(aPriorityTimestamp, 0.),
+            Item.categories
+            |> Js.Array.indexOf(aItem.category)
+            |> float_of_int,
+            - Option.getWithDefault(aItem.sellPrice, 0) |> float_of_int,
+            Item.getName(aItem)
+            |> Js.String.localeCompare(Item.getName(bItem)),
           |],
           [|
             switch (UserStore.getItem(~itemId=bId, ~variation=bVariant)) {
             | Some(bUserItem) =>
               prioritizeViewerStatuses |> Js.Array.includes(bUserItem.status)
-                ? (-1) : 0
-            | None => 0
+                ? (-1.) : 0.
+            | None => 0.
             },
-            Item.categories |> Js.Array.indexOf(bItem.category),
-            - Option.getWithDefault(bItem.sellPrice, 0),
-            0,
+            -. Option.getWithDefault(bPriorityTimestamp, 0.),
+            Item.categories
+            |> Js.Array.indexOf(bItem.category)
+            |> float_of_int,
+            - Option.getWithDefault(bItem.sellPrice, 0) |> float_of_int,
+            0.,
           |],
         );
       })

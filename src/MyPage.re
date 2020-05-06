@@ -176,9 +176,9 @@ module ProfileTextarea = {
 
 [@react.component]
 let make = (~user: User.t, ~urlRest, ~url) => {
-  let listStatus =
+  let list =
     switch (urlRest) {
-    | [url] => User.urlToItemStatus(url)
+    | [url] => ViewingList.urlToViewingList(url)
     | _ => None
     };
   <div>
@@ -192,8 +192,8 @@ let make = (~user: User.t, ~urlRest, ~url) => {
         </Link>
       </div>
     </div>
-    {switch (listStatus) {
-     | Some(listStatus) => <UserListBrowser user listStatus url me=true />
+    {switch (list) {
+     | Some(list) => <UserListBrowser user list url me=true />
      | None =>
        if (user.items->Js.Dict.keys->Js.Array.length > 0) {
          <UserProfileBrowser

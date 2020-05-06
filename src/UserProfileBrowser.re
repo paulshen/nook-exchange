@@ -174,7 +174,7 @@ module Section = {
   let make =
       (
         ~username: string,
-        ~status: User.itemStatus,
+        ~list: ViewingList.t,
         ~userItems: array(((int, int), User.item)),
         ~editable,
       ) => {
@@ -191,7 +191,7 @@ module Section = {
               ~prioritizeViewerStatuses=?
                 !editable
                   ? Some(
-                      switch (status) {
+                      switch (list) {
                       | Wishlist => [|User.ForTrade, User.CanCraft|]
                       | ForTrade
                       | CanCraft => [|User.Wishlist|]
@@ -216,10 +216,12 @@ module Section = {
       ])}>
       <div className=Styles.sectionTitle>
         <Link
-          path={"/u/" ++ username ++ "/" ++ User.itemStatusToUrl(status)}
+          path={
+            "/u/" ++ username ++ "/" ++ ViewingList.viewingListToUrl(list)
+          }
           className=Styles.sectionTitleLink>
-          {React.string(User.itemStatusToEmoji(status))}
-          {React.string(" " ++ User.itemStatusToString(status))}
+          {React.string(ViewingList.viewingListToEmoji(list))}
+          {React.string(" " ++ ViewingList.viewingListToString(list))}
           <span className=Styles.sectionTitleLinkIcon />
         </Link>
       </div>
@@ -236,14 +238,14 @@ module Section = {
               let checked = ReactEvent.Form.target(e)##checked;
               Analytics.Amplitude.logEventWithProperties(
                 ~eventName="Miniature Mode Clicked",
-                ~eventProperties={"checked": checked, "status": status},
+                ~eventProperties={"checked": checked, "list": list},
               );
               setShowMini(_ => checked);
             }}
             className=Styles.showRecipesCheckbox
           />
         </div>
-        {if (status == CanCraft) {
+        {if (list == CanCraft) {
            <div className=Styles.showRecipesBox>
              <label
                htmlFor="craftShowRecipe"
@@ -300,7 +302,7 @@ module Section = {
                    variation
                    userItem
                    editable
-                   listStatus=status
+                   list
                    showRecipe=showRecipes
                    key={string_of_int(itemId) ++ string_of_int(variation)}
                  />
@@ -315,13 +317,7 @@ module Section = {
                          "/u/"
                          ++ username
                          ++ "/"
-                         ++ (
-                           switch (status) {
-                           | Wishlist => "wishlist"
-                           | CanCraft => "can-craft"
-                           | ForTrade => "for-trade"
-                           }
-                         )
+                         ++ ViewingList.viewingListToUrl(list)
                        }
                        className={Cn.make([
                          UserItemCard.Styles.card,
@@ -374,17 +370,17 @@ let make =
 
   <div>
     {if (hasForTrade) {
-       <Section username status=ForTrade userItems=forTradeList editable />;
+       <Section username list=ForTrade userItems=forTradeList editable />;
      } else {
        React.null;
      }}
     {if (hasCanCraft) {
-       <Section username status=CanCraft userItems=canCraftList editable />;
+       <Section username list=CanCraft userItems=canCraftList editable />;
      } else {
        React.null;
      }}
     {if (hasWishlist) {
-       <Section username status=Wishlist userItems=wishlist editable />;
+       <Section username list=Wishlist userItems=wishlist editable />;
      } else {
        React.null;
      }}

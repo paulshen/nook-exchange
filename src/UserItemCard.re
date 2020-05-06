@@ -118,7 +118,7 @@ let make =
       ~itemId,
       ~variation,
       ~userItem: User.item,
-      ~listStatus,
+      ~list: ViewingList.t,
       ~editable,
       ~showRecipe,
       ~onCatalogPage=false,
@@ -263,7 +263,7 @@ let make =
                          Cn.ifTrue(
                            Styles.topRightIconSelected,
                            User.(
-                             switch (listStatus, viewerItem.status) {
+                             switch (list, viewerItem.status) {
                              | (ForTrade, Wishlist)
                              | (CanCraft, Wishlist)
                              | (Wishlist, ForTrade)

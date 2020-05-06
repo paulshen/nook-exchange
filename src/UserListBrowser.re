@@ -132,7 +132,7 @@ let userItemsHasOneWithStatus = (~userItems, ~status) => {
 let make =
     (
       ~user: User.t,
-      ~listStatus: User.itemStatus,
+      ~list: ViewingList.t,
       ~url: ReasonReactRouter.url,
       ~me=false,
       (),
@@ -163,12 +163,12 @@ let make =
         user.items
         ->Js.Dict.entries
         ->Belt.Array.keepMapU((. (itemKey, item: User.item)) =>
-            item.status == listStatus
+            ViewingList.doesUserItemStatusMatchViewingList(item.status, list)
               ? User.fromItemKey(~key=itemKey)
                 ->Belt.Option.map(x => (x, item))
               : None
           ),
-      (user, listStatus),
+      (user, list),
     );
   let userItemIds =
     userItems->Belt.Array.mapU((. ((itemId, _variant), _)) => itemId);
@@ -233,10 +233,11 @@ let make =
             ~prioritizeViewerStatuses=?
               !me
                 ? Some(
-                    switch (listStatus) {
+                    switch (list) {
                     | Wishlist => [|User.ForTrade, User.CanCraft|]
                     | ForTrade
-                    | CanCraft => [|User.Wishlist|]
+                    | CanCraft
+                    | Catalog => [|User.Wishlist|]
                     },
                   )
                 : None,
@@ -256,24 +257,29 @@ let make =
     );
   let numResults = filteredItems->Belt.Array.length;
 
-  let renderListLink = (status: User.itemStatus) =>
-    if (switch (status) {
+  let renderListLink = (linkList: ViewingList.t) =>
+    if (switch (linkList) {
         | Wishlist => hasWishlist
         | CanCraft => hasCanCraft
         | ForTrade => hasForTrade
         }) {
       <Link
-        path={"/u/" ++ user.username ++ "/" ++ User.itemStatusToUrl(status)}
+        path={
+          "/u/"
+          ++ user.username
+          ++ "/"
+          ++ ViewingList.viewingListToUrl(linkList)
+        }
         className=Styles.listLink>
         <span className=Styles.listLinkEmoji>
-          {React.string(User.itemStatusToEmoji(status))}
+          {React.string(ViewingList.viewingListToEmoji(linkList))}
         </span>
         <span
           className={Cn.make([
             Styles.listLinkName,
-            Cn.ifTrue(Styles.listLinkSelectedName, status == listStatus),
+            Cn.ifTrue(Styles.listLinkSelectedName, linkList == list),
           ])}>
-          {React.string(User.itemStatusToString(status))}
+          {React.string(ViewingList.viewingListToString(linkList))}
         </span>
       </Link>;
     } else {
@@ -351,7 +357,7 @@ let make =
               let checked = ReactEvent.Form.target(e)##checked;
               Analytics.Amplitude.logEventWithProperties(
                 ~eventName="Miniature Mode Clicked",
-                ~eventProperties={"checked": checked, "status": listStatus},
+                ~eventProperties={"checked": checked, "status": list},
               );
               setShowMini(_ => checked);
             }}
@@ -413,7 +419,7 @@ let make =
                    itemId
                    variation
                    userItem
-                   listStatus
+                   list
                    editable=me
                    showRecipe=showRecipes
                    key={string_of_int(itemId) ++ string_of_int(variation)}

@@ -34,9 +34,9 @@ module Styles = {
 
 [@react.component]
 let make = (~username, ~urlRest, ~url: ReasonReactRouter.url, ~showLogin) => {
-  let listStatus =
+  let list =
     switch (urlRest) {
-    | [url] => User.urlToItemStatus(url)
+    | [url] => ViewingList.urlToViewingList(url)
     | _ => None
     };
   let (user, setUser) = React.useState(() => None);
@@ -102,8 +102,8 @@ let make = (~username, ~urlRest, ~url: ReasonReactRouter.url, ~showLogin) => {
               {Emoji.parseText(profileText)}
             </div>
           }}
-         {switch (listStatus) {
-          | Some(listStatus) => <UserListBrowser user listStatus url />
+         {switch (list) {
+          | Some(list) => <UserListBrowser user list url />
           | None =>
             if (user.items->Js.Dict.keys->Js.Array.length > 0) {
               <UserProfileBrowser

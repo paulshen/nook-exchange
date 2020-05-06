@@ -134,7 +134,7 @@ module Catalog = {
              <UserItemCard
                itemId
                variation
-               listStatus=User.CatalogOnly
+               list=Catalog
                userItem
                editable=true
                showRecipe=false

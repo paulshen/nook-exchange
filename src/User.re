@@ -5,27 +5,12 @@ type itemStatus =
   | [@bs.as 3] CanCraft
   | [@bs.as 4] CatalogOnly;
 
-let itemStatusToUrl = itemStatus =>
-  switch (itemStatus) {
-  | Wishlist => "wishlist"
-  | ForTrade => "for-trade"
-  | CanCraft => "can-craft"
-  | CatalogOnly => "catalog"
-  };
-let urlToItemStatus = url =>
-  switch (url) {
-  | "for-trade" => Some(ForTrade)
-  | "can-craft" => Some(CanCraft)
-  | "wishlist" => Some(Wishlist)
-  | "catalog" => Some(CatalogOnly)
-  | _ => None
-  };
 let itemStatusToEmoji = itemStatus => {
   switch (itemStatus) {
   | Wishlist => {j|🙏|j}
   | ForTrade => {j|🤝|j}
   | CanCraft => {j|🔨|j}
-  | CatalogOnly => {j|🔨|j}
+  | CatalogOnly => {j|📖|j}
   };
 };
 let itemStatusToString = itemStatus =>

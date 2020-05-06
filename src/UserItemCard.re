@@ -4,7 +4,7 @@ module Styles = {
     style([
       position(absolute),
       top(px(6)),
-      left(px(6)),
+      left(px(7)),
       display(flexBox),
     ]);
   let metaIcon = style([opacity(0.), transition(~duration=200, "all")]);
@@ -27,9 +27,10 @@ module Styles = {
     style([position(absolute), top(px(8)), right(px(8))]);
   let catalogStatusButton =
     style([
-      fontSize(px(14)),
+      fontSize(px(13)),
       opacity(0.5),
       cursor(`default),
+      padding2(~v=zero, ~h=px(1)),
       transition(~duration=200, "all"),
       media("(hover: none)", [opacity(0.8)]),
     ]);
@@ -165,61 +166,48 @@ let make =
        }}
     </div>
     <div className=Styles.metaIcons>
-      {!onCatalogPage
-         ? <>
-             {if (userItem.priorityTimestamp !== None) {
-                <StarIcon />;
-              } else {
-                React.null;
-              }}
-             {switch (item.recipe) {
-              | Some(recipe) =>
-                <ItemCard.RecipeIcon recipe className=Styles.metaIcon />
-              | None => React.null
-              }}
-             {if (item.orderable) {
-                <ItemCard.OrderableIcon className=Styles.metaIcon />;
-              } else {
-                React.null;
-              }}
-           </>
-         : <>
-             {if (userItem.priorityTimestamp !== None) {
-                <StarIcon />;
-              } else {
-                React.null;
-              }}
-             {switch (userItem.status) {
-              | CanCraft
-              | ForTrade =>
-                <ReactAtmosphere.Tooltip
-                  text={React.string(
-                    "In "
-                    ++ (
-                      userItem.status == ForTrade ? "For Trade" : "Can Craft"
-                    ),
-                  )}
-                  options={Obj.magic({"modifiers": None})}>
-                  {(
-                     ({onMouseEnter, onMouseLeave, onFocus, onBlur, ref}) =>
-                       <div
-                         onMouseEnter
-                         onMouseLeave
-                         onFocus
-                         onBlur
-                         className=Styles.catalogStatusButton
-                         ref={ReactDOMRe.Ref.domRef(ref)}>
-                         {React.string(
-                            userItem.status == ForTrade
-                              ? {j|🤝|j} : {j|🔨|j},
-                          )}
-                       </div>
+      {if (userItem.priorityTimestamp !== None) {
+         <StarIcon />;
+       } else {
+         React.null;
+       }}
+      {switch (onCatalogPage, list, userItem.status) {
+       | (true, _, CanCraft)
+       | (true, _, ForTrade)
+       | (false, Catalog, CanCraft)
+       | (false, Catalog, ForTrade) =>
+         <ReactAtmosphere.Tooltip
+           text={React.string(
+             userItem.status == ForTrade ? "For Trade" : "Can Craft",
+           )}
+           options={Obj.magic({"modifiers": None})}>
+           {(
+              ({onMouseEnter, onMouseLeave, onFocus, onBlur, ref}) =>
+                <div
+                  onMouseEnter
+                  onMouseLeave
+                  onFocus
+                  onBlur
+                  className=Styles.catalogStatusButton
+                  ref={ReactDOMRe.Ref.domRef(ref)}>
+                  {React.string(
+                     userItem.status == ForTrade ? {j|🤝|j} : {j|🔨|j},
                    )}
-                </ReactAtmosphere.Tooltip>
-              | CatalogOnly => React.null
-              | Wishlist => raise(Constants.Uhoh)
-              }}
-           </>}
+                </div>
+            )}
+         </ReactAtmosphere.Tooltip>
+       | _ => React.null
+       }}
+      {switch (onCatalogPage, item.recipe) {
+       | (false, Some(recipe)) =>
+         <ItemCard.RecipeIcon recipe className=Styles.metaIcon />
+       | _ => React.null
+       }}
+      {if (!onCatalogPage && item.orderable) {
+         <ItemCard.OrderableIcon className=Styles.metaIcon />;
+       } else {
+         React.null;
+       }}
     </div>
     {editable
        ? <>

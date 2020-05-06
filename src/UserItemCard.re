@@ -11,7 +11,7 @@ module Styles = {
   let topRightIcon =
     style([
       position(absolute),
-      top(px(7)),
+      top(px(6)),
       right(px(10)),
       fontSize(px(13)),
       boxSizing(borderBox),
@@ -28,11 +28,11 @@ module Styles = {
   let catalogStatusButton =
     style([
       fontSize(px(13)),
-      opacity(0.5),
+      opacity(0.),
       cursor(`default),
       padding2(~v=zero, ~h=px(1)),
       transition(~duration=200, "all"),
-      media("(hover: none)", [opacity(0.8)]),
+      media("(hover: none)", [opacity(0.5)]),
     ]);
   let nameLink =
     style([

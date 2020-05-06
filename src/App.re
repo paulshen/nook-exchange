@@ -200,6 +200,7 @@ let make = () => {
            </div>
          : React.null}
       <Footer />
+      <QuicklistOverlay />
       {showLogin
          ? <LoginOverlay onClose={() => setShowLogin(_ => false)} />
          : React.null}

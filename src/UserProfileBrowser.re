@@ -87,7 +87,7 @@ module Styles = {
       media("(hover: hover)", [hover([opacity(0.8)])]),
     ]);
   let cardMiniQuicklistSelected =
-    style([important(opacity(1.)), backgroundColor(hex("65c98b"))]);
+    style([important(opacity(1.)), backgroundColor(hex("3aa56340"))]);
   let cardMiniImage =
     style([display(block), width(px(64)), height(px(64))]);
   let cardMiniRecipe =

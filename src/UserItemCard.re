@@ -101,7 +101,7 @@ module Styles = {
     ]);
   let cardQuicklistSelected =
     style([
-      boxShadow(Shadow.box(~spread=px(4), Colors.green)),
+      boxShadow(Shadow.box(~spread=px(2), Colors.green)),
       children([opacity(1.)]),
     ]);
   let quicklistButton =

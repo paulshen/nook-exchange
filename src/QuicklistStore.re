@@ -7,12 +7,13 @@ type action =
   | StartList
   | AddItem(int, int)
   | RemoveItem(int, int)
-  | SaveList(string);
+  | SaveList(string)
+  | RemoveList;
 
 open Belt;
 
 let api =
-  Restorative.createStore(Some({id: None, itemIds: [||]}), (state, action) => {
+  Restorative.createStore(None, (state, action) => {
     switch (action) {
     | StartList => Some({id: None, itemIds: [||]})
     | AddItem(itemId, variant) =>
@@ -32,11 +33,15 @@ let api =
         }
       )
     | SaveList(id) => state->Option.map(state => {...state, id: Some(id)})
+    | RemoveList => None
     }
   });
 
 let useHasQuicklist = () => {
   api.useStoreWithSelector(state => state != None, ());
+};
+let useQuicklist = () => {
+  api.useStore();
 };
 
 let useItemState = (~itemId, ~variant) => {
@@ -52,10 +57,18 @@ let useItemState = (~itemId, ~variant) => {
   );
 };
 
+let startList = () => {
+  api.dispatch(StartList);
+};
+
 let addItem = (~itemId, ~variant) => {
   api.dispatch(AddItem(itemId, variant));
 };
 
 let removeItem = (~itemId, ~variant) => {
   api.dispatch(RemoveItem(itemId, variant));
+};
+
+let removeList = () => {
+  api.dispatch(RemoveList);
 };

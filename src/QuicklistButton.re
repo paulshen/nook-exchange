@@ -3,7 +3,7 @@ module Styles = {
   let button =
     style([
       backgroundColor(hex("3aa56320")),
-      borderRadius(pct(50.)),
+      borderRadius(px(4)),
       border(px(2), solid, Colors.green),
       cursor(pointer),
       width(px(24)),

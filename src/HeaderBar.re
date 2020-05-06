@@ -296,6 +296,16 @@ let make = (~onLogin, ~onSettings) => {
             {React.string("Browse Items")}
           </Link>
         </div>
+        <div className=Styles.navLink>
+          <a
+            href="#"
+            onClick={e => {
+              ReactEvent.Mouse.preventDefault(e);
+              QuicklistStore.startList();
+            }}>
+            {React.string("Mark Items")}
+          </a>
+        </div>
       </div>
       <div className=Styles.nav>
         {switch (user) {

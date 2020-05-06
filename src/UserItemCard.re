@@ -58,6 +58,7 @@ module Styles = {
       media(
         "(hover: hover)",
         [
+          children([transition(~duration=200, "opacity")]),
           hover([
             selector("& ." ++ metaIcon, [opacity(1.)]),
             selector("& ." ++ topRightIcon, [opacity(1.)]),
@@ -92,8 +93,19 @@ module Styles = {
     ]);
   let recipe =
     style([marginTop(px(6)), textAlign(center), fontSize(px(12))]);
+  let cardHasQuicklist =
+    style([
+      children([opacity(0.5)]),
+      selector("& ." ++ metaIcons, [display(none)]),
+      media("(hover: hover)", [hover([children([opacity(1.)])])]),
+    ]);
+  let cardQuicklistSelected =
+    style([
+      boxShadow(Shadow.box(~spread=px(4), Colors.green)),
+      children([opacity(1.)]),
+    ]);
   let quicklistButton =
-    style([position(absolute), top(px(8)), right(px(8))]);
+    style([position(absolute), top(px(6)), left(px(6))]);
 };
 
 module StarIcon = {
@@ -130,11 +142,15 @@ let make =
   let item = Item.getItem(~itemId);
   let viewerItem = UserStore.useItem(~itemId, ~variation);
   let hasQuicklist = QuicklistStore.useHasQuicklist();
+  let isInQuicklist =
+    QuicklistStore.useItemState(~itemId, ~variant=variation);
 
   <div
     className={Cn.make([
       Styles.card,
       Cn.ifTrue(Styles.cardOnCatalogPage, onCatalogPage),
+      Cn.ifTrue(Styles.cardHasQuicklist, hasQuicklist),
+      Cn.ifTrue(Styles.cardQuicklistSelected, isInQuicklist),
     ])}>
     <div className=ItemCard.Styles.body>
       <ItemImage
@@ -278,6 +294,7 @@ let make =
        ? <QuicklistButton
            itemId
            variant=variation
+           selected=isInQuicklist
            className=Styles.quicklistButton
          />
        : React.null}

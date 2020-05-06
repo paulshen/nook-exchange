@@ -51,3 +51,11 @@ let useItemState = (~itemId, ~variant) => {
     (),
   );
 };
+
+let addItem = (~itemId, ~variant) => {
+  api.dispatch(AddItem(itemId, variant));
+};
+
+let removeItem = (~itemId, ~variant) => {
+  api.dispatch(RemoveItem(itemId, variant));
+};

@@ -195,8 +195,6 @@ let make =
       );
     let url = ReasonReactRouter.dangerouslyGetInitialUrl();
     let newUrl = getUrl(~url, ~urlSearchParams);
-    Js.log(newUrl);
-    [%debugger];
     ReasonReactRouter.push(newUrl);
     if (React.Ref.current(numFiltersChangeLogged) < 2) {
       Analytics.Amplitude.logEventWithProperties(

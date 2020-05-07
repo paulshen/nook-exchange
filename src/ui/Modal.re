@@ -41,7 +41,7 @@ module Styles = {
         ~timingFunction=cubicBezier(0.48, 1.38, 0.71, 0.93),
         "all",
       ),
-      smallThresholdMediaQuery([width(pct(100.))]),
+      smallThresholdMediaQuery([maxWidth(vw(90.))]),
     ]);
   let transitionIn =
     style([

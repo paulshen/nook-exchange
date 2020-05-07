@@ -81,6 +81,6 @@ let saveList = () => {
   let response = Belt.Result.getExn(responseResult);
   let%Repromise.JsExn json = Fetch.Response.json(response);
   let listId = json |> Json.Decode.(field("id", string));
-  api.dispatch(SaveList(listId));
-  Promise.resolved();
+  // api.dispatch(SaveList(listId));
+  Promise.resolved(listId);
 };

@@ -13,6 +13,7 @@ module Styles = {
       color(Colors.white),
       transition(~duration=250, "all"),
       transform(translate3d(zero, pct(100.), zero)),
+      media("(max-width: 450px)", [left(zero), right(zero), width(auto)]),
     ]);
   let rootWithQuicklist = style([Colors.darkLayerShadow]);
   let introBar =
@@ -86,10 +87,9 @@ module Styles = {
     style([
       display(flexBox),
       flexWrap(wrap),
-      paddingTop(px(16)),
-      paddingLeft(px(16)),
-      paddingBottom(px(16)),
+      padding(px(16)),
       position(relative),
+      justifyContent(center),
     ]);
   let listImagesScrollFade =
     style([
@@ -142,8 +142,15 @@ type visibility =
 module CreateDialog = {
   module Styles = {
     open Css;
-    let body = style([padding(px(16))]);
-    let title = style([fontSize(px(24)), marginBottom(px(8))]);
+    let body =
+      style([
+        padding(px(16)),
+        width(px(384)),
+        boxSizing(borderBox),
+        minHeight(px(96)),
+        maxWidth(vw(90.)),
+      ]);
+    let title = style([fontSize(px(24)), marginBottom(px(16))]);
     let listUrl =
       style([
         width(pct(100.)),
@@ -155,6 +162,7 @@ module CreateDialog = {
         cursor(pointer),
         outlineStyle(none),
         margin2(~v=px(16), ~h=zero),
+        transition(~duration=300, "all"),
       ]);
     let listUrlCopied = style([borderColor(hex("3cb56c"))]);
   };
@@ -164,39 +172,71 @@ module CreateDialog = {
   module ConfirmModal = {
     [@react.component]
     let make = (~onClose) => {
+      let (listId, setListId) = React.useState(() => None);
+      React.useEffect0(() => {
+        {
+          let%Repromise listId = QuicklistStore.saveList();
+          setListId(_ => Some(listId));
+          Promise.resolved();
+        }
+        |> ignore;
+        None;
+      });
+
       let (hasCopied, setHasCopied) = React.useState(() => false);
       <Modal>
         <div className=Styles.body>
-          <div className=Styles.title> {React.string("List created!")} </div>
-          <div>
-            {React.string("This is your URL. Tap to copy. ")}
-            <a href="https://nook.exchange" target="_blank">
-              {React.string("Open in new tab.")}
-            </a>
+          <div className=Styles.title>
+            {React.string(
+               listId != None ? "List created!" : "Creating list..",
+             )}
           </div>
-          <button
-            className={Cn.make([
-              Styles.listUrl,
-              Cn.ifTrue(Styles.listUrlCopied, hasCopied),
-            ])}
-            onClick={_ => {
-              copyToClipboard("https://nook.exchange/u/kFb8X");
-              setHasCopied(_ => true);
-            }}>
-            {React.string("https://nook.exchange/u/kFb8X")}
-          </button>
-          {if (UserStore.isLoggedIn()) {
-             <div>
-               {React.string(
-                  {j|Lists are saved to your account. The page is coming soon 🙃|j},
-                )}
-             </div>;
-           } else {
-             <div>
-               {React.string("Create an account to save your lists!")}
-             </div>;
+          {switch (listId) {
+           | Some(listId) =>
+             let url =
+               Webapi.Dom.(window |> Window.location |> Location.origin)
+               ++ "/l/"
+               ++ listId;
+             <>
+               <div>
+                 {React.string("This is your URL. Tap to copy. ")}
+                 <a href=url target="_blank">
+                   {React.string("Open in new tab.")}
+                 </a>
+               </div>
+               <button
+                 className={Cn.make([
+                   Styles.listUrl,
+                   Cn.ifTrue(Styles.listUrlCopied, hasCopied),
+                 ])}
+                 onClick={_ => {
+                   copyToClipboard(url);
+                   setHasCopied(_ => true);
+                 }}>
+                 {React.string(url)}
+               </button>
+               <div>
+                 {React.string("This is a preview feature. Please ")}
+                 <a href="https://twitter.com/nookexchange" target="_blank">
+                   {React.string("share your feedback")}
+                 </a>
+                 {React.string("!")}
+               </div>
+             </>;
+           | None => React.null
            }}
         </div>
+        // {if (UserStore.isLoggedIn()) {
+        //    <div>
+        //      {React.string(
+        //         {j|Lists are saved to your account. The page is coming soon 🙃|j},
+        //       )}
+        //    </div>;
+        //  } else {
+        //    <div>
+        //      {React.string("Create an account to save your lists!")}
+        //    </div>;
+        //  }}
         <Modal.FooterBar>
           <Button onClick={_ => onClose()}> {React.string("Okay")} </Button>
         </Modal.FooterBar>
@@ -219,12 +259,12 @@ module CreateDialog = {
 let make = () => {
   let quicklist = QuicklistStore.useQuicklist();
   let (visibility, setVisibility) = React.useState(() => Bar);
-  let url = ReasonReactRouter.useUrl();
 
   if (visibility == Panel && quicklist == None) {
     setVisibility(_ => Bar);
   };
 
+  let url = ReasonReactRouter.useUrl();
   <div
     className={Cn.make([
       Styles.root,
@@ -232,7 +272,12 @@ let make = () => {
         Styles.shown,
         quicklist != None
         || visibility != Hidden
-        && ,
+        && (
+          switch (url.path) {
+          | ["u", ..._] => true
+          | _ => false
+          }
+        ),
       ),
       Cn.ifTrue(Styles.shownPanel, visibility == Panel),
       Cn.ifTrue(Styles.rootWithQuicklist, quicklist != None),
@@ -270,7 +315,7 @@ let make = () => {
              <button
                onClick={_ => {QuicklistStore.startList()}}
                className=Styles.button>
-               {React.string("Share a list of items")}
+               {React.string("Start a list")}
              </button>
            }
          )}
@@ -367,8 +412,8 @@ let make = () => {
       <div className=Styles.saveRow>
         <button
           onClick={_ => {
-            // QuicklistStore.saveList() |> ignore;
-            CreateDialog.show()
+            CreateDialog.show();
+            setVisibility(_ => Bar);
           }}
           disabled={
             switch (quicklist) {
@@ -377,7 +422,7 @@ let make = () => {
             }
           }
           className=Styles.saveButton>
-          {React.string("Share quick list")}
+          {React.string("Share this list!")}
         </button>
       </div>
     </div>

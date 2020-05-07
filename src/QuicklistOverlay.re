@@ -230,7 +230,14 @@ let make = () => {
       Styles.root,
       Cn.ifTrue(
         Styles.shown,
-        quicklist != None || visibility != Hidden && url.path != [],
+        quicklist != None
+        || visibility != Hidden
+        && (
+          switch (url.path) {
+          | ["u", ..._] => true
+          | _ => false
+          }
+        ),
       ),
       Cn.ifTrue(Styles.shownPanel, visibility == Panel),
       Cn.ifTrue(Styles.rootWithQuicklist, quicklist != None),

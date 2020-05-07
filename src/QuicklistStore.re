@@ -45,7 +45,6 @@ let useQuicklist = () => {
 };
 
 let useItemState = (~itemId, ~variant) => {
-let useItemState = (~itemId, ~variant) => {
   api.useStoreWithSelector(
     state =>
       switch (state) {

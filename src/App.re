@@ -185,6 +185,7 @@ let make = () => {
                   showLogin={() => setShowLogin(_ => true)}
                   key=username
                 />
+              | ["l", listId, ..._urlRest] => <ListPage listId />
               | ["privacy"] => <TextPages.PrivacyPolicy />
               | ["terms"] => <TextPages.TermsOfService />
               | _ =>

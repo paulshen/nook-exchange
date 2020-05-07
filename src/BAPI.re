@@ -232,3 +232,22 @@ let createItemList = (~sessionId, ~items: array((int, int))) => {
     );
   Promise.resolved(responseResult);
 };
+
+let getItemList = (~listId: string) => {
+  let url = Constants.bapiUrl ++ "/item-lists/" ++ listId;
+  let%Repromise.Js responseResult =
+    Fetch.fetchWithInit(
+      url,
+      Fetch.RequestInit.make(
+        ~method_=Get,
+        ~headers=
+          Fetch.HeadersInit.make({
+            "X-Client-Version": Constants.gitCommitRef,
+            "Content-Type": "application/json",
+          }),
+        ~mode=CORS,
+        (),
+      ),
+    );
+  Promise.resolved(responseResult);
+};

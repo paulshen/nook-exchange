@@ -54,7 +54,7 @@ module Styles = {
     ]);
 };
 
-let confirm = (~bodyText, ~confirmLabel, ~cancelLabel, ~onConfirm) => {
+let confirm = (~bodyText, ~confirmLabel, ~cancelLabel=?, ~onConfirm, ()) => {
   let modalKey = ref(None);
   let closeModal = () => {
     ReactAtmosphere.API.removeLayer(~key=Belt.Option.getExn(modalKey^));
@@ -67,15 +67,19 @@ let confirm = (~bodyText, ~confirmLabel, ~cancelLabel, ~onConfirm) => {
           <div className=Styles.root>
             <div className=Styles.text> {React.string(bodyText)} </div>
             <div className=Styles.buttonRow>
-              <a
-                href="#"
-                onClick={e => {
-                  ReactEvent.Mouse.preventDefault(e);
-                  closeModal();
-                }}
-                className=Styles.notNowLink>
-                {React.string(cancelLabel)}
-              </a>
+              {switch (cancelLabel) {
+               | Some(cancelLabel) =>
+                 <a
+                   href="#"
+                   onClick={e => {
+                     ReactEvent.Mouse.preventDefault(e);
+                     closeModal();
+                   }}
+                   className=Styles.notNowLink>
+                   {React.string(cancelLabel)}
+                 </a>
+               | None => React.null
+               }}
               <Button
                 onClick={_ => {
                   onConfirm();

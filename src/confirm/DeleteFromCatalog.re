@@ -21,13 +21,15 @@ let confirm = (~onConfirm) =>
         "Removing an item from your catalog will also remove it from your For Trade and Can Craft lists. Do you want to continue?",
       ~confirmLabel="Remove from catalog",
       ~cancelLabel="Not now",
-      ~onConfirm=() => {
-        PersistConfig.confirm();
-        onConfirm();
-        Analytics.Amplitude.logEventWithProperties(
-          ~eventName="Confirm Dialog Confirmed",
-          ~eventProperties={"id": "deleteFromCatalog"},
-        );
-      },
+      ~onConfirm=
+        () => {
+          PersistConfig.confirm();
+          onConfirm();
+          Analytics.Amplitude.logEventWithProperties(
+            ~eventName="Confirm Dialog Confirmed",
+            ~eventProperties={"id": "deleteFromCatalog"},
+          );
+        },
+      (),
     );
   };

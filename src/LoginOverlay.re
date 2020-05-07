@@ -112,7 +112,7 @@ module Styles = {
     ]);
   let url =
     style([
-      border(px(4), dashed, hex("bae8cc")),
+      border(px(2), dashed, Colors.lightGreen),
       textAlign(center),
       borderRadius(px(4)),
       padding(px(16)),

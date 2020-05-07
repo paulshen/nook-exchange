@@ -79,6 +79,14 @@ module Styles = {
       ]),
     ]);
   let cardMini = style([position(relative)]);
+  let cardMiniHasQuicklist =
+    style([
+      cursor(pointer),
+      transition(~duration=200, "all"),
+      media("(hover: hover)", [opacity(0.5), hover([opacity(0.8)])]),
+    ]);
+  let cardMiniQuicklistSelected =
+    style([important(opacity(1.)), backgroundColor(hex("3aa56340"))]);
   let cardMiniImage =
     style([display(block), width(px(64)), height(px(64))]);
   let cardMiniRecipe =
@@ -126,22 +134,49 @@ open Belt;
 module UserItemCardMini = {
   [@react.component]
   let make = (~itemId: int, ~variation) => {
+    let hasQuicklist = QuicklistStore.useHasQuicklist();
+    let isInQuicklist =
+      QuicklistStore.useItemState(~itemId, ~variant=variation);
+
     let item = Item.getItem(~itemId);
-    <div className=Styles.cardMini>
-      <ReactAtmosphere.Tooltip text={React.string(Item.getName(item))}>
-        {({onMouseEnter, onMouseLeave, onFocus, onBlur, ref}) =>
-           <div
-             onMouseEnter
-             onMouseLeave
-             onFocus
-             onBlur
-             ref={ReactDOMRe.Ref.domRef(ref)}>
-             <img
-               src={Item.getImageUrl(~item, ~variant=variation)}
-               className=Styles.cardMiniImage
-             />
-           </div>}
-      </ReactAtmosphere.Tooltip>
+    <div
+      className={Cn.make([
+        Styles.cardMini,
+        Cn.ifTrue(Styles.cardMiniHasQuicklist, hasQuicklist),
+        Cn.ifTrue(Styles.cardMiniQuicklistSelected, isInQuicklist),
+      ])}>
+      {let image =
+         <img
+           onClick=?{
+             hasQuicklist
+               ? Some(
+                   _ =>
+                     if (isInQuicklist) {
+                       QuicklistStore.removeItem(~itemId, ~variant=variation);
+                     } else {
+                       QuicklistStore.addItem(~itemId, ~variant=variation);
+                     },
+                 )
+               : None
+           }
+           src={Item.getImageUrl(~item, ~variant=variation)}
+           className=Styles.cardMiniImage
+         />;
+       if (Utils.browserSupportsHover || !hasQuicklist) {
+         <ReactAtmosphere.Tooltip text={React.string(Item.getName(item))}>
+           {({onMouseEnter, onMouseLeave, onFocus, onBlur, ref}) =>
+              <div
+                onMouseEnter
+                onMouseLeave
+                onFocus
+                onBlur
+                ref={ReactDOMRe.Ref.domRef(ref)}>
+                image
+              </div>}
+         </ReactAtmosphere.Tooltip>;
+       } else {
+         image;
+       }}
       {Item.isRecipe(~item)
          ? <img
              src={Constants.cdnUrl ++ "/images/DIYRecipe.png"}

@@ -42,7 +42,9 @@ let make = (~username, ~urlRest, ~url: ReasonReactRouter.url, ~showLogin) => {
   let (user, setUser) = React.useState(() => None);
   let isMountedRef = React.useRef(true);
   React.useEffect0(() => {
-    Some(() => {React.Ref.setCurrent(isMountedRef, false)})
+    open Webapi.Dom;
+    window |> Window.scrollTo(0., 0.);
+    Some(() => {React.Ref.setCurrent(isMountedRef, false)});
   });
   React.useEffect1(
     () => {

@@ -1,6 +1,5 @@
 module Styles = {
   open Css;
-  let root = style([display(flexBox), flexWrap(wrap)]);
   let select =
     style([
       borderColor(hex("00000020")),
@@ -30,6 +29,34 @@ module Styles = {
       fontSize(px(16)),
       lineHeight(px(37)),
       paddingRight(px(16)),
+      whiteSpace(`nowrap),
+    ]);
+  let root =
+    style([
+      display(flexBox),
+      flexWrap(wrap),
+      media(
+        "(max-width: 600px)",
+        [
+          alignItems(center),
+          flexWrap(`nowrap),
+          marginLeft(px(-16)),
+          marginRight(px(-16)),
+          paddingLeft(px(16)),
+          paddingRight(px(16)),
+          paddingBottom(px(8)),
+          overflowX(auto),
+          selector("& ." ++ textInput, [marginBottom(zero)]),
+          selector("& ." ++ select, [marginBottom(zero)]),
+        ],
+      ),
+    ]);
+  let rootScrollerSpacer =
+    style([
+      media(
+        "(max-width: 600px)",
+        [flexShrink(0.), width(px(1)), height(px(1))],
+      ),
     ]);
   let pager =
     style([fontSize(px(16)), lineHeight(px(32)), marginBottom(px(8))]);
@@ -813,5 +840,6 @@ let make =
      } else {
        React.null;
      }}
+    <div className=Styles.rootScrollerSpacer />
   </div>;
 };

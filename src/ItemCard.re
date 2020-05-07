@@ -153,6 +153,24 @@ module Styles = {
       right(px(8)),
       selector("." ++ card ++ ":hover &", [opacity(0.8)]),
     ]);
+
+  let cardHasQuicklist =
+    style([
+      selector("& ." ++ metaIcons, [display(none)]),
+      selector("& ." ++ bottomBar, [display(none)]),
+      selector("& ." ++ catalogCheckbox, [display(none)]),
+      media(
+        "(hover: hover)",
+        [children([opacity(0.5)]), hover([children([opacity(1.)])])],
+      ),
+    ]);
+  let cardQuicklistSelected =
+    style([
+      boxShadow(Shadow.box(~spread=px(2), Colors.green)),
+      children([opacity(1.)]),
+    ]);
+  let quicklistButton =
+    style([position(absolute), top(px(6)), left(px(6))]);
 };
 
 module MetaIconStyles = {
@@ -388,10 +406,16 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
   let variation = Js.Math.min_int(variation, numVariations - 1);
   let userItem = UserStore.useItem(~itemId=item.id, ~variation);
 
+  let hasQuicklist = QuicklistStore.useHasQuicklist();
+  let isInQuicklist =
+    QuicklistStore.useItemState(~itemId=item.id, ~variant=variation);
+
   <div
     className={Cn.make([
       Styles.card,
       Cn.ifSome(Styles.cardSelected, userItem),
+      Cn.ifTrue(Styles.cardHasQuicklist, hasQuicklist),
+      Cn.ifTrue(Styles.cardQuicklistSelected, isInQuicklist),
     ])}>
     <div className=Styles.body>
       <div className=Styles.name>
@@ -625,5 +649,13 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
             : React.null}
        </div>
      }}
+    {hasQuicklist
+       ? <QuicklistButton
+           itemId={item.id}
+           variant=variation
+           selected=isInQuicklist
+           className=Styles.quicklistButton
+         />
+       : React.null}
   </div>;
 };

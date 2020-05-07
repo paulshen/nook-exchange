@@ -202,3 +202,52 @@ let patchMe =
     );
   Promise.resolved(response);
 };
+
+let createItemList = (~sessionId, ~items: array((int, int))) => {
+  let url = Constants.bapiUrl ++ "/item-lists";
+  let%Repromise.Js responseResult =
+    Fetch.fetchWithInit(
+      url,
+      Fetch.RequestInit.make(
+        ~method_=Post,
+        ~body=
+          Fetch.BodyInit.make(
+            Js.Json.stringify(
+              Json.Encode.(
+                object_([("items", array(tuple2(int, int), items))])
+              ),
+            ),
+          ),
+        ~headers=
+          Fetch.HeadersInit.make({
+            "X-Client-Version": Constants.gitCommitRef,
+            "Content-Type": "application/json",
+            "Authorization":
+              "Bearer " ++ Belt.Option.getWithDefault(sessionId, ""),
+          }),
+        ~credentials=Include,
+        ~mode=CORS,
+        (),
+      ),
+    );
+  Promise.resolved(responseResult);
+};
+
+let getItemList = (~listId: string) => {
+  let url = Constants.bapiUrl ++ "/item-lists/" ++ listId;
+  let%Repromise.Js responseResult =
+    Fetch.fetchWithInit(
+      url,
+      Fetch.RequestInit.make(
+        ~method_=Get,
+        ~headers=
+          Fetch.HeadersInit.make({
+            "X-Client-Version": Constants.gitCommitRef,
+            "Content-Type": "application/json",
+          }),
+        ~mode=CORS,
+        (),
+      ),
+    );
+  Promise.resolved(responseResult);
+};

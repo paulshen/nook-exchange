@@ -185,6 +185,7 @@ let make = () => {
                   showLogin={() => setShowLogin(_ => true)}
                   key=username
                 />
+              | ["l", listId, ..._urlRest] => <ListPage listId />
               | ["privacy"] => <TextPages.PrivacyPolicy />
               | ["terms"] => <TextPages.TermsOfService />
               | _ =>
@@ -200,6 +201,7 @@ let make = () => {
            </div>
          : React.null}
       <Footer />
+      <QuicklistOverlay />
       {showLogin
          ? <LoginOverlay onClose={() => setShowLogin(_ => false)} />
          : React.null}

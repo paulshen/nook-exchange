@@ -10,6 +10,7 @@ module Styles = {
       height(px(24)),
       outlineStyle(none),
       transition(~duration=200, "all"),
+      backgroundPosition(center),
       media(
         "(hover: hover)",
         [
@@ -29,7 +30,6 @@ module Styles = {
       backgroundImage(url(checkImage)),
       backgroundSize(size(px(16), px(16))),
       backgroundRepeat(noRepeat),
-      backgroundPosition(center),
       borderColor(Colors.green),
     ]);
 };

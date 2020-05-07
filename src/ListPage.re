@@ -164,7 +164,8 @@ module ListRow = {
           // selector("& ." ++ itemName, [textDecoration(underline)]),
         ]),
       ]);
-    let variantName = style([color(Colors.gray), paddingRight(px(8))]);
+    let variantName =
+      style([color(Colors.gray), padding2(~v=zero, ~h=px(8))]);
     let image = style([width(px(48)), height(px(48))]);
   };
 

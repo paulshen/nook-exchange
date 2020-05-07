@@ -121,16 +121,16 @@ module Styles = {
     style([
       backgroundColor(Colors.white),
       display(flexBox),
-      justifyContent(flexEnd),
+      flexDirection(column),
       padding2(~v=px(8), ~h=px(16)),
-      height(px(43)),
     ]);
   let saveButton =
     style([
-      padding2(~v=px(12), ~h=px(24)),
+      padding2(~v=px(12), ~h=zero),
       backgroundColor(Colors.green),
       color(Colors.white),
-      borderRadius(px(8)),
+      borderRadius(px(10)),
+      width(pct(100.)),
     ]);
 };
 
@@ -139,7 +139,7 @@ type visibility =
   | Bar
   | Panel;
 
-module ConfirmDialog = {
+module CreateDialog = {
   module Styles = {
     open Css;
     let body = style([padding(px(16))]);
@@ -232,12 +232,7 @@ let make = () => {
         Styles.shown,
         quicklist != None
         || visibility != Hidden
-        && (
-          switch (url.path) {
-          | ["u", ..._] => true
-          | _ => false
-          }
-        ),
+        && ,
       ),
       Cn.ifTrue(Styles.shownPanel, visibility == Panel),
       Cn.ifTrue(Styles.rootWithQuicklist, quicklist != None),
@@ -275,21 +270,35 @@ let make = () => {
              <button
                onClick={_ => {QuicklistStore.startList()}}
                className=Styles.button>
-               {React.string("Start a quick list")}
+               {React.string("Share a list of items")}
              </button>
            }
          )}
       {switch (quicklist) {
-       | Some(_quicklist) =>
+       | Some(quicklist) =>
          <a
            href="#"
            onClick={e => {
              ReactEvent.Mouse.preventDefault(e);
-             QuicklistStore.removeList();
+             let numItems = Js.Array.length(quicklist.itemIds);
+             if (numItems > 1) {
+               ConfirmDialog.confirm(
+                 ~bodyText=
+                   "You have "
+                   ++ string_of_int(numItems)
+                   ++ " items that will be discarded. Are you sure?",
+                 ~confirmLabel="Yes, discard list",
+                 ~cancelLabel="Not yet",
+                 ~onConfirm=() => QuicklistStore.removeList(),
+                 (),
+               );
+             } else {
+               QuicklistStore.removeList();
+             };
              setVisibility(_ => Bar);
            }}
            className=Styles.barLink>
-           {React.string("Discard")}
+           {React.string("Discard list")}
          </a>
        | None =>
          <a
@@ -315,6 +324,18 @@ let make = () => {
                       let item = Item.getItem(~itemId);
                       <ReactAtmosphere.Tooltip
                         text={React.string("Tap to remove")}
+                        options={
+                          placement: Some("top"),
+                          modifiers:
+                            Some([|
+                              {
+                                "name": "offset",
+                                "options": {
+                                  "offset": [|0, 4|],
+                                },
+                              },
+                            |]),
+                        }
                         key={string_of_int(itemId) ++ string_of_int(variant)}>
                         {(
                            ({onMouseEnter, onMouseLeave, ref}) =>
@@ -347,7 +368,7 @@ let make = () => {
         <button
           onClick={_ => {
             // QuicklistStore.saveList() |> ignore;
-            ConfirmDialog.show()
+            CreateDialog.show()
           }}
           disabled={
             switch (quicklist) {

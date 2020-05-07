@@ -1,6 +1,8 @@
 open Css;
 
+let linkGreen = hex("247d46");
 let green = hex("3aa563");
+let lightGreen = hex("bae8cc");
 let white = hex("ffffff");
 let red = hex("ED3730");
 let charcoal = hex("202020");

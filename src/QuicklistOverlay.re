@@ -11,11 +11,10 @@ module Styles = {
       overflow(hidden),
       backgroundColor(Colors.green),
       color(Colors.white),
-      transition(~duration=300, "all"),
+      transition(~duration=250, "all"),
       transform(translate3d(zero, pct(100.), zero)),
     ]);
   let rootWithQuicklist = style([Colors.darkLayerShadow]);
-  let shown = style([transform(translate3d(zero, px(384), zero))]);
   let introBar =
     style([
       display(flexBox),
@@ -25,6 +24,7 @@ module Styles = {
       height(px(33)),
       transition(~duration=200, "all"),
     ]);
+  let shown = style([transform(translate3d(zero, px(384), zero))]);
   let button =
     style([
       backgroundColor(Colors.white),
@@ -33,6 +33,7 @@ module Styles = {
       borderRadius(px(4)),
       padding2(~v=px(8), ~h=px(12)),
       cursor(pointer),
+      disabled([opacity(0.8)]),
       hover([backgroundColor(Colors.white)]),
     ]);
   let barLink =
@@ -42,11 +43,22 @@ module Styles = {
       textDecoration(none),
       hover([textDecoration(underline)]),
     ]);
+  [@bs.module "./assets/down_caret.png"]
+  external downCaretIcon: string = "default";
   let hidePanelLink =
     style([
       marginLeft(px(8)),
       textDecoration(none),
       hover([textDecoration(underline)]),
+    ]);
+  let hidePanelLinkCaret =
+    style([
+      backgroundImage(url(downCaretIcon)),
+      backgroundSize(cover),
+      display(inlineBlock),
+      height(px(16)),
+      width(px(16)),
+      verticalAlign(`top),
     ]);
   let shownPanel =
     style([
@@ -54,18 +66,65 @@ module Styles = {
       transform(translate3d(zero, zero, zero)),
       backgroundColor(Colors.white),
       color(Colors.charcoal),
-      selector("& ." ++ barLink, [color(Colors.green)]),
+      selector("& ." ++ barLink, [color(Colors.linkGreen)]),
+      selector(
+        "& ." ++ introBar,
+        [borderBottom(px(1), solid, Colors.faintGray)],
+      ),
     ]);
   let body =
     style([
       height(px(384)),
       boxSizing(borderBox),
-      padding3(~top=px(16), ~h=px(16), ~bottom=px(8)),
       display(flexBox),
       flexDirection(column),
     ]);
-  let bodyList = style([flexGrow(1.)]);
-  let saveRow = style([display(flexBox), justifyContent(flexEnd)]);
+  let bodyListWrapper =
+    style([flexGrow(1.), overflow(hidden), position(relative)]);
+  let bodyList = style([height(pct(100.)), overflow(auto)]);
+  let listImages =
+    style([
+      display(flexBox),
+      flexWrap(wrap),
+      paddingTop(px(16)),
+      paddingLeft(px(16)),
+      paddingBottom(px(16)),
+      position(relative),
+    ]);
+  let listImagesScrollFade =
+    style([
+      backgroundImage(
+        linearGradient(
+          deg(0.),
+          [(zero, hex("ffffffff")), (pct(100.), hex("ffffff00"))],
+        ),
+      ),
+      position(absolute),
+      bottom(zero),
+      left(zero),
+      right(zero),
+      height(px(16)),
+    ]);
+  let listImage =
+    style([
+      display(block),
+      width(px(64)),
+      height(px(64)),
+      cursor(pointer),
+      media(
+        "(hover: hover)",
+        [hover([backgroundColor(Colors.faintGray)])],
+      ),
+    ]);
+  let emptyList = style([paddingTop(px(32)), textAlign(center)]);
+  let saveRow =
+    style([
+      backgroundColor(Colors.white),
+      display(flexBox),
+      justifyContent(flexEnd),
+      padding2(~v=px(8), ~h=px(16)),
+      height(px(43)),
+    ]);
   let saveButton =
     style([
       padding2(~v=px(12), ~h=px(24)),
@@ -73,14 +132,88 @@ module Styles = {
       color(Colors.white),
       borderRadius(px(8)),
     ]);
-  let listImages = style([display(flexBox), flexWrap(wrap)]);
-  let listImage = style([display(block), width(px(64)), height(px(64))]);
 };
 
 type visibility =
   | Hidden
   | Bar
   | Panel;
+
+module ConfirmDialog = {
+  module Styles = {
+    open Css;
+    let body = style([padding(px(16))]);
+    let title = style([fontSize(px(24)), marginBottom(px(8))]);
+    let listUrl =
+      style([
+        width(pct(100.)),
+        padding2(~v=px(12), ~h=px(8)),
+        backgroundColor(transparent),
+        border(px(2), dashed, hex("bae8cc")),
+        borderRadius(px(4)),
+        textAlign(center),
+        cursor(pointer),
+        outlineStyle(none),
+        margin2(~v=px(16), ~h=zero),
+      ]);
+    let listUrlCopied = style([borderColor(hex("3cb56c"))]);
+  };
+
+  [@bs.module] external copyToClipboard: string => unit = "copy-to-clipboard";
+
+  module ConfirmModal = {
+    [@react.component]
+    let make = (~onClose) => {
+      let (hasCopied, setHasCopied) = React.useState(() => false);
+      <Modal>
+        <div className=Styles.body>
+          <div className=Styles.title> {React.string("List created!")} </div>
+          <div>
+            {React.string("This is your URL. Tap to copy. ")}
+            <a href="https://nook.exchange" target="_blank">
+              {React.string("Open in new tab.")}
+            </a>
+          </div>
+          <button
+            className={Cn.make([
+              Styles.listUrl,
+              Cn.ifTrue(Styles.listUrlCopied, hasCopied),
+            ])}
+            onClick={_ => {
+              copyToClipboard("https://nook.exchange/u/kFb8X");
+              setHasCopied(_ => true);
+            }}>
+            {React.string("https://nook.exchange/u/kFb8X")}
+          </button>
+          {if (UserStore.isLoggedIn()) {
+             <div>
+               {React.string(
+                  {j|Lists are saved to your account. The page is coming soon 🙃|j},
+                )}
+             </div>;
+           } else {
+             <div>
+               {React.string("Create an account to save your lists!")}
+             </div>;
+           }}
+        </div>
+        <Modal.FooterBar>
+          <Button onClick={_ => onClose()}> {React.string("Okay")} </Button>
+        </Modal.FooterBar>
+      </Modal>;
+    };
+  };
+
+  let show = () => {
+    let modalKey = ref(None);
+    let onClose = () =>
+      ReactAtmosphere.API.removeLayer(~key=Belt.Option.getExn(modalKey^));
+    modalKey :=
+      Some(
+        ReactAtmosphere.API.pushLayer(~render=_ => <ConfirmModal onClose />),
+      );
+  };
+};
 
 [@react.component]
 let make = () => {
@@ -111,7 +244,8 @@ let make = () => {
                setVisibility(_ => Bar);
              }}
              className=Styles.hidePanelLink>
-             {React.string("Hide Panel")}
+             <span className=Styles.hidePanelLinkCaret />
+             {React.string("Close Panel")}
            </a>
          : (
            switch (quicklist) {
@@ -119,6 +253,7 @@ let make = () => {
              let numItems = quicklist.itemIds->Js.Array.length;
              <button
                onClick={_ => {setVisibility(_ => Panel)}}
+               disabled={Js.Array.length(quicklist.itemIds) == 0}
                className=Styles.button>
                {React.string(
                   numItems > 0
@@ -147,7 +282,7 @@ let make = () => {
              setVisibility(_ => Bar);
            }}
            className=Styles.barLink>
-           {React.string(visibility == Panel ? "Discard list" : "Cancel")}
+           {React.string("Discard")}
          </a>
        | None =>
          <a
@@ -162,29 +297,59 @@ let make = () => {
        }}
     </div>
     <div className=Styles.body>
-      <div className=Styles.bodyList>
-        {switch (quicklist) {
-         | Some(quicklist) =>
-           <div className=Styles.listImages>
-             {quicklist.itemIds
-              ->Belt.Array.map(((itemId, variant)) => {
-                  let item = Item.getItem(~itemId);
-                  <img
-                    src={Item.getImageUrl(~item, ~variant)}
-                    className=Styles.listImage
-                    key={string_of_int(itemId) ++ string_of_int(variant)}
-                  />;
-                })
-              ->React.array}
-           </div>
-         | None => React.null
-         }}
+      <div className=Styles.bodyListWrapper>
+        <div className=Styles.bodyList>
+          {switch (quicklist) {
+           | Some(quicklist) =>
+             if (Js.Array.length(quicklist.itemIds) > 0) {
+               <div className=Styles.listImages>
+                 {quicklist.itemIds
+                  ->Belt.Array.map(((itemId, variant)) => {
+                      let item = Item.getItem(~itemId);
+                      <ReactAtmosphere.Tooltip
+                        text={React.string("Tap to remove")}
+                        key={string_of_int(itemId) ++ string_of_int(variant)}>
+                        {(
+                           ({onMouseEnter, onMouseLeave, ref}) =>
+                             <img
+                               src={Item.getImageUrl(~item, ~variant)}
+                               className=Styles.listImage
+                               onMouseEnter
+                               onMouseLeave
+                               onClick={_ => {
+                                 QuicklistStore.removeItem(~itemId, ~variant)
+                               }}
+                               ref={ReactDOMRe.Ref.domRef(ref)}
+                             />
+                         )}
+                      </ReactAtmosphere.Tooltip>;
+                    })
+                  ->React.array}
+               </div>;
+             } else {
+               <div className=Styles.emptyList>
+                 {React.string("Your list is empty!")}
+               </div>;
+             }
+           | None => React.null
+           }}
+        </div>
+        <div className=Styles.listImagesScrollFade />
       </div>
       <div className=Styles.saveRow>
         <button
-          onClick={_ => {QuicklistStore.saveList() |> ignore}}
+          onClick={_ => {
+            // QuicklistStore.saveList() |> ignore;
+            ConfirmDialog.show()
+          }}
+          disabled={
+            switch (quicklist) {
+            | Some(quicklist) => Js.Array.length(quicklist.itemIds) == 0
+            | None => true
+            }
+          }
           className=Styles.saveButton>
-          {React.string("Save and share quick list")}
+          {React.string("Share quick list")}
         </button>
       </div>
     </div>

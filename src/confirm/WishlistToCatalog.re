@@ -21,13 +21,15 @@ let confirm = (~onConfirm) =>
         "Adding an item to your catalog will remove it from your Wishlist. Do you want to continue?",
       ~confirmLabel="Move to catalog",
       ~cancelLabel="Not now",
-      ~onConfirm=() => {
-        PersistConfig.confirm();
-        onConfirm();
-        Analytics.Amplitude.logEventWithProperties(
-          ~eventName="Confirm Dialog Confirmed",
-          ~eventProperties={"id": "wishlistToCatalog"},
-        );
-      },
+      ~onConfirm=
+        () => {
+          PersistConfig.confirm();
+          onConfirm();
+          Analytics.Amplitude.logEventWithProperties(
+            ~eventName="Confirm Dialog Confirmed",
+            ~eventProperties={"id": "wishlistToCatalog"},
+          );
+        },
+      (),
     );
   };

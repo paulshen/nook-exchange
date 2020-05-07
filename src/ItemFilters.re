@@ -187,6 +187,8 @@ let doesItemMatchFilters = (~item: Item.t, ~filters: t) => {
         ->Belt.Array.keepMap(x => x);
       fragments->Belt.Array.every(fragment =>
         Js.String.toLowerCase(Item.getName(item))
+        |> Js.String.normalizeByForm("NFD")
+        |> Js.String.replaceByRe([%bs.re "/[\u0300-\u036f]/g"], "")
         |> Js.String.includes(fragment)
         || item.tags
         |> Js.Array.includes(fragment)

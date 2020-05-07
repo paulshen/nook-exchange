@@ -41,6 +41,7 @@ let getBucketHash = () => {
 
 module ExperimentIds = {
   let matchListNotice = "524";
+  let quicklistOverlay = "927";
 };
 
 let getBucketIdForExperiment = (~experimentId) =>
@@ -50,6 +51,8 @@ let getBucketIdForExperiment = (~experimentId) =>
       // Use the 3rd bit (50%)
       getBucketHash() lsr 2 land 1,
     );
+  } else if (experimentId == ExperimentIds.quicklistOverlay) {
+    string_of_int(getBucketHash() lsr 3 land 1);
   } else {
     raise(UnexpectedExperimentId(experimentId));
   };

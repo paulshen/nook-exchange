@@ -60,14 +60,34 @@ let useItemState = (~itemId, ~variant) => {
 
 let startList = () => {
   api.dispatch(StartList);
+  Analytics.Amplitude.logEventWithProperties(
+    ~eventName="Item List Started",
+    ~eventProperties={"path": Webapi.Dom.(location |> Location.pathname)},
+  );
 };
 
+let hasLoggedItemAdd = ref(false);
 let addItem = (~itemId, ~variant) => {
   api.dispatch(AddItem(itemId, variant));
+  if (! hasLoggedItemAdd^) {
+    Analytics.Amplitude.logEventWithProperties(
+      ~eventName="Item List Item Added",
+      ~eventProperties={"itemId": itemId, "variant": variant},
+    );
+    hasLoggedItemAdd := true;
+  };
 };
 
+let hasLoggedItemRemove = ref(false);
 let removeItem = (~itemId, ~variant) => {
   api.dispatch(RemoveItem(itemId, variant));
+  if (! hasLoggedItemRemove^) {
+    Analytics.Amplitude.logEventWithProperties(
+      ~eventName="Item List Item Removed",
+      ~eventProperties={"itemId": itemId, "variant": variant},
+    );
+    hasLoggedItemRemove := true;
+  };
 };
 
 let removeList = () => {
@@ -76,12 +96,20 @@ let removeList = () => {
 
 let saveList = () => {
   let list = api.getState()->Belt.Option.getExn;
+  let itemIds = list.itemIds;
   let%Repromise responseResult =
-    BAPI.createItemList(~sessionId=UserStore.sessionId^, ~items=list.itemIds);
+    BAPI.createItemList(~sessionId=UserStore.sessionId^, ~items=itemIds);
   UserStore.handleServerResponse("/item-lists", responseResult);
   let response = Belt.Result.getExn(responseResult);
   let%Repromise.JsExn json = Fetch.Response.json(response);
   let listId = json |> Json.Decode.(field("id", string));
+  Analytics.Amplitude.logEventWithProperties(
+    ~eventName="Item List Created",
+    ~eventProperties={
+      "listId": listId,
+      "numItems": Js.Array.length(itemIds),
+    },
+  );
   // api.dispatch(SaveList(listId));
   Promise.resolved(listId);
 };

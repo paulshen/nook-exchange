@@ -208,14 +208,18 @@ let make = (~listId) => {
       let%Repromise.JsExn json =
         Fetch.Response.json(Belt.Result.getExn(response));
       open Json.Decode;
-      setList(_ =>
-        Some(
-          {
-            id: Some(json |> field("id", string)),
-            userId: json |> optional(field("userId", string)),
-            itemIds: json |> field("itemIds", array(tuple2(int, int))),
-          }: QuicklistStore.t,
-        )
+      let list: QuicklistStore.t = {
+        id: Some(json |> field("id", string)),
+        userId: json |> optional(field("userId", string)),
+        itemIds: json |> field("itemIds", array(tuple2(int, int))),
+      };
+      setList(_ => Some(list));
+      Analytics.Amplitude.logEventWithProperties(
+        ~eventName="Item List Page Viewed",
+        ~eventProperties={
+          "listId": listId,
+          "numItems": Js.Array.length(list.itemIds),
+        },
       );
       Promise.resolved();
     }
@@ -225,6 +229,7 @@ let make = (~listId) => {
 
   let (viewMode, setViewMode) = React.useState(() => List);
   let me = UserStore.useMe();
+  let numViewToggleLoggedRef = React.useRef(0);
 
   <div
     className={Cn.make([
@@ -236,7 +241,27 @@ let make = (~listId) => {
     ])}>
     <div className=Styles.topRow>
       <button
-        onClick={_ => {setViewMode(_ => List)}}
+        onClick={_ => {
+          setViewMode(_ => List);
+          if (React.Ref.current(numViewToggleLoggedRef) < 5) {
+            Analytics.Amplitude.logEventWithProperties(
+              ~eventName="Item List Page View Toggled",
+              ~eventProperties={
+                "view": "list",
+                "listId": listId,
+                "numItems":
+                  switch (list) {
+                  | Some(list) => Js.Array.length(list.itemIds)
+                  | None => 0
+                  },
+              },
+            );
+            React.Ref.setCurrent(
+              numViewToggleLoggedRef,
+              React.Ref.current(numViewToggleLoggedRef) + 1,
+            );
+          };
+        }}
         className={Cn.make([
           Styles.viewButton,
           Cn.ifTrue(Styles.viewButtonSelected, viewMode == List),
@@ -245,7 +270,27 @@ let make = (~listId) => {
         {React.string("List")}
       </button>
       <button
-        onClick={_ => {setViewMode(_ => Grid)}}
+        onClick={_ => {
+          setViewMode(_ => Grid);
+          if (React.Ref.current(numViewToggleLoggedRef) < 5) {
+            Analytics.Amplitude.logEventWithProperties(
+              ~eventName="Item List Page View Toggled",
+              ~eventProperties={
+                "view": "grid",
+                "listId": listId,
+                "numItems":
+                  switch (list) {
+                  | Some(list) => Js.Array.length(list.itemIds)
+                  | None => 0
+                  },
+              },
+            );
+            React.Ref.setCurrent(
+              numViewToggleLoggedRef,
+              React.Ref.current(numViewToggleLoggedRef) + 1,
+            );
+          };
+        }}
         className={Cn.make([
           Styles.viewButton,
           Cn.ifTrue(Styles.viewButtonSelected, viewMode == Grid),

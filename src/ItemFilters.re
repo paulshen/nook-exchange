@@ -174,6 +174,12 @@ let doesItemMatchCategory = (~item: Item.t, ~category: string) => {
   };
 };
 
+let removeAccents = str => {
+  str
+  |> Js.String.normalizeByForm("NFD")
+  |> Js.String.replaceByRe([%bs.re "/[\u0300-\u036f]/g"], "");
+};
+
 let doesItemMatchFilters = (~item: Item.t, ~filters: t) => {
   (
     switch (filters.text) {
@@ -187,9 +193,8 @@ let doesItemMatchFilters = (~item: Item.t, ~filters: t) => {
         ->Belt.Array.keepMap(x => x);
       fragments->Belt.Array.every(fragment =>
         Js.String.toLowerCase(Item.getName(item))
-        |> Js.String.normalizeByForm("NFD")
-        |> Js.String.replaceByRe([%bs.re "/[\u0300-\u036f]/g"], "")
-        |> Js.String.includes(fragment)
+        |> removeAccents
+        |> Js.String.includes(removeAccents(fragment))
         || item.tags
         |> Js.Array.includes(fragment)
       );

@@ -95,9 +95,11 @@ module Styles = {
     style([marginTop(px(6)), textAlign(center), fontSize(px(12))]);
   let cardHasQuicklist =
     style([
-      children([opacity(0.5)]),
       selector("& ." ++ metaIcons, [display(none)]),
-      media("(hover: hover)", [hover([children([opacity(1.)])])]),
+      media(
+        "(hover: hover)",
+        [children([opacity(0.5)]), hover([children([opacity(1.)])])],
+      ),
     ]);
   let cardQuicklistSelected =
     style([

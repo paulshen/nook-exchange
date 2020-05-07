@@ -8,8 +8,12 @@ module Styles = {
       cursor(pointer),
       width(px(24)),
       height(px(24)),
+      padding(zero),
       outlineStyle(none),
-      transition(~duration=200, "all"),
+      transitions([
+        Transition.shorthand(~duration=200, "background-color"),
+        Transition.shorthand(~duration=200, "border-color"),
+      ]),
       backgroundPosition(center),
       media(
         "(hover: hover)",

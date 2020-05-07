@@ -27,7 +27,12 @@ module Styles = {
       padding3(~top=px(18), ~bottom=px(16), ~h=px(32)),
       media(
         "(max-width: 640px)",
-        [paddingLeft(px(16)), paddingRight(px(16))],
+        [
+          paddingLeft(px(16)),
+          paddingRight(px(16)),
+          whiteSpace(nowrap),
+          overflowX(auto),
+        ],
       ),
     ]);
   let profileLink =
@@ -42,6 +47,7 @@ module Styles = {
     ]);
   let profileLinkIcon =
     style([
+      flexShrink(0.),
       margin2(~v=zero, ~h=px(16)),
       top(zero),
       media("(max-width: 640px)", [margin2(~v=zero, ~h=px(8))]),

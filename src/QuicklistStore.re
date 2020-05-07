@@ -1,5 +1,6 @@
 type t = {
   id: option(string),
+  userId: option(string),
   itemIds: array((int, int)),
 };
 
@@ -15,7 +16,7 @@ open Belt;
 let api =
   Restorative.createStore(None, (state, action) => {
     switch (action) {
-    | StartList => Some({id: None, itemIds: [||]})
+    | StartList => Some({id: None, userId: None, itemIds: [||]})
     | AddItem(itemId, variant) =>
       state->Option.map(state =>
         {

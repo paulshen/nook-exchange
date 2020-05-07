@@ -156,11 +156,13 @@ module Styles = {
 
   let cardHasQuicklist =
     style([
-      children([opacity(0.5)]),
       selector("& ." ++ metaIcons, [display(none)]),
       selector("& ." ++ bottomBar, [display(none)]),
       selector("& ." ++ catalogCheckbox, [display(none)]),
-      media("(hover: hover)", [hover([children([opacity(1.)])])]),
+      media(
+        "(hover: hover)",
+        [children([opacity(0.5)]), hover([children([opacity(1.)])])],
+      ),
     ]);
   let cardQuicklistSelected =
     style([

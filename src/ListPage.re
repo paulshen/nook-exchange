@@ -10,7 +10,7 @@ module Styles = {
       margin2(~v=zero, ~h=auto),
       media(
         "(max-width: 630px)",
-        [marginLeft(px(16)), marginRight(px(16))],
+        [paddingTop(px(16)), marginLeft(px(16)), marginRight(px(16))],
       ),
     ]);
   let gridWidth = numCards => numCards * cardWidth + (numCards - 1) * 16;
@@ -165,7 +165,11 @@ module ListRow = {
         ]),
       ]);
     let variantName =
-      style([color(Colors.gray), padding2(~v=zero, ~h=px(8))]);
+      style([
+        color(Colors.gray),
+        padding2(~v=zero, ~h=px(8)),
+        textAlign(`right),
+      ]);
     let image = style([width(px(48)), height(px(48))]);
   };
 
@@ -208,6 +212,7 @@ let make = (~listId) => {
         Some(
           {
             id: Some(json |> field("id", string)),
+            userId: json |> optional(field("userId", string)),
             itemIds: json |> field("itemIds", array(tuple2(int, int))),
           }: QuicklistStore.t,
         )
@@ -219,6 +224,7 @@ let make = (~listId) => {
   });
 
   let (viewMode, setViewMode) = React.useState(() => List);
+  let me = UserStore.useMe();
 
   <div
     className={Cn.make([
@@ -230,15 +236,6 @@ let make = (~listId) => {
     ])}>
     <div className=Styles.topRow>
       <button
-        onClick={_ => {setViewMode(_ => Grid)}}
-        className={Cn.make([
-          Styles.viewButton,
-          Cn.ifTrue(Styles.viewButtonSelected, viewMode == Grid),
-        ])}>
-        <span className=Styles.gridIcon />
-        {React.string("Grid")}
-      </button>
-      <button
         onClick={_ => {setViewMode(_ => List)}}
         className={Cn.make([
           Styles.viewButton,
@@ -247,24 +244,44 @@ let make = (~listId) => {
         <span className=Styles.listIcon />
         {React.string("List")}
       </button>
+      <button
+        onClick={_ => {setViewMode(_ => Grid)}}
+        className={Cn.make([
+          Styles.viewButton,
+          Cn.ifTrue(Styles.viewButtonSelected, viewMode == Grid),
+        ])}>
+        <span className=Styles.gridIcon />
+        {React.string("Grid")}
+      </button>
     </div>
     {switch (list) {
      | Some(list) =>
-       <div
-         className={
-           switch (viewMode) {
-           | Grid => Styles.grid
-           | List => Styles.list
-           }
-         }>
-         {list.itemIds
-          |> Js.Array.mapi(((itemId, variant), i) => {
-               switch (viewMode) {
-               | Grid => <GridCard itemId variant key={string_of_int(i)} />
-               | List => <ListRow itemId variant key={string_of_int(i)} />
-               }
-             })
-          |> React.array}
+       <div>
+         <div
+           className={
+             switch (viewMode) {
+             | Grid => Styles.grid
+             | List => Styles.list
+             }
+           }>
+           {list.itemIds
+            |> Js.Array.mapi(((itemId, variant), i) => {
+                 switch (viewMode) {
+                 | Grid => <GridCard itemId variant key={string_of_int(i)} />
+                 | List => <ListRow itemId variant key={string_of_int(i)} />
+                 }
+               })
+            |> React.array}
+         </div>
+         {switch (me) {
+          | Some(me) =>
+            if (list.userId == Some(me.id)) {
+              React.null;
+            } else {
+              React.null;
+            }
+          | None => React.null
+          }}
        </div>
      | None => React.null
      }}

@@ -81,10 +81,9 @@ module Styles = {
   let cardMini = style([position(relative)]);
   let cardMiniHasQuicklist =
     style([
-      opacity(0.5),
       cursor(pointer),
       transition(~duration=200, "all"),
-      media("(hover: hover)", [hover([opacity(0.8)])]),
+      media("(hover: hover)", [opacity(0.5), hover([opacity(0.8)])]),
     ]);
   let cardMiniQuicklistSelected =
     style([important(opacity(1.)), backgroundColor(hex("3aa56340"))]);

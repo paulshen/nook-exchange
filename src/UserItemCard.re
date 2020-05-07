@@ -12,17 +12,18 @@ module Styles = {
     style([
       position(absolute),
       top(px(6)),
-      right(px(10)),
+      right(px(8)),
       fontSize(px(13)),
       boxSizing(borderBox),
       cursor(`default),
-      width(px(20)),
-      height(px(20)),
-      textAlign(center),
-      opacity(0.5),
+      padding2(~v=zero, ~h=px(2)),
+      height(px(24)),
+      display(flexBox),
+      alignItems(center),
+      opacity(0.8),
       transition(~duration=200, "all"),
+      hover([opacity(1.)]),
     ]);
-  let topRightIconSelected = style([opacity(1.)]);
   let ellipsisButton =
     style([position(absolute), top(px(8)), right(px(8))]);
   let catalogStatusButton =
@@ -99,10 +100,11 @@ module StarIcon = {
     open Css;
     let icon =
       style([
-        height(px(24)),
         padding2(~v=zero, ~h=px(2)),
+        display(flexBox),
+        alignItems(center),
+        height(px(24)),
         fontSize(px(12)),
-        lineHeight(px(26)),
         cursor(`default),
       ]);
   };
@@ -237,37 +239,30 @@ let make =
             }}
            {switch (viewerItem) {
             | Some(viewerItem) =>
-              <ReactAtmosphere.Tooltip
-                text={React.string(
-                  "In your " ++ User.itemStatusToString(viewerItem.status),
-                )}>
-                {(
-                   ({onMouseEnter, onMouseLeave, ref}) =>
-                     <div
-                       onMouseEnter
-                       onMouseLeave
-                       className={Cn.make([
-                         Styles.topRightIcon,
-                         Cn.ifTrue(
-                           Styles.topRightIconSelected,
-                           User.(
-                             switch (list, viewerItem.status) {
-                             | (ForTrade, Wishlist)
-                             | (CanCraft, Wishlist)
-                             | (Wishlist, ForTrade)
-                             | (Wishlist, CanCraft) => true
-                             | _ => false
-                             }
-                           ),
-                         ),
-                       ])}
-                       ref={ReactDOMRe.Ref.domRef(ref)}>
-                       {React.string(
-                          User.itemStatusToEmoji(viewerItem.status),
-                        )}
-                     </div>
-                 )}
-              </ReactAtmosphere.Tooltip>
+              switch (list, viewerItem.status) {
+              | (ForTrade, Wishlist)
+              | (CanCraft, Wishlist)
+              | (Wishlist, ForTrade)
+              | (Wishlist, CanCraft) =>
+                <ReactAtmosphere.Tooltip
+                  text={React.string(
+                    "In your " ++ User.itemStatusToString(viewerItem.status),
+                  )}>
+                  {(
+                     ({onMouseEnter, onMouseLeave, ref}) =>
+                       <div
+                         onMouseEnter
+                         onMouseLeave
+                         className={Cn.make([Styles.topRightIcon])}
+                         ref={ReactDOMRe.Ref.domRef(ref)}>
+                         {React.string(
+                            User.itemStatusToEmoji(viewerItem.status),
+                          )}
+                       </div>
+                   )}
+                </ReactAtmosphere.Tooltip>
+              | _ => React.null
+              }
             | None => React.null
             }}
          </>}

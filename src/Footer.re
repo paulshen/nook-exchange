@@ -57,6 +57,8 @@ let make = () => {
         <a href="/terms"> {React.string("Terms of Service")} </a>
         {React.string(" | ")}
         <a href="/privacy"> {React.string("Privacy Policy")} </a>
+        {React.string(" | ")}
+        <a href="mailto:hi@nook.exchange"> {React.string("Contact Us")} </a>
         {React.string(" | Thanks for visiting!")}
       </div>
       <div className=Styles.disclaimer>

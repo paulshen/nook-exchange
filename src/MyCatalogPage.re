@@ -173,14 +173,16 @@ module Loaded = {
       userItems->Belt.Array.keepU((. (_, item: User.item)) =>
         item.status != Wishlist
       );
+    let url = "https://nook.exchange/u/" ++ user.username ++ "/catalog";
 
     <div>
       <div className=Styles.title> {React.string("My Catalog")} </div>
       <div className=Styles.userBody>
         <div className=Styles.userBodyParagraph>
           {React.string(
-             {j|You are getting a sneak preview of your catalog 🤫. This is a list of items in your For Trade and Can Craft. You can also have catalog-only items.|j},
+             {j|This is a list of your For Trade and Can Craft items. You can also have catalog-only items. Share your catalog! |j},
            )}
+          <a href=url target="_blank"> {React.string(url)} </a>
         </div>
         {user.enableCatalogCheckbox
            ? <div className=Styles.userBodyParagraph>
@@ -219,12 +221,6 @@ module Loaded = {
                </a>
                {React.string(".")}
              </div>}
-        <div>
-          {React.string("Do you like it? How can it be better? ")}
-          <a href="https://twitter.com/nookexchange" target="_blank">
-            {React.string("Let us know!")}
-          </a>
-        </div>
       </div>
       <Catalog userItems=catalog />
     </div>;

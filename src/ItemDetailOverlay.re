@@ -570,7 +570,7 @@ let make = (~item: Item.t, ~variant, ~isInitialLoad) => {
                } else {
                  React.null;
                }}
-              {if (item.buyPrice != None && item.sellPrice != None) {
+              {if (item.buyPrice != None || item.sellPrice != None) {
                  <div className=Styles.itemPrices>
                    {switch (item.buyPrice) {
                     | Some(buyPrice) =>

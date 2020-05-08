@@ -226,6 +226,13 @@ let make = (~onClose) => {
                    }}
                    className=Styles.input
                  />
+                 <div className=Styles.errorMessage>
+                   <a
+                     href="mailto:hi@nook.exchange?subject=I need a new password!&body=My username is <username>. This is the email on my account."
+                     target="_blank">
+                     {React.string("Forgot password?")}
+                   </a>
+                 </div>
                  {switch (registerStatus) {
                   | Some(Error(error)) =>
                     <div className=Styles.errorMessage>

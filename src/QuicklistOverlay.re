@@ -110,7 +110,7 @@ module Styles = {
     ]);
   let shownPanel =
     style([
-      boxShadow(Shadow.box(~blur=px(24), hex("00000080"))),
+      boxShadow(Shadow.box(~blur=px(24), hex("00000040"))),
       transform(translate3d(zero, zero, zero)),
       backgroundColor(Colors.white),
       color(Colors.charcoal),

@@ -332,7 +332,7 @@ let setItemPriority = (~itemId: int, ~variant: int, ~isPriority: bool) => {
       ++ "/"
       ++ string_of_int(variant)
       ++ "/priority";
-    let%Repromise.Js responseResult =
+    let%Repromise.Js _responseResult =
       Fetch.fetchWithInit(
         url,
         Fetch.RequestInit.make(
@@ -357,7 +357,6 @@ let setItemPriority = (~itemId: int, ~variant: int, ~isPriority: bool) => {
           (),
         ),
       );
-    handleServerResponse(url, responseResult);
     Promise.resolved();
   }
   |> ignore;

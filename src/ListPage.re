@@ -123,10 +123,12 @@ module ListRow = {
       className=Styles.row>
       <div className=Styles.imageWrapper>
         <img src={Item.getImageUrl(~item, ~variant)} className=Styles.image />
-        <img
-          src={Constants.cdnUrl ++ "/images/DIYRecipe.png"}
-          className=Styles.recipeIcon
-        />
+        {Item.isRecipe(~item)
+           ? <img
+               src={Constants.cdnUrl ++ "/images/DIYRecipe.png"}
+               className=Styles.recipeIcon
+             />
+           : React.null}
       </div>
       <div className=Styles.itemName>
         {React.string(Item.getName(item))}

@@ -62,7 +62,22 @@ let startList = () => {
   api.dispatch(StartList);
   Analytics.Amplitude.logEventWithProperties(
     ~eventName="Item List Started",
-    ~eventProperties={"path": Webapi.Dom.(location |> Location.pathname)},
+    ~eventProperties={
+      "path": Webapi.Dom.(location |> Location.pathname),
+      "isLoggedIn": UserStore.isLoggedIn(),
+      "isViewingSelf":
+        switch (UserStore.getUserOption()) {
+        | Some(user) =>
+          let url = ReasonReactRouter.dangerouslyGetInitialUrl();
+          switch (url.path) {
+          | ["u", username, ..._] =>
+            Js.String.toLowerCase(username)
+            == Js.String.toLowerCase(user.username)
+          | _ => false
+          };
+        | None => false
+        },
+    },
   );
 };
 

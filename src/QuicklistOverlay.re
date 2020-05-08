@@ -320,277 +320,239 @@ module CreateDialog = {
   };
 };
 
-module Component = {
-  [@react.component]
-  let make = () => {
-    let quicklist = QuicklistStore.useQuicklist();
-    let (visibility, setVisibility) = React.useState(() => Bar);
-    let (isSubmitting, setIsSubmitting) = React.useState(() => false);
-
-    if (visibility == Panel && quicklist == None) {
-      setVisibility(_ => Bar);
-    };
-
-    let url = ReasonReactRouter.useUrl();
-    let viewportWidth = Utils.useViewportWidth();
-    <>
-      {visibility == Panel
-         ? <div
-             onClick={_ => {setVisibility(_ => Bar)}}
-             className=Styles.mobileOverlay
-           />
-         : React.null}
-      <div
-        className={Cn.make([
-          Styles.root,
-          Cn.ifTrue(
-            Styles.shown,
-            quicklist != None
-            || visibility != Hidden
-            && (
-              switch (url.path) {
-              | ["u", ..._] => true
-              | _ => false
-              }
-            ),
-          ),
-          Cn.ifTrue(Styles.shownPanel, visibility == Panel),
-          Cn.ifTrue(Styles.rootWithQuicklist, quicklist != None),
-        ])}>
-        <div className=Styles.introBar>
-          {visibility == Panel
-             ? <a
-                 href="#"
-                 onClick={e => {
-                   ReactEvent.Mouse.preventDefault(e);
-                   Analytics.Amplitude.logEvent(
-                     ~eventName="Item List Overlay Closed",
-                   );
-                   setVisibility(_ => Bar);
-                 }}
-                 className=Styles.hidePanelLink>
-                 <span className=Styles.hidePanelLinkCaret />
-                 {React.string("Close")}
-               </a>
-             : (
-               switch (quicklist) {
-               | Some(quicklist) =>
-                 let numItems = quicklist.itemIds->Js.Array.length;
-                 <button
-                   onClick={_ => {
-                     setVisibility(_ => Panel);
-                     Analytics.Amplitude.logEventWithProperties(
-                       ~eventName="Item List Overlay Shown",
-                       ~eventProperties={"numItems": numItems},
-                     );
-                   }}
-                   disabled={Js.Array.length(quicklist.itemIds) == 0}
-                   className=Styles.button>
-                   {React.string(
-                      numItems > 0
-                        ? "See "
-                          ++ string_of_int(numItems)
-                          ++ " item"
-                          ++ (numItems == 1 ? "" : "s")
-                        : "Select items",
-                    )}
-                 </button>;
-               | None =>
-                 <button
-                   onClick={_ => {QuicklistStore.startList()}}
-                   className=Styles.button>
-                   {React.string("Start a list")}
-                 </button>
-               }
-             )}
-          {switch (quicklist) {
-           | Some(quicklist) =>
-             <a
-               href="#"
-               onClick={e => {
-                 ReactEvent.Mouse.preventDefault(e);
-                 let numItems = Js.Array.length(quicklist.itemIds);
-                 if (numItems > 1) {
-                   ConfirmDialog.confirm(
-                     ~bodyText=
-                       "You have "
-                       ++ string_of_int(numItems)
-                       ++ " items that will be discarded. Are you sure?",
-                     ~confirmLabel="Yes, discard list",
-                     ~cancelLabel="Not yet",
-                     ~onConfirm=
-                       () => {
-                         QuicklistStore.removeList();
-                         Analytics.Amplitude.logEventWithProperties(
-                           ~eventName="Item List Removed",
-                           ~eventProperties={"numItems": numItems},
-                         );
-                       },
-                     (),
-                   );
-                 } else {
-                   QuicklistStore.removeList();
-                   Analytics.Amplitude.logEventWithProperties(
-                     ~eventName="Item List Removed",
-                     ~eventProperties={"numItems": numItems},
-                   );
-                 };
-                 setVisibility(_ => Bar);
-               }}
-               className=Styles.barLink>
-               {React.string("Discard list")}
-             </a>
-           | None =>
-             <a
-               href="#"
-               onClick={e => {
-                 ReactEvent.Mouse.preventDefault(e);
-                 setVisibility(_ => Hidden);
-                 Analytics.Amplitude.logEvent(
-                   ~eventName="Item List Overlay Hidden",
-                 );
-               }}
-               className=Styles.barLink>
-               {React.string("Hide")}
-             </a>
-           }}
-        </div>
-        <div className=Styles.body>
-          <div className=Styles.bodyListWrapper>
-            <div className=Styles.bodyList>
-              {switch (quicklist) {
-               | Some(quicklist) =>
-                 if (Js.Array.length(quicklist.itemIds) > 0) {
-                   <div className=Styles.listImages>
-                     {quicklist.itemIds
-                      ->Belt.Array.map(((itemId, variant)) => {
-                          let item = Item.getItem(~itemId);
-                          if (viewportWidth > viewportThreshold) {
-                            <ReactAtmosphere.Tooltip
-                              text={React.string("Tap to remove")}
-                              options={
-                                placement: Some("top"),
-                                modifiers:
-                                  Some([|
-                                    {
-                                      "name": "offset",
-                                      "options": {
-                                        "offset": [|0, 4|],
-                                      },
-                                    },
-                                  |]),
-                              }
-                              key={
-                                string_of_int(itemId)
-                                ++ string_of_int(variant)
-                              }>
-                              {(
-                                 ({onMouseEnter, onMouseLeave, ref}) =>
-                                   <img
-                                     src={Item.getImageUrl(~item, ~variant)}
-                                     className=Styles.listImage
-                                     onMouseEnter
-                                     onMouseLeave
-                                     onClick={_ => {
-                                       QuicklistStore.removeItem(
-                                         ~itemId,
-                                         ~variant,
-                                       )
-                                     }}
-                                     ref={ReactDOMRe.Ref.domRef(ref)}
-                                   />
-                               )}
-                            </ReactAtmosphere.Tooltip>;
-                          } else {
-                            <img
-                              src={Item.getImageUrl(~item, ~variant)}
-                              className=Styles.listImage
-                              onClick={_ => {
-                                QuicklistStore.removeItem(~itemId, ~variant)
-                              }}
-                              key={
-                                string_of_int(itemId)
-                                ++ string_of_int(variant)
-                              }
-                            />;
-                          };
-                        })
-                      ->React.array}
-                   </div>;
-                 } else {
-                   <div className=Styles.emptyList>
-                     {React.string("Your list is empty!")}
-                   </div>;
-                 }
-               | None => React.null
-               }}
-            </div>
-            <div className=Styles.listImagesScrollFade />
-          </div>
-          <div className=Styles.saveRow>
-            <div className=Styles.mobileRemoveMessage>
-              {React.string("Tap item to remove")}
-            </div>
-            <button
-              onClick={_ => {
-                {
-                  setIsSubmitting(_ => true);
-                  let%Repromise listId = QuicklistStore.saveList();
-                  setIsSubmitting(_ => false);
-                  setVisibility(_ => Bar);
-                  CreateDialog.show(~listId);
-                  QuicklistStore.removeList();
-                  Promise.resolved();
-                }
-                |> ignore
-              }}
-              disabled={
-                switch (quicklist) {
-                | Some(quicklist) =>
-                  Js.Array.length(quicklist.itemIds) == 0 || isSubmitting
-                | None => true
-                }
-              }
-              className=Styles.saveButton>
-              {React.string("Share this list!")}
-            </button>
-          </div>
-        </div>
-      </div>
-    </>;
-  };
-};
-
 [@react.component]
 let make = () => {
   let quicklist = QuicklistStore.useQuicklist();
-  let bucketId =
-    Experiment.getBucketIdForExperiment(
-      ~experimentId=Experiment.ExperimentIds.quicklistOverlay,
-    );
-  let url = ReasonReactRouter.useUrl();
-  let isOnUserPage =
-    switch (url.path) {
-    | ["u", ..._] => true
-    | _ => false
-    };
-  let didTriggerRef = React.useRef(false);
-  React.useEffect1(
-    () => {
-      if (isOnUserPage && !React.Ref.current(didTriggerRef)) {
-        Experiment.trigger(
-          ~experimentId=Experiment.ExperimentIds.quicklistOverlay,
-          ~bucketId,
-        );
-        React.Ref.setCurrent(didTriggerRef, true);
-      };
-      None;
-    },
-    [|isOnUserPage|],
-  );
-  if (quicklist !== None || bucketId === "1") {
-    <Component />;
-  } else {
-    React.null;
+  let (visibility, setVisibility) = React.useState(() => Bar);
+  let (isSubmitting, setIsSubmitting) = React.useState(() => false);
+
+  if (visibility == Panel && quicklist == None) {
+    setVisibility(_ => Bar);
   };
+
+  let url = ReasonReactRouter.useUrl();
+  let viewportWidth = Utils.useViewportWidth();
+  <>
+    {visibility == Panel
+       ? <div
+           onClick={_ => {setVisibility(_ => Bar)}}
+           className=Styles.mobileOverlay
+         />
+       : React.null}
+    <div
+      className={Cn.make([
+        Styles.root,
+        Cn.ifTrue(
+          Styles.shown,
+          quicklist != None
+          || visibility != Hidden
+          && (
+            switch (url.path) {
+            | ["u", ..._] => true
+            | _ => false
+            }
+          ),
+        ),
+        Cn.ifTrue(Styles.shownPanel, visibility == Panel),
+        Cn.ifTrue(Styles.rootWithQuicklist, quicklist != None),
+      ])}>
+      <div className=Styles.introBar>
+        {visibility == Panel
+           ? <a
+               href="#"
+               onClick={e => {
+                 ReactEvent.Mouse.preventDefault(e);
+                 Analytics.Amplitude.logEvent(
+                   ~eventName="Item List Overlay Closed",
+                 );
+                 setVisibility(_ => Bar);
+               }}
+               className=Styles.hidePanelLink>
+               <span className=Styles.hidePanelLinkCaret />
+               {React.string("Close")}
+             </a>
+           : (
+             switch (quicklist) {
+             | Some(quicklist) =>
+               let numItems = quicklist.itemIds->Js.Array.length;
+               <button
+                 onClick={_ => {
+                   setVisibility(_ => Panel);
+                   Analytics.Amplitude.logEventWithProperties(
+                     ~eventName="Item List Overlay Shown",
+                     ~eventProperties={"numItems": numItems},
+                   );
+                 }}
+                 disabled={Js.Array.length(quicklist.itemIds) == 0}
+                 className=Styles.button>
+                 {React.string(
+                    numItems > 0
+                      ? "See "
+                        ++ string_of_int(numItems)
+                        ++ " item"
+                        ++ (numItems == 1 ? "" : "s")
+                      : "Select items",
+                  )}
+               </button>;
+             | None =>
+               <button
+                 onClick={_ => {QuicklistStore.startList()}}
+                 className=Styles.button>
+                 {React.string("Start a list")}
+               </button>
+             }
+           )}
+        {switch (quicklist) {
+         | Some(quicklist) =>
+           <a
+             href="#"
+             onClick={e => {
+               ReactEvent.Mouse.preventDefault(e);
+               let numItems = Js.Array.length(quicklist.itemIds);
+               if (numItems > 1) {
+                 ConfirmDialog.confirm(
+                   ~bodyText=
+                     "You have "
+                     ++ string_of_int(numItems)
+                     ++ " items that will be discarded. Are you sure?",
+                   ~confirmLabel="Yes, discard list",
+                   ~cancelLabel="Not yet",
+                   ~onConfirm=
+                     () => {
+                       QuicklistStore.removeList();
+                       Analytics.Amplitude.logEventWithProperties(
+                         ~eventName="Item List Removed",
+                         ~eventProperties={"numItems": numItems},
+                       );
+                     },
+                   (),
+                 );
+               } else {
+                 QuicklistStore.removeList();
+                 Analytics.Amplitude.logEventWithProperties(
+                   ~eventName="Item List Removed",
+                   ~eventProperties={"numItems": numItems},
+                 );
+               };
+               setVisibility(_ => Bar);
+             }}
+             className=Styles.barLink>
+             {React.string("Discard list")}
+           </a>
+         | None =>
+           <a
+             href="#"
+             onClick={e => {
+               ReactEvent.Mouse.preventDefault(e);
+               setVisibility(_ => Hidden);
+               Analytics.Amplitude.logEvent(
+                 ~eventName="Item List Overlay Hidden",
+               );
+             }}
+             className=Styles.barLink>
+             {React.string("Hide")}
+           </a>
+         }}
+      </div>
+      <div className=Styles.body>
+        <div className=Styles.bodyListWrapper>
+          <div className=Styles.bodyList>
+            {switch (quicklist) {
+             | Some(quicklist) =>
+               if (Js.Array.length(quicklist.itemIds) > 0) {
+                 <div className=Styles.listImages>
+                   {quicklist.itemIds
+                    ->Belt.Array.map(((itemId, variant)) => {
+                        let item = Item.getItem(~itemId);
+                        if (viewportWidth > viewportThreshold) {
+                          <ReactAtmosphere.Tooltip
+                            text={React.string("Tap to remove")}
+                            options={
+                              placement: Some("top"),
+                              modifiers:
+                                Some([|
+                                  {
+                                    "name": "offset",
+                                    "options": {
+                                      "offset": [|0, 4|],
+                                    },
+                                  },
+                                |]),
+                            }
+                            key={
+                              string_of_int(itemId) ++ string_of_int(variant)
+                            }>
+                            {(
+                               ({onMouseEnter, onMouseLeave, ref}) =>
+                                 <img
+                                   src={Item.getImageUrl(~item, ~variant)}
+                                   className=Styles.listImage
+                                   onMouseEnter
+                                   onMouseLeave
+                                   onClick={_ => {
+                                     QuicklistStore.removeItem(
+                                       ~itemId,
+                                       ~variant,
+                                     )
+                                   }}
+                                   ref={ReactDOMRe.Ref.domRef(ref)}
+                                 />
+                             )}
+                          </ReactAtmosphere.Tooltip>;
+                        } else {
+                          <img
+                            src={Item.getImageUrl(~item, ~variant)}
+                            className=Styles.listImage
+                            onClick={_ => {
+                              QuicklistStore.removeItem(~itemId, ~variant)
+                            }}
+                            key={
+                              string_of_int(itemId) ++ string_of_int(variant)
+                            }
+                          />;
+                        };
+                      })
+                    ->React.array}
+                 </div>;
+               } else {
+                 <div className=Styles.emptyList>
+                   {React.string("Your list is empty!")}
+                 </div>;
+               }
+             | None => React.null
+             }}
+          </div>
+          <div className=Styles.listImagesScrollFade />
+        </div>
+        <div className=Styles.saveRow>
+          <div className=Styles.mobileRemoveMessage>
+            {React.string("Tap item to remove")}
+          </div>
+          <button
+            onClick={_ => {
+              {
+                setIsSubmitting(_ => true);
+                let%Repromise listId = QuicklistStore.saveList();
+                setIsSubmitting(_ => false);
+                setVisibility(_ => Bar);
+                CreateDialog.show(~listId);
+                QuicklistStore.removeList();
+                Promise.resolved();
+              }
+              |> ignore
+            }}
+            disabled={
+              switch (quicklist) {
+              | Some(quicklist) =>
+                Js.Array.length(quicklist.itemIds) == 0 || isSubmitting
+              | None => true
+              }
+            }
+            className=Styles.saveButton>
+            {React.string("Share this list!")}
+          </button>
+        </div>
+      </div>
+    </div>
+  </>;
 };

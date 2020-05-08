@@ -75,6 +75,12 @@ let getItem = (~itemId, ~variation) => {
   };
 };
 
+let getUserOption = () => {
+  switch (api.getState()) {
+  | LoggedIn(user) => Some(user)
+  | _ => None
+  };
+};
 let isLoggedIn = () =>
   switch (api.getState()) {
   | LoggedIn(_) => true

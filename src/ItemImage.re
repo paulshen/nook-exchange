@@ -68,22 +68,27 @@ let make =
       ~variant,
       ~narrow=false,
       ~forceTooltip=false,
-      ~className,
+      ~link=true,
+      ~className=?,
       (),
     ) => {
   let numCollapsedVariants =
-    switch (item.variations) {
-    | Single
-    | OneDimension(_) => 1
-    | TwoDimensions(a, b) =>
-      if (item.bodyCustomizable) {
-        a * b;
-      } else {
-        b;
-      }
+    if (Item.isRecipe(~item)) {
+      1;
+    } else {
+      switch (item.variations) {
+      | Single
+      | OneDimension(_) => 1
+      | TwoDimensions(a, b) =>
+        if (item.bodyCustomizable) {
+          a * b;
+        } else {
+          b;
+        }
+      };
     };
   let (offset, setOffset) = React.useState(() => 0);
-  <div className={Cn.make([Styles.root, className])}>
+  <div className={Cn.make([Styles.root, Cn.unpack(className)])}>
     {numCollapsedVariants > 1
        ? <button
            onClick={_ => {
@@ -107,7 +112,7 @@ let make =
       className={Cn.make([
         Styles.mainImageWrapper,
         Cn.ifTrue(Styles.mainImageWrapperRecipe, Item.isRecipe(~item)),
-        className,
+        Cn.unpack(className),
       ])}>
       {let image =
          <Link

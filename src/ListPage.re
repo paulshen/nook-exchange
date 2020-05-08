@@ -1,4 +1,4 @@
-let cardWidth = 192;
+let cardWidth = 176;
 
 module Styles = {
   open Css;
@@ -43,7 +43,7 @@ module Styles = {
       transition(~duration=200, "all"),
       hover([opacity(0.8)]),
     ]);
-  let viewButtonSelected = style([opacity(1.)]);
+  let viewButtonSelected = style([important(opacity(1.))]);
   let gridIcon =
     style([
       display(inlineBlock),
@@ -69,77 +69,7 @@ module Styles = {
       border(px(1), solid, Colors.lightGreen),
     ]);
   let grid =
-    style([
-      display(flexBox),
-      flexWrap(wrap),
-      marginRight(px(-16)),
-      media(
-        "(max-width: 630px)",
-        [marginRight(zero), justifyContent(spaceBetween)],
-      ),
-    ]);
-};
-
-module GridCard = {
-  module Styles = {
-    open Css;
-    let gridItem =
-      style([
-        backgroundColor(Colors.white),
-        display(flexBox),
-        flexDirection(column),
-        alignItems(center),
-        color(Colors.charcoal),
-        padding2(~v=px(16), ~h=px(16)),
-        borderRadius(px(8)),
-        marginRight(px(16)),
-        marginBottom(px(16)),
-        textDecoration(none),
-        textAlign(center),
-        width(px(192)),
-        boxSizing(borderBox),
-        media(
-          "(max-width: 630px)",
-          [width(Calc.(pct(50.) - px(8))), marginRight(zero)],
-        ),
-        media(
-          "(hover: hover)",
-          [
-            hover([boxShadow(Shadow.box(~blur=px(32), hex("3aa56340")))]),
-          ],
-        ),
-      ]);
-    let gridImage =
-      style([width(px(128)), height(px(128)), display(block)]);
-    let spacer = style([flexGrow(1.)]);
-    let itemName = style([fontSize(px(16))]);
-    let variantName = style([color(Colors.gray), marginTop(px(8))]);
-  };
-
-  [@react.component]
-  let make = (~itemId, ~variant) => {
-    let item = Item.getItem(~itemId);
-    <Link
-      path={ItemDetailOverlay.getItemDetailUrl(
-        ~itemId,
-        ~variant=Some(variant),
-      )}
-      className=Styles.gridItem>
-      <div className=Styles.itemName>
-        {React.string(Item.getName(item))}
-      </div>
-      <img
-        src={Item.getImageUrl(~item, ~variant)}
-        className=Styles.gridImage
-      />
-      <div className=Styles.spacer />
-      {switch (Item.getVariantName(~item, ~variant, ~hidePattern=true, ())) {
-       | Some(variantName) =>
-         <div className=Styles.variantName> {React.string(variantName)} </div>
-       | None => React.null
-       }}
-    </Link>;
-  };
+    style([display(flexBox), flexWrap(wrap), marginRight(px(-16))]);
 };
 
 module ListRow = {
@@ -170,7 +100,16 @@ module ListRow = {
         padding2(~v=zero, ~h=px(8)),
         textAlign(`right),
       ]);
+    let imageWrapper = style([position(relative), fontSize(zero)]);
     let image = style([width(px(48)), height(px(48))]);
+    let recipeIcon =
+      style([
+        position(absolute),
+        bottom(px(-4)),
+        right(px(-4)),
+        width(px(24)),
+        height(px(24)),
+      ]);
   };
 
   [@react.component]
@@ -182,7 +121,13 @@ module ListRow = {
         ~variant=Some(variant),
       )}
       className=Styles.row>
-      <img src={Item.getImageUrl(~item, ~variant)} className=Styles.image />
+      <div className=Styles.imageWrapper>
+        <img src={Item.getImageUrl(~item, ~variant)} className=Styles.image />
+        <img
+          src={Constants.cdnUrl ++ "/images/DIYRecipe.png"}
+          className=Styles.recipeIcon
+        />
+      </div>
       <div className=Styles.itemName>
         {React.string(Item.getName(item))}
       </div>
@@ -312,7 +257,15 @@ let make = (~listId) => {
            {list.itemIds
             |> Js.Array.mapi(((itemId, variant), i) => {
                  switch (viewMode) {
-                 | Grid => <GridCard itemId variant key={string_of_int(i)} />
+                 | Grid =>
+                   <UserItemCard
+                     itemId
+                     variation=variant
+                     editable=false
+                     showRecipe=false
+                     showMetaIcons=false
+                     key={string_of_int(i)}
+                   />
                  | List => <ListRow itemId variant key={string_of_int(i)} />
                  }
                })

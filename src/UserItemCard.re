@@ -73,6 +73,7 @@ module Styles = {
       ),
     ]);
   let cardOnCatalogPage = style([paddingBottom(px(16))]);
+  let cardWithoutTopRow = style([paddingTop(px(8))]);
   let itemImage = style([marginLeft(px(-8)), marginRight(px(-8))]);
   let name =
     style([fontSize(px(16)), marginBottom(px(4)), textAlign(center)]);
@@ -136,10 +137,11 @@ let make =
     (
       ~itemId,
       ~variation,
-      ~userItem: User.item,
-      ~list: ViewingList.t,
+      ~userItem: option(User.item)=?,
+      ~list: option(ViewingList.t)=?,
       ~editable,
       ~showRecipe,
+      ~showMetaIcons=true,
       ~onCatalogPage=false,
       (),
     ) => {
@@ -152,6 +154,7 @@ let make =
   <div
     className={Cn.make([
       Styles.card,
+      Cn.ifTrue(Styles.cardWithoutTopRow, !showMetaIcons),
       Cn.ifTrue(Styles.cardOnCatalogPage, onCatalogPage),
       Cn.ifTrue(Styles.cardHasQuicklist, hasQuicklist),
       Cn.ifTrue(Styles.cardQuicklistSelected, isInQuicklist),
@@ -188,83 +191,100 @@ let make =
        | _ => React.null
        }}
     </div>
-    <div className=Styles.metaIcons>
-      {if (userItem.priorityTimestamp !== None) {
-         <StarIcon />;
-       } else {
-         React.null;
-       }}
-      {switch (onCatalogPage, list, userItem.status) {
-       | (true, _, CanCraft)
-       | (true, _, ForTrade)
-       | (false, Catalog, CanCraft)
-       | (false, Catalog, ForTrade) =>
-         <ReactAtmosphere.Tooltip
-           text={React.string(
-             userItem.status == ForTrade ? "For Trade" : "Can Craft",
-           )}
-           options={Obj.magic({"modifiers": None})}>
-           {(
-              ({onMouseEnter, onMouseLeave, onFocus, onBlur, ref}) =>
-                <div
-                  onMouseEnter
-                  onMouseLeave
-                  onFocus
-                  onBlur
-                  className=Styles.catalogStatusButton
-                  ref={ReactDOMRe.Ref.domRef(ref)}>
-                  {React.string(
-                     userItem.status == ForTrade ? {j|🤝|j} : {j|🔨|j},
-                   )}
-                </div>
-            )}
-         </ReactAtmosphere.Tooltip>
-       | _ => React.null
-       }}
-      {switch (onCatalogPage, item.recipe) {
-       | (false, Some(recipe)) =>
-         <ItemCard.RecipeIcon recipe className=Styles.metaIcon />
-       | _ => React.null
-       }}
-      {if (!onCatalogPage && item.orderable) {
-         <ItemCard.OrderableIcon className=Styles.metaIcon />;
-       } else {
-         React.null;
-       }}
-    </div>
+    {showMetaIcons
+       ? <div className=Styles.metaIcons>
+           {if (Belt.Option.flatMap(userItem, userItem =>
+                  userItem.priorityTimestamp
+                )
+                !== None) {
+              <StarIcon />;
+            } else {
+              React.null;
+            }}
+           {switch (
+              onCatalogPage,
+              list,
+              Belt.Option.map(userItem, userItem => userItem.status),
+            ) {
+            | (true, _, Some(CanCraft) as userItemStatus)
+            | (true, _, Some(ForTrade) as userItemStatus)
+            | (false, Some(Catalog), Some(CanCraft) as userItemStatus)
+            | (false, Some(Catalog), Some(ForTrade) as userItemStatus) =>
+              <ReactAtmosphere.Tooltip
+                text={React.string(
+                  userItemStatus == Some(ForTrade)
+                    ? "For Trade" : "Can Craft",
+                )}
+                options={Obj.magic({"modifiers": None})}>
+                {(
+                   ({onMouseEnter, onMouseLeave, onFocus, onBlur, ref}) =>
+                     <div
+                       onMouseEnter
+                       onMouseLeave
+                       onFocus
+                       onBlur
+                       className=Styles.catalogStatusButton
+                       ref={ReactDOMRe.Ref.domRef(ref)}>
+                       {React.string(
+                          userItemStatus == Some(ForTrade)
+                            ? {j|🤝|j} : {j|🔨|j},
+                        )}
+                     </div>
+                 )}
+              </ReactAtmosphere.Tooltip>
+            | _ => React.null
+            }}
+           {switch (onCatalogPage, item.recipe) {
+            | (false, Some(recipe)) =>
+              <ItemCard.RecipeIcon recipe className=Styles.metaIcon />
+            | _ => React.null
+            }}
+           {if (!onCatalogPage && item.orderable) {
+              <ItemCard.OrderableIcon className=Styles.metaIcon />;
+            } else {
+              React.null;
+            }}
+         </div>
+       : React.null}
     {editable
        ? <>
-           {!onCatalogPage
-              ? <UserItemNote
-                  itemId={item.id}
-                  variation
-                  userItem
-                  className=Styles.userItemNote
-                  key={string_of_int(variation)}
-                />
-              : React.null}
+           {switch (onCatalogPage, userItem) {
+            | (false, Some(userItem)) =>
+              <UserItemNote
+                itemId={item.id}
+                variation
+                userItem
+                className=Styles.userItemNote
+                key={string_of_int(variation)}
+              />
+            | _ => React.null
+            }}
            <UserItemEllipsisButton
              item
-             userItem
+             userItem={Belt.Option.getExn(userItem)}
              variation
              className=Styles.ellipsisButton
            />
          </>
        : <>
-           {if (userItem.note->Js.String.length > 0) {
-              <div className=Styles.userNote>
-                {Emoji.parseText(userItem.note)}
-              </div>;
-            } else {
-              React.null;
+           {switch (userItem) {
+            | Some(userItem) =>
+              if (userItem.note->Js.String.length > 0) {
+                <div className=Styles.userNote>
+                  {Emoji.parseText(userItem.note)}
+                </div>;
+              } else {
+                React.null;
+              }
+            | None => React.null
             }}
            {switch (viewerItem) {
             | Some(viewerItem) =>
               switch (list, viewerItem.status) {
-              | (ForTrade, Wishlist)
-              | (CanCraft, Wishlist)
-              | (Wishlist, ForTrade)
-              | (Wishlist, CanCraft) =>
+              | (Some(ForTrade), Wishlist)
+              | (Some(CanCraft), Wishlist)
+              | (Some(Wishlist), ForTrade)
+              | (Some(Wishlist), CanCraft) =>
                 <ReactAtmosphere.Tooltip
                   text={React.string(
                     "In your " ++ User.itemStatusToString(viewerItem.status),

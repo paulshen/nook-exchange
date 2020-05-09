@@ -251,3 +251,43 @@ let getItemList = (~listId: string) => {
     );
   Promise.resolved(responseResult);
 };
+
+let followUser = (~userId, ~sessionId) => {
+  let%Repromise.JsExn response =
+    Fetch.fetchWithInit(
+      Constants.bapiUrl ++ "/@me/follow/" ++ userId,
+      Fetch.RequestInit.make(
+        ~method_=Post,
+        ~headers=
+          Fetch.HeadersInit.make({
+            "X-Client-Version": Constants.gitCommitRef,
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " ++ sessionId,
+          }),
+        ~credentials=Include,
+        ~mode=CORS,
+        (),
+      ),
+    );
+  Promise.resolved(Fetch.Response.status(response) < 300);
+};
+
+let unfollowUser = (~userId, ~sessionId) => {
+  let%Repromise.JsExn response =
+    Fetch.fetchWithInit(
+      Constants.bapiUrl ++ "/@me/unfollow/" ++ userId,
+      Fetch.RequestInit.make(
+        ~method_=Post,
+        ~headers=
+          Fetch.HeadersInit.make({
+            "X-Client-Version": Constants.gitCommitRef,
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " ++ sessionId,
+          }),
+        ~credentials=Include,
+        ~mode=CORS,
+        (),
+      ),
+    );
+  Promise.resolved(Fetch.Response.status(response) < 300);
+};

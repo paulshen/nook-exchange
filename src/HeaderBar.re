@@ -174,6 +174,9 @@ module Menu = {
             } else {
               React.null;
             }}
+           <Link path="/friends" className=MenuStyles.menuItem>
+             {React.string("Friends")}
+           </Link>
            <a
              href="#"
              onClick={e => {

@@ -30,6 +30,64 @@ module Styles = {
       ),
     ]);
   let bodyText = style([fontSize(px(18))]);
+  let followBlock =
+    style([
+      backgroundColor(hex("ffffffc0")),
+      boxSizing(borderBox),
+      maxWidth(px(512)),
+      padding2(~v=px(32), ~h=px(24)),
+      margin3(~top=px(64), ~bottom=px(48), ~h=auto),
+      borderRadius(px(8)),
+      textAlign(center),
+    ]);
+};
+
+module FollowLink = {
+  type status =
+    | Success
+    | Error;
+
+  [@react.component]
+  let make = (~user: User.t, ~showLogin) => {
+    let (status, setStatus) = React.useState(() => None);
+
+    // TODO: get and render follow status
+
+    switch (status) {
+    | Some(Success) => <div> {React.string("Success!")} </div>
+    | _ =>
+      <div>
+        <a
+          href="#"
+          onClick={e => {
+            ReactEvent.Mouse.preventDefault(e);
+            if (UserStore.isLoggedIn()) {
+              {
+                let%Repromise success =
+                  BAPI.followUser(
+                    ~userId=user.id,
+                    ~sessionId=Belt.Option.getExn(UserStore.sessionId^),
+                  );
+                setStatus(_ => Some(success ? Success : Error));
+                Promise.resolved();
+              }
+              |> ignore;
+            } else {
+              showLogin();
+            };
+          }}>
+          {React.string("Add " ++ user.username ++ " to friends")}
+        </a>
+        {status == Some(Error)
+           ? <div>
+               {React.string(
+                  "Oh no! Something wrong happened. Please try again.",
+                )}
+             </div>
+           : React.null}
+      </div>
+    };
+  };
 };
 
 [@react.component]
@@ -128,6 +186,9 @@ let make = (~username, ~urlRest, ~url: ReasonReactRouter.url, ~showLogin) => {
               </div>;
             }
           }}
+         <div className=Styles.followBlock>
+           <FollowLink user showLogin />
+         </div>
        </div>
      | None => React.null
      }}

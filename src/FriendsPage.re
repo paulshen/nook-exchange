@@ -78,13 +78,32 @@ module Followee = {
         borderRadius(px(16)),
         padding3(~top=px(32), ~bottom=px(16), ~h=px(32)),
         margin3(~top=zero, ~h=auto, ~bottom=px(48)),
+        width(auto),
+        media("(min-width: 660px)", [width(px(getRootWidth(3)))]),
+        media("(min-width: 860px)", [width(px(getRootWidth(4)))]),
+        media("(min-width: 1040px)", [width(px(getRootWidth(5)))]),
+        media(
+          "(max-width: 640px)",
+          [width(auto), padding(px(16)), borderRadius(zero)],
+        ),
       ]);
-    let usernameRow = style([marginBottom(px(24))]);
+    let usernameRow =
+      style([
+        display(flexBox),
+        alignItems(center),
+        justifyContent(spaceBetween),
+        marginBottom(px(24)),
+      ]);
+    let usernameRowUnfollowed = style([important(marginBottom(px(16)))]);
     let usernameLink =
       style([
         fontSize(px(24)),
-        marginBottom(px(24)),
         color(Colors.charcoal),
+        textDecoration(none),
+        media("(hover: hover)", [hover([textDecoration(underline)])]),
+      ]);
+    let unfollowLink =
+      style([
         textDecoration(none),
         media("(hover: hover)", [hover([textDecoration(underline)])]),
       ]);
@@ -105,9 +124,14 @@ module Followee = {
       style([boxShadow(Shadow.box(~spread=px(2), Colors.green))]);
   };
 
-  let getNumCards = viewportWidth => {
-    10;
-  };
+  let getNumCards = viewportWidth =>
+    if (viewportWidth >= 1040) {
+      10;
+    } else if (viewportWidth >= 860) {
+      8;
+    } else {
+      6;
+    };
 
   module ItemCard = {
     [@react.component]
@@ -169,41 +193,70 @@ module Followee = {
   let make = (~followee) => {
     let viewportWidth = Utils.useViewportWidth();
     let numCards = getNumCards(viewportWidth);
+    let (unfollowed, setUnfollowed) = React.useState(() => false);
 
     <div className=Styles.root>
-      <div className=Styles.usernameRow>
+      <div
+        className={Cn.make([
+          Styles.usernameRow,
+          Cn.ifTrue(Styles.usernameRowUnfollowed, unfollowed),
+        ])}>
         <Link path={"/u/" ++ followee.username} className=Styles.usernameLink>
           {React.string(followee.username)}
         </Link>
+        {!unfollowed
+           ? <a
+               href="#"
+               onClick={e => {
+                 ReactEvent.Mouse.preventDefault(e);
+                 {
+                   let%Repromise success =
+                     BAPI.unfollowUser(
+                       ~userId=followee.id,
+                       ~sessionId=Belt.Option.getExn(UserStore.sessionId^),
+                     );
+                   if (success) {
+                     setUnfollowed(_ => true);
+                   };
+                   Promise.resolved();
+                 }
+                 |> ignore;
+               }}
+               className=Styles.unfollowLink>
+               {React.string("Unfollow")}
+             </a>
+           : <span> {React.string("Unfollowed")} </span>}
       </div>
-      <div className=Styles.items>
-        {followee.items
-         |> Js.Array.slice(~start=0, ~end_=numCards - 1)
-         |> Js.Array.map(((itemId, variant, userItem)) =>
-              <ItemCard
-                itemId
-                variant
-                userItem
-                username={followee.username}
-                key={string_of_int(itemId) ++ string_of_int(variant)}
-              />
-            )
-         |> React.array}
-        <Link
-          path={"/u/" ++ followee.username}
-          className={Cn.make([
-            UserItemCard.Styles.card,
-            UserProfileBrowser.Styles.cardSeeAll,
-          ])}>
-          {React.string("See more")}
-          <span
-            className={Cn.make([
-              UserProfileBrowser.Styles.sectionTitleLinkIcon,
-              UserProfileBrowser.Styles.cardSeeAllLinkIcon,
-            ])}
-          />
-        </Link>
-      </div>
+      {!unfollowed
+         ? <div className=Styles.items>
+             {followee.items
+              |> Js.Array.slice(~start=0, ~end_=numCards - 1)
+              |> Js.Array.map(((itemId, variant, userItem)) =>
+                   <ItemCard
+                     itemId
+                     variant
+                     userItem
+                     username={followee.username}
+                     key={string_of_int(itemId) ++ string_of_int(variant)}
+                   />
+                 )
+              |> React.array}
+             <Link
+               path={"/u/" ++ followee.username}
+               className={Cn.make([
+                 UserItemCard.Styles.card,
+                 UserProfileBrowser.Styles.cardSeeAll,
+               ])}>
+               {React.string("Go to profile")}
+               <span
+                 className={Cn.make([
+                   UserProfileBrowser.Styles.sectionTitleLinkIcon,
+                   UserProfileBrowser.Styles.cardSeeAllLinkIcon,
+                 ])}
+               />
+             </Link>
+           </div>
+         : React.null}
     </div>;
   };
 };
@@ -211,7 +264,7 @@ module Followee = {
 module WithViewer = {
   module Styles = {
     open Css;
-    let root = style([]);
+    let root = style([paddingTop(px(32))]);
   };
 
   [@react.component]

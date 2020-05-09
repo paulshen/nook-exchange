@@ -25,6 +25,10 @@ let make = () => {
   <div className=Styles.footer>
     <div className=Styles.contents>
       <div>
+        <a href="https://www.buymeacoffee.com/nookexchange" target="_blank">
+          {React.string("Support us")}
+        </a>
+        {React.string(" | ")}
         <a href="https://twitter.com/nookexchange" target="_blank">
           {React.string("Twitter")}
         </a>
@@ -32,7 +36,7 @@ let make = () => {
         <a
           href="https://docs.google.com/spreadsheets/d/13d_LAJPlxMa_DubPTuirkIV4DERBMXbrWQsmSh8ReK4/edit?usp=sharing"
           target="_blank">
-          {React.string("Data Source")}
+          {React.string("Data source")}
         </a>
         {React.string(" | ")}
         <a
@@ -58,7 +62,7 @@ let make = () => {
         {React.string(" | ")}
         <a href="/privacy"> {React.string("Privacy Policy")} </a>
         {React.string(" | ")}
-        <a href="mailto:hi@nook.exchange"> {React.string("Contact Us")} </a>
+        <a href="mailto:hi@nook.exchange"> {React.string("Contact us")} </a>
         {React.string(" | Thanks for visiting!")}
       </div>
       <div className=Styles.disclaimer>

@@ -103,8 +103,7 @@ let getUrl =
       ~url: ReasonReactRouter.url,
       ~urlSearchParams: Webapi.Url.URLSearchParams.t,
     ) => {
-  "/"
-  ++ Js.Array.joinWith("/", Belt.List.toArray(url.path))
+  Utils.getPath(~url)
   ++ (
     switch (Webapi.Url.URLSearchParams.toString(urlSearchParams)) {
     | "" => ""
@@ -179,7 +178,9 @@ let make =
   let userItemIds =
     userItems->Belt.Array.mapU((. ((itemId, _variant), _)) => itemId);
 
-  let (showMini, setShowMini) = React.useState(() => false);
+  let url = ReasonReactRouter.useUrl();
+  let showMini =
+    Webapi.Url.URLSearchParams.(make(url.search) |> has("thumbnails"));
   let (showRecipes, setShowRecipes) = React.useState(() => false);
   let (filters, pageOffset) =
     React.useMemo1(
@@ -200,6 +201,9 @@ let make =
           ~pageOffset=0,
         ),
       );
+    if (showMini) {
+      urlSearchParams |> Webapi.Url.URLSearchParams.append("thumbnails", "");
+    };
     let url = ReasonReactRouter.dangerouslyGetInitialUrl();
     let newUrl = getUrl(~url, ~urlSearchParams);
     ReasonReactRouter.push(newUrl);
@@ -365,7 +369,21 @@ let make =
                 ~eventName="Miniature Mode Clicked",
                 ~eventProperties={"checked": checked, "status": list},
               );
-              setShowMini(_ => checked);
+              let urlSearchParams =
+                Webapi.Url.URLSearchParams.makeWithArray(
+                  ItemFilters.serialize(
+                    ~filters,
+                    ~defaultSort=UserDefault,
+                    ~pageOffset=0,
+                  ),
+                );
+              if (checked) {
+                urlSearchParams
+                |> Webapi.Url.URLSearchParams.append("thumbnails", "");
+              };
+              let url = ReasonReactRouter.dangerouslyGetInitialUrl();
+              let newUrl = getUrl(~url, ~urlSearchParams);
+              ReasonReactRouter.replace(newUrl);
             }}
             className=UserProfileBrowser.Styles.showRecipesCheckbox
           />

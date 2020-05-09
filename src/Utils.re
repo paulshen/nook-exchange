@@ -76,3 +76,7 @@ let browserSupportsHover = {
   Webapi.Dom.(window |> Window.matchMedia("(hover: hover)"))
   ->mediaQueryListMatches;
 };
+
+let getPath = (~url: ReasonReactRouter.url) => {
+  "/" ++ (Belt.List.toArray(url.path) |> Js.Array.joinWith("/"));
+};

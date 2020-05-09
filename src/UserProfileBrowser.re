@@ -217,7 +217,9 @@ module Section = {
     let viewportWidth = Utils.useViewportWidth();
     let maxResults = getMaxResults(~viewportWidth);
     let (showRecipes, setShowRecipes) = React.useState(() => false);
-    let (showMini, setShowMini) = React.useState(() => false);
+    let url = ReasonReactRouter.useUrl();
+    let showMini =
+      Webapi.Url.URLSearchParams.(make(url.search) |> has("thumbnails"));
     let filteredItems =
       React.useMemo1(
         () => {
@@ -275,7 +277,10 @@ module Section = {
                 ~eventName="Miniature Mode Clicked",
                 ~eventProperties={"checked": checked, "list": list},
               );
-              setShowMini(_ => checked);
+              let url = ReasonReactRouter.dangerouslyGetInitialUrl();
+              ReasonReactRouter.replace(
+                Utils.getPath(~url) ++ (checked ? "?thumbnails" : ""),
+              );
             }}
             className=Styles.showRecipesCheckbox
           />

@@ -48,9 +48,8 @@ module Styles = {
   let profileLinkIcon =
     style([
       flexShrink(0.),
-      margin2(~v=zero, ~h=px(16)),
+      margin2(~v=zero, ~h=px(8)),
       top(zero),
-      media("(max-width: 640px)", [margin2(~v=zero, ~h=px(8))]),
       media("(max-width: 400px)", [margin2(~v=zero, ~h=px(4))]),
     ]);
   let listLinkEmoji =
@@ -84,15 +83,21 @@ module Styles = {
     ]);
   let rootMini = style([important(backgroundColor(hex("fffffff0")))]);
   let filterBar = style([marginBottom(zero)]);
+  let topPager = style([media("(max-width: 640px)", [display(none)])]);
   let sectionToggles =
     style([
-      position(absolute),
-      right(px(32)),
-      top(px(-40)),
       display(flexBox),
+      position(static),
+      textAlign(center),
+      marginTop(px(8)),
       media(
-        "(max-width: 860px)",
-        [position(static), textAlign(center), marginTop(px(8))],
+        "(min-width: 1040px)",
+        [
+          position(absolute),
+          right(px(32)),
+          top(px(-40)),
+          marginTop(zero),
+        ],
       ),
       media("(max-width: 470px)", [marginBottom(px(16))]),
     ]);
@@ -348,6 +353,7 @@ let make =
                     pageOffset
                     numResultsPerPage
                     setPageOffset
+                    className=Styles.topPager
                   />
                 : React.null}
            </div>

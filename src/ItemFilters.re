@@ -31,26 +31,7 @@ module Styles = {
       paddingRight(px(16)),
       whiteSpace(`nowrap),
     ]);
-  let root =
-    style([
-      display(flexBox),
-      flexWrap(wrap),
-      media(
-        "(max-width: 600px)",
-        [
-          alignItems(center),
-          flexWrap(`nowrap),
-          marginLeft(px(-16)),
-          marginRight(px(-16)),
-          paddingLeft(px(16)),
-          paddingRight(px(16)),
-          paddingBottom(px(8)),
-          overflowX(auto),
-          selector("& ." ++ textInput, [marginBottom(zero)]),
-          selector("& ." ++ select, [marginBottom(zero)]),
-        ],
-      ),
-    ]);
+  let root = style([display(flexBox), flexWrap(wrap)]);
   let rootScrollerSpacer =
     style([
       media(
@@ -394,9 +375,17 @@ let getUserItemSort =
 
 module Pager = {
   [@react.component]
-  let make = (~numResults, ~pageOffset, ~numResultsPerPage, ~setPageOffset) =>
+  let make =
+      (
+        ~numResults,
+        ~pageOffset,
+        ~numResultsPerPage,
+        ~setPageOffset,
+        ~className=?,
+        (),
+      ) =>
     if (numResults > 8) {
-      <div className=Styles.pager>
+      <div className={Cn.make([Styles.pager, Cn.unpack(className)])}>
         {pageOffset > 0
            ? <a
                href="#"
@@ -612,6 +601,7 @@ module CategoryButtons = {
          </div>
        | _ => React.null
        }}
+      <div className=Styles.rootScrollerSpacer />
     </div>;
   };
 };

@@ -299,6 +299,12 @@ let make = (~onLogin, ~onSettings) => {
             {React.string("Browse Items")}
           </Link>
         </div>
+        // TODO: show if has friends
+        <div className=Styles.navLink>
+          <Link path="/friends" className=Styles.standardViewport>
+            {React.string("Friends")}
+          </Link>
+        </div>
       </div>
       <div className=Styles.nav>
         {switch (user) {

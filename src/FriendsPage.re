@@ -242,7 +242,7 @@ module Followee = {
                  )
               |> React.array}
              <Link
-               path={"/u/" ++ followee.username}
+               path={"/u/" ++ followee.username ++ "?s=tu"}
                className={Cn.make([
                  UserItemCard.Styles.card,
                  UserProfileBrowser.Styles.cardSeeAll,

@@ -186,6 +186,7 @@ let make = (~username, ~urlRest, ~url: ReasonReactRouter.url, ~showLogin) => {
               </div>;
             }
           }}
+         // TODO: hide if already friends
          <div className=Styles.followBlock>
            <FollowLink user showLogin />
          </div>

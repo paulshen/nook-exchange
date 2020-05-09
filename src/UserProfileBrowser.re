@@ -71,7 +71,7 @@ module Styles = {
       paddingBottom(px(36)),
       textDecoration(none),
       hover([
-        boxShadow(Shadow.box(~blur=px(24), hex("3aa563a0"))),
+        Colors.darkLayerShadow,
         selector(
           "& ." ++ cardSeeAllLinkIcon,
           [transform(translateX(px(2)))],

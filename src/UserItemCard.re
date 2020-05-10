@@ -95,8 +95,11 @@ module Styles = {
     ]);
   let recipe =
     style([marginTop(px(6)), textAlign(center), fontSize(px(12))]);
+  let cardViewerMatch =
+    style([boxShadow(Shadow.box(~spread=px(2), Colors.green))]);
   let cardHasQuicklist =
     style([
+      boxShadow(none),
       selector("& ." ++ metaIcons, [display(none)]),
       media(
         "(hover: hover)",
@@ -105,7 +108,7 @@ module Styles = {
     ]);
   let cardQuicklistSelected =
     style([
-      boxShadow(Shadow.box(~spread=px(2), Colors.green)),
+      important(boxShadow(Shadow.box(~spread=px(2), Colors.green))),
       children([opacity(1.)]),
     ]);
   let quicklistButton =
@@ -153,6 +156,19 @@ let make =
   let isInQuicklist =
     QuicklistStore.useItemState(~itemId, ~variant=variation);
 
+  let isViewerMatch =
+    switch (viewerItem) {
+    | Some(viewerItem) =>
+      switch (list, viewerItem.status) {
+      | (Some(ForTrade), Wishlist)
+      | (Some(CanCraft), Wishlist)
+      | (Some(Wishlist), ForTrade)
+      | (Some(Wishlist), CanCraft) => true
+      | _ => false
+      }
+    | None => false
+    };
+
   <div
     className={Cn.make([
       Styles.card,
@@ -160,6 +176,7 @@ let make =
       Cn.ifTrue(Styles.cardOnCatalogPage, onCatalogPage),
       Cn.ifTrue(Styles.cardHasQuicklist, hasQuicklist),
       Cn.ifTrue(Styles.cardQuicklistSelected, isInQuicklist),
+      Cn.ifTrue(Styles.cardViewerMatch, isViewerMatch),
       Cn.unpack(className),
     ])}>
     <div className=ItemCard.Styles.body>

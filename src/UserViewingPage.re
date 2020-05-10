@@ -71,13 +71,33 @@ module FollowLink = {
              href="#"
              onClick={e => {
                ReactEvent.Mouse.preventDefault(e);
+               Analytics.Amplitude.logEventWithProperties(
+                 ~eventName="Friend Link Clicked",
+                 ~eventProperties={
+                   "isLoggedIn": UserStore.isLoggedIn(),
+                   "followeeId": user.id,
+                 },
+               );
                if (UserStore.isLoggedIn()) {
                  {
                    let%Repromise response =
                      UserStore.followUser(~userId=user.id);
                    switch (response) {
-                   | Ok () => setStatus(_ => Some(Success))
-                   | Error(error) => setStatus(_ => Some(Error(error)))
+                   | Ok () =>
+                     setStatus(_ => Some(Success));
+                     Analytics.Amplitude.logEventWithProperties(
+                       ~eventName="Friend Follow Success",
+                       ~eventProperties={"followeeId": user.id},
+                     );
+                   | Error(error) =>
+                     setStatus(_ => Some(Error(error)));
+                     Analytics.Amplitude.logEventWithProperties(
+                       ~eventName="Friend Follow Failed",
+                       ~eventProperties={
+                         "followeeId": user.id,
+                         "error": error,
+                       },
+                     );
                    };
                    Promise.resolved();
                  }

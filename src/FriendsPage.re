@@ -218,7 +218,12 @@ module Followee = {
                    let%Repromise response =
                      UserStore.unfollowUser(~userId=followee.id);
                    switch (response) {
-                   | Ok () => setUnfollowed(_ => true)
+                   | Ok () =>
+                     setUnfollowed(_ => true);
+                     Analytics.Amplitude.logEventWithProperties(
+                       ~eventName="Friend Unfollowed",
+                       ~eventProperties={"followeeId": followee.id},
+                     );
                    | Error(_) => ()
                    };
                    Promise.resolved();
@@ -307,6 +312,10 @@ module WithViewer = {
       {
         let%Repromise feed = fetchFeed();
         setFeed(_ => Some(feed));
+        Analytics.Amplitude.logEventWithProperties(
+          ~eventName="Friend Page Viewed",
+          ~eventProperties={"numFollowees": Js.Array.length(feed)},
+        );
         Promise.resolved();
       }
       |> ignore;

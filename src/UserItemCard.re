@@ -3,7 +3,7 @@ module Styles = {
   let metaIcons =
     style([
       position(absolute),
-      top(px(6)),
+      top(px(5)),
       left(px(7)),
       display(flexBox),
     ]);
@@ -11,7 +11,7 @@ module Styles = {
   let topRightIcon =
     style([
       position(absolute),
-      top(px(6)),
+      top(px(5)),
       right(px(8)),
       fontSize(px(13)),
       boxSizing(borderBox),
@@ -95,8 +95,11 @@ module Styles = {
     ]);
   let recipe =
     style([marginTop(px(6)), textAlign(center), fontSize(px(12))]);
+  let cardViewerMatch =
+    style([boxShadow(Shadow.box(~spread=px(2), Colors.green))]);
   let cardHasQuicklist =
     style([
+      boxShadow(none),
       selector("& ." ++ metaIcons, [display(none)]),
       media(
         "(hover: hover)",
@@ -105,7 +108,7 @@ module Styles = {
     ]);
   let cardQuicklistSelected =
     style([
-      boxShadow(Shadow.box(~spread=px(2), Colors.green)),
+      important(boxShadow(Shadow.box(~spread=px(2), Colors.green))),
       children([opacity(1.)]),
     ]);
   let quicklistButton =
@@ -143,6 +146,8 @@ let make =
       ~showRecipe,
       ~showMetaIcons=true,
       ~onCatalogPage=false,
+      ~customTopLeft=?,
+      ~className=?,
       (),
     ) => {
   let item = Item.getItem(~itemId);
@@ -151,6 +156,19 @@ let make =
   let isInQuicklist =
     QuicklistStore.useItemState(~itemId, ~variant=variation);
 
+  let isViewerMatch =
+    switch (viewerItem) {
+    | Some(viewerItem) =>
+      switch (list, viewerItem.status) {
+      | (Some(ForTrade), Wishlist)
+      | (Some(CanCraft), Wishlist)
+      | (Some(Wishlist), ForTrade)
+      | (Some(Wishlist), CanCraft) => true
+      | _ => false
+      }
+    | None => false
+    };
+
   <div
     className={Cn.make([
       Styles.card,
@@ -158,6 +176,8 @@ let make =
       Cn.ifTrue(Styles.cardOnCatalogPage, onCatalogPage),
       Cn.ifTrue(Styles.cardHasQuicklist, hasQuicklist),
       Cn.ifTrue(Styles.cardQuicklistSelected, isInQuicklist),
+      Cn.ifTrue(Styles.cardViewerMatch, isViewerMatch),
+      Cn.unpack(className),
     ])}>
     <div className=ItemCard.Styles.body>
       <ItemImage
@@ -192,59 +212,63 @@ let make =
        }}
     </div>
     {showMetaIcons
-       ? <div className=Styles.metaIcons>
-           {if (Belt.Option.flatMap(userItem, userItem =>
-                  userItem.priorityTimestamp
-                )
-                !== None) {
-              <StarIcon />;
-            } else {
-              React.null;
-            }}
-           {switch (
-              onCatalogPage,
-              list,
-              Belt.Option.map(userItem, userItem => userItem.status),
-            ) {
-            | (true, _, Some(CanCraft) as userItemStatus)
-            | (true, _, Some(ForTrade) as userItemStatus)
-            | (false, Some(Catalog), Some(CanCraft) as userItemStatus)
-            | (false, Some(Catalog), Some(ForTrade) as userItemStatus) =>
-              <ReactAtmosphere.Tooltip
-                text={React.string(
-                  userItemStatus == Some(ForTrade)
-                    ? "For Trade" : "Can Craft",
-                )}
-                options={Obj.magic({"modifiers": None})}>
-                {(
-                   ({onMouseEnter, onMouseLeave, onFocus, onBlur, ref}) =>
-                     <div
-                       onMouseEnter
-                       onMouseLeave
-                       onFocus
-                       onBlur
-                       className=Styles.catalogStatusButton
-                       ref={ReactDOMRe.Ref.domRef(ref)}>
-                       {React.string(
-                          userItemStatus == Some(ForTrade)
-                            ? {j|🤝|j} : {j|🔨|j},
-                        )}
-                     </div>
-                 )}
-              </ReactAtmosphere.Tooltip>
-            | _ => React.null
-            }}
-           {switch (onCatalogPage, item.recipe) {
-            | (false, Some(recipe)) =>
-              <ItemCard.RecipeIcon recipe className=Styles.metaIcon />
-            | _ => React.null
-            }}
-           {if (!onCatalogPage && item.orderable) {
-              <ItemCard.OrderableIcon className=Styles.metaIcon />;
-            } else {
-              React.null;
-            }}
-         </div>
+       ? switch (customTopLeft) {
+         | None =>
+           <div className=Styles.metaIcons>
+             {if (Belt.Option.flatMap(userItem, userItem =>
+                    userItem.priorityTimestamp
+                  )
+                  !== None) {
+                <StarIcon />;
+              } else {
+                React.null;
+              }}
+             {switch (
+                onCatalogPage,
+                list,
+                Belt.Option.map(userItem, userItem => userItem.status),
+              ) {
+              | (true, _, Some(CanCraft) as userItemStatus)
+              | (true, _, Some(ForTrade) as userItemStatus)
+              | (false, Some(Catalog), Some(CanCraft) as userItemStatus)
+              | (false, Some(Catalog), Some(ForTrade) as userItemStatus) =>
+                <ReactAtmosphere.Tooltip
+                  text={React.string(
+                    userItemStatus == Some(ForTrade)
+                      ? "For Trade" : "Can Craft",
+                  )}
+                  options={Obj.magic({"modifiers": None})}>
+                  {(
+                     ({onMouseEnter, onMouseLeave, onFocus, onBlur, ref}) =>
+                       <div
+                         onMouseEnter
+                         onMouseLeave
+                         onFocus
+                         onBlur
+                         className=Styles.catalogStatusButton
+                         ref={ReactDOMRe.Ref.domRef(ref)}>
+                         {React.string(
+                            userItemStatus == Some(ForTrade)
+                              ? {j|🤝|j} : {j|🔨|j},
+                          )}
+                       </div>
+                   )}
+                </ReactAtmosphere.Tooltip>
+              | _ => React.null
+              }}
+             {switch (onCatalogPage, item.recipe) {
+              | (false, Some(recipe)) =>
+                <ItemCard.RecipeIcon recipe className=Styles.metaIcon />
+              | _ => React.null
+              }}
+             {if (!onCatalogPage && item.orderable) {
+                <ItemCard.OrderableIcon className=Styles.metaIcon />;
+              } else {
+                React.null;
+              }}
+           </div>
+         | Some(customTopLeft) => customTopLeft
+         }
        : React.null}
     {editable
        ? <>

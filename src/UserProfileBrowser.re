@@ -71,7 +71,7 @@ module Styles = {
       paddingBottom(px(36)),
       textDecoration(none),
       hover([
-        boxShadow(Shadow.box(~blur=px(24), hex("3aa563a0"))),
+        Colors.darkLayerShadow,
         selector(
           "& ." ++ cardSeeAllLinkIcon,
           [transform(translateX(px(2)))],
@@ -220,6 +220,19 @@ module Section = {
     let url = ReasonReactRouter.useUrl();
     let showMini =
       Webapi.Url.URLSearchParams.(make(url.search) |> has("thumbnails"));
+    let url = ReasonReactRouter.useUrl();
+    let sort =
+      React.useMemo1(
+        () => {
+          let (filters, _) =
+            ItemFilters.fromUrlSearch(
+              ~urlSearch=url.search,
+              ~defaultSort=UserDefault,
+            );
+          filters.sort;
+        },
+        [|url.search|],
+      );
     let filteredItems =
       React.useMemo1(
         () => {
@@ -235,7 +248,7 @@ module Section = {
                       },
                     )
                   : None,
-              ~sort=ItemFilters.UserDefault,
+              ~sort,
             );
           userItems
           |> Js.Array.sortInPlaceWith((aUserItem, bUserItem) =>
@@ -243,6 +256,17 @@ module Section = {
              );
         },
         [|userItems|],
+      );
+    let viewingListUrl =
+      "/u/"
+      ++ username
+      ++ "/"
+      ++ ViewingList.viewingListToUrl(list)
+      ++ (
+        switch (url.search) {
+        | "" => ""
+        | search => "?" ++ search
+        }
       );
     let numResults = userItems |> Js.Array.length;
 
@@ -252,11 +276,7 @@ module Section = {
         Cn.ifTrue(Styles.rootMini, showMini),
       ])}>
       <div className=Styles.sectionTitle>
-        <Link
-          path={
-            "/u/" ++ username ++ "/" ++ ViewingList.viewingListToUrl(list)
-          }
-          className=Styles.sectionTitleLink>
+        <Link path=viewingListUrl className=Styles.sectionTitleLink>
           {React.string(ViewingList.viewingListToEmoji(list))}
           {React.string(" " ++ ViewingList.viewingListToString(list))}
           <span className=Styles.sectionTitleLinkIcon />
@@ -353,12 +373,7 @@ module Section = {
                    _,
                    [|
                      <Link
-                       path={
-                         "/u/"
-                         ++ username
-                         ++ "/"
-                         ++ ViewingList.viewingListToUrl(list)
-                       }
+                       path=viewingListUrl
                        className={Cn.make([
                          UserItemCard.Styles.card,
                          Styles.cardSeeAll,

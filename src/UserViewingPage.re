@@ -19,6 +19,7 @@ module Styles = {
       padding2(~v=px(16), ~h=px(24)),
       borderRadius(px(8)),
       whiteSpace(`preLine),
+      position(relative),
       media(
         "(max-width: 512px)",
         [
@@ -30,6 +31,99 @@ module Styles = {
       ),
     ]);
   let bodyText = style([fontSize(px(18))]);
+  let followBlock =
+    style([marginTop(px(16)), firstChild([marginTop(zero)])]);
+  let followLink = style([textDecoration(none)]);
+  let followLinkText =
+    style([
+      media(
+        "(hover: hover)",
+        [
+          selector(
+            "." ++ followLink ++ ":hover &",
+            [textDecoration(underline)],
+          ),
+        ],
+      ),
+    ]);
+};
+
+module FollowLink = {
+  type status =
+    | Success
+    | Error(string);
+
+  [@react.component]
+  let make = (~user: User.t, ~showLogin) => {
+    let (status, setStatus) = React.useState(() => None);
+
+    <div className=Styles.followBlock>
+      {switch (status) {
+       | Some(Success) =>
+         <div>
+           {React.string({j|🙌|j} ++ " Yay! You can find them on your ")}
+           <Link path="/friends"> {React.string("friends page")} </Link>
+           {React.string(".")}
+         </div>
+       | _ =>
+         <>
+           <a
+             href="#"
+             onClick={e => {
+               ReactEvent.Mouse.preventDefault(e);
+               Analytics.Amplitude.logEventWithProperties(
+                 ~eventName="Friend Link Clicked",
+                 ~eventProperties={
+                   "isLoggedIn": UserStore.isLoggedIn(),
+                   "followeeId": user.id,
+                 },
+               );
+               if (UserStore.isLoggedIn()) {
+                 {
+                   let%Repromise response =
+                     UserStore.followUser(~userId=user.id);
+                   switch (response) {
+                   | Ok () =>
+                     setStatus(_ => Some(Success));
+                     Analytics.Amplitude.logEventWithProperties(
+                       ~eventName="Friend Follow Success",
+                       ~eventProperties={"followeeId": user.id},
+                     );
+                   | Error(error) =>
+                     setStatus(_ => Some(Error(error)));
+                     Analytics.Amplitude.logEventWithProperties(
+                       ~eventName="Friend Follow Failed",
+                       ~eventProperties={
+                         "followeeId": user.id,
+                         "error": error,
+                       },
+                     );
+                   };
+                   Promise.resolved();
+                 }
+                 |> ignore;
+               } else {
+                 showLogin();
+               };
+             }}
+             className=Styles.followLink>
+             {React.string({j|😊 |j})}
+             <span className=Styles.followLinkText>
+               {React.string("Add " ++ user.username ++ " to my friends")}
+             </span>
+           </a>
+           {switch (status) {
+            | Some(Error("")) =>
+              <div>
+                {React.string({j|Oh no! Something went wrong 🙁|j})}
+              </div>
+            | Some(Error(error)) => <div> {React.string(error)} </div>
+            | _ => React.null
+            }}
+         </>
+       }}
+    </div>;
+  };
 };
 
 [@react.component]
@@ -41,6 +135,22 @@ let make = (~username, ~urlRest, ~url: ReasonReactRouter.url, ~showLogin) => {
     };
   let (user, setUser) = React.useState(() => None);
   let isMountedRef = React.useRef(true);
+  let me = UserStore.useMe();
+  let isLoggedIn = me != None;
+  let wasFollowing =
+    React.useMemo2(
+      () => {
+        switch (me, user) {
+        | (Some(me), Some((user: User.t))) =>
+          switch (me.followeeIds) {
+          | Some(followeeIds) => followeeIds |> Js.Array.includes(user.id)
+          | None => false
+          }
+        | _ => false
+        }
+      },
+      (isLoggedIn, user),
+    );
   React.useEffect0(() => {
     open Webapi.Dom;
     window |> Window.scrollTo(0., 0.);
@@ -97,11 +207,15 @@ let make = (~username, ~urlRest, ~url: ReasonReactRouter.url, ~showLogin) => {
     {switch (user) {
      | Some(user) =>
        <div>
-         {switch (user.profileText) {
-          | "" => <div className=Styles.userBodySpacer />
-          | profileText =>
+         {switch (user.profileText, wasFollowing) {
+          | ("", true) => React.null
+          | _ =>
             <div className=Styles.userBody>
-              {Emoji.parseText(profileText)}
+              {switch (user.profileText) {
+               | "" => React.null
+               | profileText => <div> {Emoji.parseText(profileText)} </div>
+               }}
+              {!wasFollowing ? <FollowLink user showLogin /> : React.null}
             </div>
           }}
          {switch (list) {

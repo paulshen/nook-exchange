@@ -87,6 +87,7 @@ type t = {
   items: Js.Dict.t(item),
   profileText: string,
   enableCatalogCheckbox: bool,
+  followeeIds: option(array(string)),
 };
 
 let fromAPI = (json: Js.Json.t) => {
@@ -143,5 +144,6 @@ let fromAPI = (json: Js.Json.t) => {
              ->Belt.Option.getWithDefault(false)
            ),
          ]),
+    followeeIds: json |> optional(field("followeeIds", array(string))),
   };
 };

@@ -94,7 +94,11 @@ module Followee = {
         justifyContent(spaceBetween),
         marginBottom(px(24)),
       ]);
-    let usernameRowUnfollowed = style([important(marginBottom(px(16)))]);
+    let usernameRowUnfollowed =
+      style([
+        important(marginBottom(px(16))),
+        media("(max-width: 640px)", [important(marginBottom(zero))]),
+      ]);
     let usernameLink =
       style([
         fontSize(px(24)),
@@ -179,6 +183,7 @@ module Followee = {
                    | CatalogOnly => Catalog
                    },
                  )
+              ++ "?s=tu"
             }
             className=Styles.listLink>
             {React.string(User.itemStatusToString(userItem.status))}
@@ -210,13 +215,11 @@ module Followee = {
                onClick={e => {
                  ReactEvent.Mouse.preventDefault(e);
                  {
-                   let%Repromise success =
-                     BAPI.unfollowUser(
-                       ~userId=followee.id,
-                       ~sessionId=Belt.Option.getExn(UserStore.sessionId^),
-                     );
-                   if (success) {
-                     setUnfollowed(_ => true);
+                   let%Repromise response =
+                     UserStore.unfollowUser(~userId=followee.id);
+                   switch (response) {
+                   | Ok () => setUnfollowed(_ => true)
+                   | Error(_) => ()
                    };
                    Promise.resolved();
                  }
@@ -241,20 +244,26 @@ module Followee = {
                    />
                  )
               |> React.array}
-             <Link
-               path={"/u/" ++ followee.username ++ "?s=tu"}
-               className={Cn.make([
-                 UserItemCard.Styles.card,
-                 UserProfileBrowser.Styles.cardSeeAll,
-               ])}>
-               {React.string("Go to profile")}
-               <span
-                 className={Cn.make([
-                   UserProfileBrowser.Styles.sectionTitleLinkIcon,
-                   UserProfileBrowser.Styles.cardSeeAllLinkIcon,
-                 ])}
-               />
-             </Link>
+             {Js.Array.length(followee.items) > 0
+                ? <Link
+                    path={"/u/" ++ followee.username ++ "?s=tu"}
+                    className={Cn.make([
+                      UserItemCard.Styles.card,
+                      UserProfileBrowser.Styles.cardSeeAll,
+                    ])}>
+                    {React.string("Go to profile")}
+                    <span
+                      className={Cn.make([
+                        UserProfileBrowser.Styles.sectionTitleLinkIcon,
+                        UserProfileBrowser.Styles.cardSeeAllLinkIcon,
+                      ])}
+                    />
+                  </Link>
+                : <div>
+                    {React.string(
+                       followee.username ++ " has no items! " ++ {j|😞|j},
+                     )}
+                  </div>}
            </div>
          : React.null}
     </div>;
@@ -264,7 +273,29 @@ module Followee = {
 module WithViewer = {
   module Styles = {
     open Css;
-    let root = style([paddingTop(px(32))]);
+    let root = style([paddingTop(px(16))]);
+    let pageTitle =
+      style([fontSize(px(32)), textAlign(center), marginBottom(px(32))]);
+    let emptyFeed =
+      style([
+        backgroundColor(hex("ffffffc0")),
+        boxSizing(borderBox),
+        lineHeight(px(20)),
+        margin3(~top=zero, ~bottom=px(48), ~h=auto),
+        maxWidth(px(512)),
+        padding2(~v=px(32), ~h=px(24)),
+        borderRadius(px(8)),
+        textAlign(center),
+        media(
+          "(max-width: 512px)",
+          [
+            borderRadius(zero),
+            padding2(~v=px(24), ~h=px(16)),
+            marginBottom(zero),
+            borderBottom(px(1), solid, Colors.faintGray),
+          ],
+        ),
+      ]);
   };
 
   [@react.component]
@@ -283,15 +314,22 @@ module WithViewer = {
     });
 
     <div className=Styles.root>
+      <div className=Styles.pageTitle> {React.string("My Friends")} </div>
       {switch (feed) {
        | Some(feed) =>
-         <div>
-           {feed
-            |> Js.Array.map(followee =>
-                 <Followee followee key={followee.id} />
-               )
-            |> React.array}
-         </div>
+         Js.Array.length(feed) > 0
+           ? <div>
+               {feed
+                |> Js.Array.map(followee =>
+                     <Followee followee key={followee.id} />
+                   )
+                |> React.array}
+             </div>
+           : <div className=Styles.emptyFeed>
+               {React.string(
+                  "Visit people's profiles to add them to your friends page!",
+                )}
+             </div>
        | None => React.null
        }}
     </div>;

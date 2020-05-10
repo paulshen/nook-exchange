@@ -49,6 +49,8 @@ module Styles = {
       media("(hover: none)", [pointerEvents(auto)]),
       important(backgroundColor(transparent)),
     ]);
+  let biggerViewport =
+    style([media("(max-width: 700px)", [display(none)])]);
   let standardViewport =
     style([media("(max-width: 500px)", [display(none)])]);
   let smallViewport =
@@ -94,6 +96,17 @@ module Styles = {
       firstChild([marginLeft(zero)]),
     ]);
   let twitterLink = style([]);
+};
+
+let userHasFriends = (user: option(User.t)) => {
+  switch (user) {
+  | Some(me) =>
+    switch (me.followeeIds) {
+    | Some(followeeIds) => Js.Array.length(followeeIds) > 0
+    | None => false
+    }
+  | None => false
+  };
 };
 
 module Menu = {
@@ -175,7 +188,7 @@ module Menu = {
               React.null;
             }}
            <Link path="/friends" className=MenuStyles.menuItem>
-             {React.string("Friends")}
+             {React.string("My Friends")}
            </Link>
            <a
              href="#"
@@ -299,12 +312,13 @@ let make = (~onLogin, ~onSettings) => {
             {React.string("Browse Items")}
           </Link>
         </div>
-        // TODO: show if has friends
-        <div className=Styles.navLink>
-          <Link path="/friends" className=Styles.standardViewport>
-            {React.string("Friends")}
-          </Link>
-        </div>
+        {userHasFriends(user)
+           ? <div className=Styles.navLink>
+               <Link path="/friends" className=Styles.biggerViewport>
+                 {React.string("Friends")}
+               </Link>
+             </div>
+           : React.null}
       </div>
       <div className=Styles.nav>
         {switch (user) {

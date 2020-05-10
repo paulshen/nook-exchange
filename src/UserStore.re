@@ -8,7 +8,9 @@ type action =
   | Login(User.t)
   | UpdateUser(User.t)
   | Logout
-  | FetchMeFailed;
+  | FetchMeFailed
+  | FollowUser(string)
+  | UnfollowUser(string);
 
 let api =
   Restorative.createStore(Loading, (state, action) => {
@@ -17,6 +19,34 @@ let api =
     | UpdateUser(user) => LoggedIn(user)
     | Logout => NotLoggedIn
     | FetchMeFailed => NotLoggedIn
+    | FollowUser(followeeId) =>
+      switch (state) {
+      | LoggedIn(user) =>
+        LoggedIn({
+          ...user,
+          followeeIds:
+            user.followeeIds
+            ->Belt.Option.map(followeeIds =>
+                Js.Array.includes(followeeId, followeeIds)
+                  ? followeeIds
+                  : followeeIds->Belt.Array.concat([|followeeId|])
+              ),
+        })
+      | _ => state
+      }
+    | UnfollowUser(followeeId) =>
+      switch (state) {
+      | LoggedIn(user) =>
+        LoggedIn({
+          ...user,
+          followeeIds:
+            user.followeeIds
+            ->Belt.Option.map(followeeIds =>
+                followeeIds->Belt.Array.keep(f => f !== followeeId)
+              ),
+        })
+      | _ => state
+      }
     }
   });
 
@@ -563,6 +593,26 @@ let register = (~username, ~email, ~password) => {
       };
     Promise.resolved(Error(text));
   };
+};
+
+let followUser = (~userId) => {
+  let%Repromise response =
+    BAPI.followUser(~userId, ~sessionId=Belt.Option.getExn(sessionId^));
+  switch (response) {
+  | Ok () => api.dispatch(FollowUser(userId))
+  | Error(_) => ()
+  };
+  Promise.resolved(response);
+};
+
+let unfollowUser = (~userId) => {
+  let%Repromise response =
+    BAPI.unfollowUser(~userId, ~sessionId=Belt.Option.getExn(sessionId^));
+  switch (response) {
+  | Ok () => api.dispatch(UnfollowUser(userId))
+  | Error(_) => ()
+  };
+  Promise.resolved(response);
 };
 
 let login = (~username, ~password) => {

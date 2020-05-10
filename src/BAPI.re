@@ -269,7 +269,12 @@ let followUser = (~userId, ~sessionId) => {
         (),
       ),
     );
-  Promise.resolved(Fetch.Response.status(response) < 300);
+  if (Fetch.Response.status(response) < 300) {
+    Promise.resolved(Ok());
+  } else {
+    let%Repromise.JsExn text = Fetch.Response.text(response);
+    Promise.resolved(Error(text));
+  };
 };
 
 let unfollowUser = (~userId, ~sessionId) => {
@@ -289,5 +294,10 @@ let unfollowUser = (~userId, ~sessionId) => {
         (),
       ),
     );
-  Promise.resolved(Fetch.Response.status(response) < 300);
+  if (Fetch.Response.status(response) < 300) {
+    Promise.resolved(Ok());
+  } else {
+    let%Repromise.JsExn text = Fetch.Response.text(response);
+    Promise.resolved(Error(text));
+  };
 };

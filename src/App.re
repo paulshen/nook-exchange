@@ -186,6 +186,7 @@ let make = () => {
                   key=username
                 />
               | ["l", listId, ..._urlRest] => <ListPage listId />
+              | ["password-reset"] => <PasswordResetPage url />
               | ["privacy"] => <TextPages.PrivacyPolicy />
               | ["terms"] => <TextPages.TermsOfService />
               | _ =>

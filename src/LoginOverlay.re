@@ -118,17 +118,117 @@ module Styles = {
       padding(px(16)),
       margin2(~v=px(16), ~h=zero),
     ]);
+  let successMessage = style([flexGrow(1.), color(Colors.green)]);
   let errorMessage =
     style([marginTop(px(-10)), marginBottom(px(16)), color(Colors.red)]);
+};
+
+module PasswordReset = {
+  type status =
+    | Success
+    | Error(string);
+
+  [@react.component]
+  let make = () => {
+    let (email, setEmail) = React.useState(() => "");
+    let (isSubmitting, setIsSubmitting) = React.useState(() => false);
+    let (status, setStatus) = React.useState(() => None);
+
+    let onSubmit = e => {
+      ReactEvent.Form.preventDefault(e);
+      setIsSubmitting(_ => true);
+      {
+        let%Repromise.JsExn response =
+          Fetch.fetchWithInit(
+            Constants.bapiUrl ++ "/password-reset",
+            Fetch.RequestInit.make(
+              ~method_=Post,
+              ~body=
+                Fetch.BodyInit.make(
+                  Js.Json.stringify(
+                    Json.Encode.object_([("email", Js.Json.string(email))]),
+                  ),
+                ),
+              ~headers=
+                Fetch.HeadersInit.make({
+                  "X-Client-Version": Constants.gitCommitRef,
+                  "Content-Type": "application/json",
+                }),
+              ~mode=CORS,
+              (),
+            ),
+          );
+        let%Repromise _ =
+          if (Fetch.Response.status(response) < 300) {
+            setStatus(_ => Some(Success));
+            Analytics.Amplitude.logEventWithProperties(
+              ~eventName="Reset Password Request Success",
+              ~eventProperties={"email": email},
+            );
+            Promise.resolved();
+          } else {
+            let%Repromise.JsExn text = Fetch.Response.text(response);
+            setStatus(_ => Some(Error(text)));
+            Analytics.Amplitude.logEventWithProperties(
+              ~eventName="Reset Password Request Failure",
+              ~eventProperties={"email": email, "error": text},
+            );
+            Promise.resolved();
+          };
+        setIsSubmitting(_ => false);
+        Promise.resolved();
+      }
+      |> ignore;
+    };
+
+    <form onSubmit>
+      <div className=Styles.registerTitle>
+        {React.string("Reset your password")}
+      </div>
+      <input
+        type_="text"
+        placeholder="Account email"
+        value=email
+        onChange={e => {
+          let value = ReactEvent.Form.target(e)##value;
+          setEmail(_ => value);
+        }}
+        className=Styles.input
+      />
+      {switch (status) {
+       | Some(Error(error)) =>
+         <div className=Styles.errorMessage> {React.string(error)} </div>
+       | _ => React.null
+       }}
+      <div className=Styles.submitBar>
+        {status == Some(Success)
+           ? <div className=Styles.successMessage>
+               {React.string("Check your email!")}
+             </div>
+           : React.null}
+        <button
+          type_="submit"
+          disabled={isSubmitting || status == Some(Success)}
+          className=Styles.submitButton>
+          {React.string("Send reset link")}
+        </button>
+      </div>
+    </form>;
+  };
 };
 
 type registerStatus =
   | Success
   | Error(string);
 
+type screen =
+  | Login
+  | Register
+  | PasswordReset;
+
 [@react.component]
 let make = (~onClose) => {
-  let (showLogin, setShowLogin) = React.useState(() => false);
+  let (screen, setScreen) = React.useState(() => Register);
 
   let (username, setUsername) = React.useState(() => "");
   let (email, setEmail) = React.useState(() => "");
@@ -200,172 +300,179 @@ let make = (~onClose) => {
     <div className=Styles.backdrop onClick={_ => onClose()} />
     <div className=Styles.root>
       <div className=Styles.body>
-        {showLogin
-           ? <div>
-               <form onSubmit=onLoginSubmit>
+        {switch (screen) {
+         | Login =>
+           <div>
+             <form onSubmit=onLoginSubmit>
+               <div className=Styles.registerTitle>
+                 {React.string("Welcome back!")}
+               </div>
+               <input
+                 type_="text"
+                 placeholder="Username"
+                 value=username
+                 onChange={e => {
+                   let value = ReactEvent.Form.target(e)##value;
+                   setUsername(_ => value);
+                 }}
+                 className=Styles.input
+               />
+               <input
+                 type_="password"
+                 placeholder="Password"
+                 value=password
+                 onChange={e => {
+                   let value = ReactEvent.Form.target(e)##value;
+                   setPassword(_ => value);
+                 }}
+                 className=Styles.input
+               />
+               <div className=Styles.errorMessage>
+                 <a
+                   href="#"
+                   onClick={e => {
+                     ReactEvent.Mouse.preventDefault(e);
+                     setScreen(_ => PasswordReset);
+                   }}>
+                   {React.string("Forgot password?")}
+                 </a>
+               </div>
+               {switch (registerStatus) {
+                | Some(Error(error)) =>
+                  <div className=Styles.errorMessage>
+                    {React.string(error)}
+                  </div>
+                | _ => React.null
+                }}
+               <div className=Styles.submitBar>
+                 <a
+                   href="#"
+                   onClick={e => {
+                     ReactEvent.Mouse.preventDefault(e);
+                     setScreen(_ => Register);
+                   }}>
+                   {React.string("Need an account?")}
+                 </a>
+                 <button
+                   type_="submit"
+                   disabled=isSubmitting
+                   className=Styles.submitButton>
+                   {React.string("Login")}
+                 </button>
+               </div>
+             </form>
+           </div>
+         | Register =>
+           registerStatus == Some(Success)
+             ? <div>
                  <div className=Styles.registerTitle>
-                   {React.string("Welcome back!")}
+                   {React.string("Your account is created!")}
                  </div>
-                 <input
-                   type_="text"
-                   placeholder="Username"
-                   value=username
-                   onChange={e => {
-                     let value = ReactEvent.Form.target(e)##value;
-                     setUsername(_ => value);
-                   }}
-                   className=Styles.input
-                 />
-                 <input
-                   type_="password"
-                   placeholder="Password"
-                   value=password
-                   onChange={e => {
-                     let value = ReactEvent.Form.target(e)##value;
-                     setPassword(_ => value);
-                   }}
-                   className=Styles.input
-                 />
-                 <div className=Styles.errorMessage>
-                   <a
-                     href="mailto:hi@nook.exchange?subject=I need a new password!&body=My username is <username>. This is the email on my account."
-                     target="_blank">
-                     {React.string("Forgot password?")}
-                   </a>
+                 <div className=Styles.blurb>
+                   {React.string(
+                      "Add items to profile and share it with others.",
+                    )}
                  </div>
-                 {switch (registerStatus) {
-                  | Some(Error(error)) =>
-                    <div className=Styles.errorMessage>
-                      {React.string(error)}
-                    </div>
-                  | _ => React.null
-                  }}
+                 <div className=Styles.url>
+                   <Link path={"/u/" ++ username}>
+                     {React.string("nook.exchange/u/" ++ username)}
+                   </Link>
+                 </div>
                  <div className=Styles.submitBar>
-                   <a
-                     href="#"
-                     onClick={e => {
-                       ReactEvent.Mouse.preventDefault(e);
-                       setShowLogin(_ => false);
-                     }}>
-                     {React.string("Need an account?")}
-                   </a>
                    <button
-                     type_="submit"
-                     disabled=isSubmitting
-                     className=Styles.submitButton>
-                     {React.string("Login")}
+                     onClick={_ => onClose()} className=Styles.submitButton>
+                     {React.string("Okay!")}
                    </button>
                  </div>
-               </form>
-             </div>
-           : registerStatus == Some(Success)
-               ? <div>
-                   <div className=Styles.registerTitle>
-                     {React.string("Your account is created!")}
-                   </div>
-                   <div className=Styles.blurb>
-                     {React.string(
-                        "Add items to profile and share it with others.",
-                      )}
-                   </div>
-                   <div className=Styles.url>
-                     <Link path={"/u/" ++ username}>
-                       {React.string("nook.exchange/u/" ++ username)}
-                     </Link>
-                   </div>
-                   <div className=Styles.submitBar>
-                     <button
-                       onClick={_ => onClose()} className=Styles.submitButton>
-                       {React.string("Okay!")}
-                     </button>
-                   </div>
+               </div>
+             : <div>
+                 <div className=Styles.registerTitle>
+                   {React.string("Register an account")}
                  </div>
-               : <div>
-                   <div className=Styles.registerTitle>
-                     {React.string("Register an account")}
-                   </div>
-                   <div className=Styles.blurb>
-                     {React.string(
-                        "Create and share lists of Animal Crossing items!",
-                      )}
-                   </div>
-                   <div className=Styles.urlPreview>
-                     {React.string("nook.exchange/u/" ++ username)}
-                   </div>
-                   <div>
-                     <form onSubmit=onRegisterSubmit>
-                       <input
-                         type_="text"
-                         placeholder="Username"
-                         value=username
-                         onChange={e => {
-                           let value = ReactEvent.Form.target(e)##value;
-                           setUsername(_ => value);
-                         }}
-                         ref={ReactDOMRe.Ref.domRef(usernameRef)}
-                         className=Styles.input
-                       />
-                       <input
-                         type_="text"
-                         placeholder="Email (Optional for account recovery)"
-                         value=email
-                         onChange={e => {
-                           let value = ReactEvent.Form.target(e)##value;
-                           setEmail(_ => value);
-                         }}
-                         className=Styles.input
-                       />
-                       <input
-                         type_="password"
-                         placeholder="Password"
-                         value=password
-                         onChange={e => {
-                           let value = ReactEvent.Form.target(e)##value;
-                           setPassword(_ => value);
-                         }}
-                         className=Styles.input
-                       />
-                       {switch (registerStatus) {
-                        | Some(Error(error)) =>
-                          <div className=Styles.errorMessage>
-                            {React.string(error)}
-                          </div>
-                        | _ => React.null
-                        }}
-                       <div className=Styles.submitBar>
-                         <a
-                           href="#"
-                           onClick={e => {
-                             ReactEvent.Mouse.preventDefault(e);
-                             setShowLogin(_ => true);
-                           }}>
-                           {React.string("Login instead?")}
-                         </a>
-                         <button
-                           type_="submit"
-                           className=Styles.submitButton
-                           disabled={
-                             Js.String.length(password) < 4 || isSubmitting
-                           }>
-                           {React.string("Register")}
-                         </button>
-                       </div>
-                       <div className=Styles.terms>
-                         {React.string(
-                            "By registering, you agree to Nook Exchange's ",
-                          )}
-                         <a href="/terms" target="_blank">
-                           {React.string("Terms of Service")}
-                         </a>
-                         {React.string(" and ")}
-                         <a href="/privacy" target="_blank">
-                           {React.string("Privacy Policy")}
-                         </a>
-                         {React.string(".")}
-                       </div>
-                     </form>
-                   </div>
-                 </div>}
+                 <div className=Styles.blurb>
+                   {React.string(
+                      "Create and share lists of Animal Crossing items!",
+                    )}
+                 </div>
+                 <div className=Styles.urlPreview>
+                   {React.string("nook.exchange/u/" ++ username)}
+                 </div>
+                 <div>
+                   <form onSubmit=onRegisterSubmit>
+                     <input
+                       type_="text"
+                       placeholder="Username"
+                       value=username
+                       onChange={e => {
+                         let value = ReactEvent.Form.target(e)##value;
+                         setUsername(_ => value);
+                       }}
+                       ref={ReactDOMRe.Ref.domRef(usernameRef)}
+                       className=Styles.input
+                     />
+                     <input
+                       type_="text"
+                       placeholder="Email (Optional for account recovery)"
+                       value=email
+                       onChange={e => {
+                         let value = ReactEvent.Form.target(e)##value;
+                         setEmail(_ => value);
+                       }}
+                       className=Styles.input
+                     />
+                     <input
+                       type_="password"
+                       placeholder="Password"
+                       value=password
+                       onChange={e => {
+                         let value = ReactEvent.Form.target(e)##value;
+                         setPassword(_ => value);
+                       }}
+                       className=Styles.input
+                     />
+                     {switch (registerStatus) {
+                      | Some(Error(error)) =>
+                        <div className=Styles.errorMessage>
+                          {React.string(error)}
+                        </div>
+                      | _ => React.null
+                      }}
+                     <div className=Styles.submitBar>
+                       <a
+                         href="#"
+                         onClick={e => {
+                           ReactEvent.Mouse.preventDefault(e);
+                           setScreen(_ => Login);
+                         }}>
+                         {React.string("Login instead?")}
+                       </a>
+                       <button
+                         type_="submit"
+                         className=Styles.submitButton
+                         disabled={
+                           Js.String.length(password) < 4 || isSubmitting
+                         }>
+                         {React.string("Register")}
+                       </button>
+                     </div>
+                     <div className=Styles.terms>
+                       {React.string(
+                          "By registering, you agree to Nook Exchange's ",
+                        )}
+                       <a href="/terms" target="_blank">
+                         {React.string("Terms of Service")}
+                       </a>
+                       {React.string(" and ")}
+                       <a href="/privacy" target="_blank">
+                         {React.string("Privacy Policy")}
+                       </a>
+                       {React.string(".")}
+                     </div>
+                   </form>
+                 </div>
+               </div>
+         | PasswordReset => <PasswordReset />
+         }}
       </div>
       <button onClick={_ => onClose()} className=Styles.closeButton />
     </div>

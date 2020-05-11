@@ -18,18 +18,18 @@ module Styles = {
       bottom(zero),
       left(zero),
       right(zero),
-      backgroundColor(hex("6f8477d0")),
+      backgroundColor(hex("80808080")),
     ]);
   let root =
     style([
       backgroundColor(hex("ffffff")),
       padding2(~v=px(16), ~h=px(16)),
-      borderRadius(px(4)),
+      borderRadius(px(8)),
       position(relative),
       maxWidth(px(400)),
       boxSizing(borderBox),
       width(pct(90.)),
-      boxShadow(Shadow.box(~spread=px(12), rgba(0, 0, 0, 0.1))),
+      boxShadow(Shadow.box(~blur=px(32), rgba(0, 0, 0, 0.2))),
       overflow(auto),
       maxHeight(vh(100.)),
       // media(
@@ -46,11 +46,12 @@ module Styles = {
       paddingTop(px(16)),
     ]);
   let confirmButton = style([marginLeft(px(16))]);
-  let notNowLink =
+  let cancelLink =
     style([
       opacity(0.8),
       transition(~duration=200, "all"),
-      hover([opacity(1.)]),
+      textDecoration(none),
+      hover([opacity(1.), textDecoration(underline)]),
     ]);
 };
 
@@ -75,7 +76,7 @@ let confirm = (~bodyText, ~confirmLabel, ~cancelLabel=?, ~onConfirm, ()) => {
                      ReactEvent.Mouse.preventDefault(e);
                      closeModal();
                    }}
-                   className=Styles.notNowLink>
+                   className=Styles.cancelLink>
                    {React.string(cancelLabel)}
                  </a>
                | None => React.null

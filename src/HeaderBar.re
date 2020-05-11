@@ -190,6 +190,9 @@ module Menu = {
            <Link path="/friends" className=MenuStyles.menuItem>
              {React.string("My Friends")}
            </Link>
+           <Link path="/lists" className=MenuStyles.menuItem>
+             {React.string("My Lists")}
+           </Link>
            <a
              href="#"
              onClick={e => {

@@ -13,6 +13,14 @@ module Styles = {
         [paddingTop(px(16)), marginLeft(px(16)), marginRight(px(16))],
       ),
     ]);
+  let myListsLinkText = style([marginLeft(px(4))]);
+  let myListsLink =
+    style([
+      textDecoration(none),
+      hover([
+        selector("& ." ++ myListsLinkText, [textDecoration(underline)]),
+      ]),
+    ]);
   let titleForm = style([display(flexBox), marginBottom(px(16))]);
   let titleInput =
     style([
@@ -20,7 +28,7 @@ module Styles = {
       borderRadius(px(4)),
       border(px(1), solid, transparent),
       backgroundColor(transparent),
-      padding2(~v=px(6), ~h=px(7)),
+      padding3(~top=px(6), ~bottom=px(6), ~h=px(7)),
       marginLeft(px(-8)),
       fontSize(px(24)),
       flexGrow(1.),
@@ -123,6 +131,14 @@ module Styles = {
     ]);
   let grid =
     style([display(flexBox), flexWrap(wrap), marginRight(px(-16))]);
+  let myListFooter =
+    style([marginTop(px(32)), display(flexBox), justifyContent(flexEnd)]);
+  let deleteListLink =
+    style([
+      color(Colors.red),
+      textDecoration(none),
+      media("(hover: hover)", [hover([textDecoration(underline)])]),
+    ]);
 };
 
 module ListRow = {
@@ -141,7 +157,7 @@ module ListRow = {
         color(Colors.charcoal),
         textDecoration(none),
         hover([
-          backgroundColor(hex("f2fbf3")),
+          backgroundColor(Colors.faintGreen),
           borderTopColor(Colors.lightGreen),
           // color(Colors.white),
           // selector("& ." ++ itemName, [textDecoration(underline)]),
@@ -269,6 +285,14 @@ let make = (~listId) => {
                  && !(editTitle == "" && list.title === None);
                Some(
                  <form onSubmit=onTitleSubmit>
+                   <div>
+                     <Link path="/lists" className=Styles.myListsLink>
+                       {React.string({j|←|j})}
+                       <span className=Styles.myListsLinkText>
+                         {React.string("My Lists")}
+                       </span>
+                     </Link>
+                   </div>
                    <div className=Styles.titleForm>
                      <input
                        type_="text"
@@ -435,7 +459,40 @@ let make = (~listId) => {
          {switch (me) {
           | Some(me) =>
             if (list.userId == Some(me.id)) {
-              React.null;
+              <div className=Styles.myListFooter>
+                <a
+                  href="#"
+                  onClick={e => {
+                    ReactEvent.Mouse.preventDefault(e);
+                    ConfirmDialog.confirm(
+                      ~bodyText="Are you sure you want to delete this list?",
+                      ~confirmLabel="Delete list",
+                      ~cancelLabel="Not now",
+                      ~onConfirm=
+                        () => {
+                          {
+                            let%Repromise response =
+                              BAPI.deleteItemList(
+                                ~sessionId=
+                                  Belt.Option.getExn(UserStore.sessionId^),
+                                ~listId,
+                              );
+                            UserStore.handleServerResponse(
+                              "/item-lists/delete",
+                              response,
+                            );
+                            ReasonReactRouter.push("/lists");
+                            Promise.resolved();
+                          }
+                          |> ignore
+                        },
+                      (),
+                    );
+                  }}
+                  className=Styles.deleteListLink>
+                  {React.string("Delete list")}
+                </a>
+              </div>;
             } else {
               React.null;
             }

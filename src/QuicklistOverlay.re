@@ -262,9 +262,21 @@ module CreateDialog = {
                      ~eventProperties={"listId": listId},
                    )
                  }}>
-                 {React.string("open in new tab.")}
+                 {React.string("open in new tab")}
                </a>
+               {React.string(".")}
              </div>
+             {if (UserStore.isLoggedIn()) {
+                <div>
+                  {React.string(" You can find this on your ")}
+                  <Link path="/lists" onClick={() => onClose()}>
+                    {React.string("lists page")}
+                  </Link>
+                  {React.string(".")}
+                </div>;
+              } else {
+                React.null;
+              }}
              <button
                className={Cn.make([
                  Styles.listUrl,
@@ -575,7 +587,7 @@ let make = () => {
                  }
                }
                className=Styles.saveButton>
-               {React.string("Share this list!")}
+               {React.string("Save and share this list!")}
              </button>
            | Some(listId) =>
              <button

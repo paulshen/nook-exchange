@@ -13,6 +13,52 @@ module Styles = {
         [paddingTop(px(16)), marginLeft(px(16)), marginRight(px(16))],
       ),
     ]);
+  let titleForm = style([display(flexBox), marginBottom(px(16))]);
+  let titleInput =
+    style([
+      boxSizing(borderBox),
+      borderRadius(px(4)),
+      border(px(1), solid, transparent),
+      backgroundColor(transparent),
+      padding2(~v=px(6), ~h=px(7)),
+      marginLeft(px(-8)),
+      fontSize(px(24)),
+      flexGrow(1.),
+      transition(~duration=200, "all"),
+      focus([
+        backgroundColor(Colors.white),
+        borderColor(Colors.lightGreen),
+      ]),
+      media(
+        "(hover: hover)",
+        [
+          hover([
+            backgroundColor(Colors.white),
+            borderColor(Colors.lightGreen),
+          ]),
+        ],
+      ),
+      media("(hover: none)", [borderColor(Colors.lightGreen)]),
+    ]);
+  let titleInputHasChanges =
+    style([
+      important(backgroundColor(Colors.white)),
+      important(borderColor(Colors.lightGreen)),
+    ]);
+  let titleSubmitButton =
+    style([
+      unsafe("alignSelf", "center"),
+      marginLeft(px(16)),
+      paddingLeft(px(16)),
+      paddingRight(px(16)),
+    ]);
+  let titleSubmitRow =
+    style([
+      display(flexBox),
+      justifyContent(flexStart),
+      marginTop(px(6)),
+    ]);
+  let listTitle = style([fontSize(px(28)), marginBottom(px(16))]);
   let gridWidth = numCards => numCards * cardWidth + (numCards - 1) * 16;
   let rootGrid =
     style([
@@ -156,6 +202,7 @@ type viewMode =
 [@react.component]
 let make = (~listId) => {
   let (list, setList) = React.useState(() => None);
+  let (editTitle, setEditTitle) = React.useState(() => "");
   React.useEffect0(() => {
     {
       let%Repromise response = BAPI.getItemList(~listId);
@@ -164,11 +211,15 @@ let make = (~listId) => {
       open Json.Decode;
       let list: QuicklistStore.t = {
         id: Some(json |> field("id", string)),
+        title:
+          (json |> optional(field("title", string)))
+          ->Belt.Option.flatMap(title => title != "" ? Some(title) : None),
         userId: json |> optional(field("userId", string)),
         itemIds: json |> field("itemIds", array(tuple2(int, int))),
       };
       let username = json |> optional(field("username", string));
       setList(_ => Some((list, username)));
+      setEditTitle(_ => list.title->Belt.Option.getWithDefault(""));
       Analytics.Amplitude.logEventWithProperties(
         ~eventName="Item List Page Viewed",
         ~eventProperties={
@@ -181,6 +232,19 @@ let make = (~listId) => {
     |> ignore;
     None;
   });
+  let onTitleSubmit = e => {
+    ReactEvent.Form.preventDefault(e);
+    let editTitle = editTitle |> Js.String.slice(~from=0, ~to_=32);
+    QuicklistStore.updateListTitle(~listId, ~title=Some(editTitle)) |> ignore;
+    setList(list =>
+      list->Belt.Option.map(((list, username)) =>
+        (
+          {...list, title: editTitle != "" ? Some(editTitle) : None},
+          username,
+        )
+      )
+    );
+  };
 
   let (viewMode, setViewMode) = React.useState(() => List);
   let me = UserStore.useMe();
@@ -194,6 +258,55 @@ let make = (~listId) => {
       | List => Styles.rootList
       },
     ])}>
+    <div>
+      {switch (list) {
+       | Some((list, _)) =>
+         list.userId
+         ->Belt.Option.flatMap(userId =>
+             if (me->Belt.Option.map(me => me.id) == Some(userId)) {
+               let hasChanges =
+                 list.title != Some(editTitle)
+                 && !(editTitle == "" && list.title === None);
+               Some(
+                 <form onSubmit=onTitleSubmit>
+                   <div className=Styles.titleForm>
+                     <input
+                       type_="text"
+                       value=editTitle
+                       onChange={e => {
+                         let value = ReactEvent.Form.target(e)##value;
+                         setEditTitle(_ => value);
+                       }}
+                       className={Cn.make([
+                         Styles.titleInput,
+                         Cn.ifTrue(Styles.titleInputHasChanges, hasChanges),
+                       ])}
+                       placeholder="Name your list"
+                     />
+                     {if (hasChanges) {
+                        <Button className=Styles.titleSubmitButton>
+                          {React.string("Save")}
+                        </Button>;
+                      } else {
+                        React.null;
+                      }}
+                   </div>
+                 </form>,
+               );
+             } else {
+               None;
+             }
+           )
+         ->Belt.Option.getWithDefault(
+             switch (list.title) {
+             | Some(title) =>
+               <div className=Styles.listTitle> {React.string(title)} </div>
+             | None => React.null
+             },
+           )
+       | None => React.null
+       }}
+    </div>
     <div className=Styles.topRow>
       <div>
         {switch (list) {
@@ -208,6 +321,7 @@ let make = (~listId) => {
                      ReactEvent.Mouse.preventDefault(e);
                      QuicklistStore.loadList(
                        ~listId,
+                       ~title=list.title,
                        ~listItems=list.itemIds,
                      );
                      ReasonReactRouter.push("/");

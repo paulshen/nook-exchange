@@ -1,15 +1,16 @@
 type t = {
   id: option(string),
+  title: option(string),
   userId: option(string),
   itemIds: array((int, int)),
 };
 
 type action =
   | StartList
-  | LoadList(string, array((int, int)))
+  | LoadList(string, option(string), array((int, int)))
   | AddItem(int, int)
   | RemoveItem(int, int)
-  | SaveList(string)
+  | UpdateTitle(string, option(string))
   | RemoveList;
 
 open Belt;
@@ -17,8 +18,9 @@ open Belt;
 let api =
   Restorative.createStore(None, (state, action) => {
     switch (action) {
-    | StartList => Some({id: None, userId: None, itemIds: [||]})
-    | LoadList(id, itemIds) => Some({id: Some(id), userId: None, itemIds})
+    | StartList => Some({id: None, title: None, userId: None, itemIds: [||]})
+    | LoadList(id, title, itemIds) =>
+      Some({id: Some(id), title, userId: None, itemIds})
     | AddItem(itemId, variant) =>
       state->Option.map(state =>
         {
@@ -35,7 +37,14 @@ let api =
             ->Array.keep(((a, b)) => a != itemId || b != variant),
         }
       )
-    | SaveList(id) => state->Option.map(state => {...state, id: Some(id)})
+    | UpdateTitle(listId, title) =>
+      state->Option.map(state =>
+        if (state.id == Some(listId)) {
+          {...state, title};
+        } else {
+          state;
+        }
+      )
     | RemoveList => None
     }
   });
@@ -98,6 +107,7 @@ let saveList = () => {
         ~sessionId=Belt.Option.getExn(UserStore.sessionId^),
         ~listId,
         ~items=itemIds,
+        (),
       );
     UserStore.handleServerResponse("/item-lists/patch", responseResult);
     if (! hasLoggedItemListUpdate^) {
@@ -169,6 +179,23 @@ let removeItem = (~itemId, ~variant) => {
   };
 };
 
-let loadList = (~listId, ~listItems) => {
-  api.dispatch(LoadList(listId, listItems));
+let updateListTitle = (~listId, ~title: option(string)) => {
+  api.dispatch(UpdateTitle(listId, title));
+  let%Repromise responseResult =
+    BAPI.updateItemList(
+      ~sessionId=Option.getExn(UserStore.sessionId^),
+      ~listId,
+      ~title=title->Option.getWithDefault(""),
+      (),
+    );
+  UserStore.handleServerResponse("/item-lists/patch", responseResult);
+  Analytics.Amplitude.logEventWithProperties(
+    ~eventName="Item List Title Updated",
+    ~eventProperties={"listId": listId, "title": title},
+  );
+  Promise.resolved();
+};
+
+let loadList = (~listId, ~title, ~listItems) => {
+  api.dispatch(LoadList(listId, title, listItems));
 };

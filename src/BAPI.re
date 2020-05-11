@@ -203,6 +203,26 @@ let patchMe =
   Promise.resolved(response);
 };
 
+let getUserLists = (~sessionId) => {
+  let url = Constants.bapiUrl ++ "/@me/item-lists";
+  let%Repromise.Js responseResult =
+    Fetch.fetchWithInit(
+      url,
+      Fetch.RequestInit.make(
+        ~method_=Get,
+        ~headers=
+          Fetch.HeadersInit.make({
+            "X-Client-Version": Constants.gitCommitRef,
+            "Authorization": "Bearer " ++ sessionId,
+          }),
+        ~credentials=Include,
+        ~mode=CORS,
+        (),
+      ),
+    );
+  Promise.resolved(responseResult);
+};
+
 let createItemList = (~sessionId, ~items: array((int, int))) => {
   let url = Constants.bapiUrl ++ "/item-lists";
   let%Repromise.Js responseResult =
@@ -233,7 +253,14 @@ let createItemList = (~sessionId, ~items: array((int, int))) => {
   Promise.resolved(responseResult);
 };
 
-let updateItemList = (~sessionId, ~listId, ~items: array((int, int))) => {
+let updateItemList =
+    (
+      ~sessionId,
+      ~listId,
+      ~title=?,
+      ~items: option(array((int, int)))=?,
+      (),
+    ) => {
   let url = Constants.bapiUrl ++ "/item-lists/" ++ listId;
   let%Repromise.Js responseResult =
     Fetch.fetchWithInit(
@@ -244,7 +271,20 @@ let updateItemList = (~sessionId, ~listId, ~items: array((int, int))) => {
           Fetch.BodyInit.make(
             Js.Json.stringify(
               Json.Encode.(
-                object_([("items", array(tuple2(int, int), items))])
+                object_(
+                  Belt.List.keepMap(
+                    [
+                      title->Belt.Option.map(title =>
+                        ("title", string(title))
+                      ),
+                      items->Belt.Option.map(items =>
+                        ("items", array(tuple2(int, int), items))
+                      ),
+                    ],
+                    x =>
+                    x
+                  ),
+                )
               ),
             ),
           ),

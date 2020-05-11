@@ -279,8 +279,6 @@ module WithViewer = {
   module Styles = {
     open Css;
     let root = style([paddingTop(px(16))]);
-    let pageTitle =
-      style([fontSize(px(32)), textAlign(center), marginBottom(px(32))]);
     let emptyFeed =
       style([
         backgroundColor(hex("ffffffc0")),
@@ -323,7 +321,7 @@ module WithViewer = {
     });
 
     <div className=Styles.root>
-      <div className=Styles.pageTitle> {React.string("My Friends")} </div>
+      <PageTitle title="My Friends" />
       {switch (feed) {
        | Some(feed) =>
          Js.Array.length(feed) > 0

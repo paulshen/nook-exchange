@@ -250,7 +250,7 @@ let make = (~listId) => {
   });
   let onTitleSubmit = e => {
     ReactEvent.Form.preventDefault(e);
-    let editTitle = editTitle |> Js.String.slice(~from=0, ~to_=32);
+    let editTitle = editTitle |> Js.String.slice(~from=0, ~to_=48);
     QuicklistStore.updateListTitle(~listId, ~title=Some(editTitle)) |> ignore;
     setList(list =>
       list->Belt.Option.map(((list, username)) =>

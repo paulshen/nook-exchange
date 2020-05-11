@@ -177,7 +177,8 @@ let make = () => {
          ? <div className=Styles.body>
              {switch (url.path) {
               | ["catalog"] => <MyCatalogPage />
-              | ["friends", ...urlRest] => <FriendsPage />
+              | ["friends", ..._] => <FriendsPage />
+              | ["lists", ..._] => <MyListsPage />
               | ["u", username, ...urlRest] =>
                 <UserPage
                   username

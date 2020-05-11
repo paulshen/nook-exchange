@@ -24,9 +24,16 @@ module Styles = {
   let topRow =
     style([
       display(flexBox),
-      justifyContent(flexEnd),
+      alignItems(center),
+      justifyContent(spaceBetween),
       marginBottom(px(16)),
     ]);
+  let listUserLink =
+    style([
+      textDecoration(none),
+      media("(hover: hover)", [hover([textDecoration(underline)])]),
+    ]);
+  let viewToggles = style([display(flexBox)]);
   [@bs.module "./assets/grid.png"] external gridPng: string = "default";
   [@bs.module "./assets/list.png"] external listPng: string = "default";
   let viewButton =
@@ -160,7 +167,8 @@ let make = (~listId) => {
         userId: json |> optional(field("userId", string)),
         itemIds: json |> field("itemIds", array(tuple2(int, int))),
       };
-      setList(_ => Some(list));
+      let username = json |> optional(field("username", string));
+      setList(_ => Some((list, username)));
       Analytics.Amplitude.logEventWithProperties(
         ~eventName="Item List Page Viewed",
         ~eventProperties={
@@ -187,67 +195,104 @@ let make = (~listId) => {
       },
     ])}>
     <div className=Styles.topRow>
-      <button
-        onClick={_ => {
-          setViewMode(_ => List);
-          if (React.Ref.current(numViewToggleLoggedRef) < 5) {
-            Analytics.Amplitude.logEventWithProperties(
-              ~eventName="Item List Page View Toggled",
-              ~eventProperties={
-                "view": "list",
-                "listId": listId,
-                "numItems":
-                  switch (list) {
-                  | Some(list) => Js.Array.length(list.itemIds)
-                  | None => 0
-                  },
-              },
-            );
-            React.Ref.setCurrent(
-              numViewToggleLoggedRef,
-              React.Ref.current(numViewToggleLoggedRef) + 1,
-            );
-          };
-        }}
-        className={Cn.make([
-          Styles.viewButton,
-          Cn.ifTrue(Styles.viewButtonSelected, viewMode == List),
-        ])}>
-        <span className=Styles.listIcon />
-        {React.string("List")}
-      </button>
-      <button
-        onClick={_ => {
-          setViewMode(_ => Grid);
-          if (React.Ref.current(numViewToggleLoggedRef) < 5) {
-            Analytics.Amplitude.logEventWithProperties(
-              ~eventName="Item List Page View Toggled",
-              ~eventProperties={
-                "view": "grid",
-                "listId": listId,
-                "numItems":
-                  switch (list) {
-                  | Some(list) => Js.Array.length(list.itemIds)
-                  | None => 0
-                  },
-              },
-            );
-            React.Ref.setCurrent(
-              numViewToggleLoggedRef,
-              React.Ref.current(numViewToggleLoggedRef) + 1,
-            );
-          };
-        }}
-        className={Cn.make([
-          Styles.viewButton,
-          Cn.ifTrue(Styles.viewButtonSelected, viewMode == Grid),
-        ])}>
-        <span className=Styles.gridIcon />
-        {React.string("Grid")}
-      </button>
+      <div>
+        {switch (list) {
+         | Some((list, username)) =>
+           switch (list.userId) {
+           | Some(userId) =>
+             if (me->Belt.Option.map(me => me.id) == Some(userId)) {
+               <div>
+                 <a
+                   href="#"
+                   onClick={e => {
+                     ReactEvent.Mouse.preventDefault(e);
+                     QuicklistStore.loadList(
+                       ~listId,
+                       ~listItems=list.itemIds,
+                     );
+                     ReasonReactRouter.push("/");
+                   }}
+                   className=Styles.listUserLink>
+                   {React.string("Edit your list")}
+                 </a>
+               </div>;
+             } else {
+               switch (username) {
+               | Some(username) =>
+                 <Link path={"/u/" ++ username} className=Styles.listUserLink>
+                   {React.string("Visit " ++ username ++ "'s profile")}
+                 </Link>
+               | None => React.null
+               };
+             }
+           | None => React.null
+           }
+         | None => React.null
+         }}
+      </div>
+      <div className=Styles.viewToggles>
+        <button
+          onClick={_ => {
+            setViewMode(_ => List);
+            if (React.Ref.current(numViewToggleLoggedRef) < 5) {
+              Analytics.Amplitude.logEventWithProperties(
+                ~eventName="Item List Page View Toggled",
+                ~eventProperties={
+                  "view": "list",
+                  "listId": listId,
+                  "numItems":
+                    switch (list) {
+                    | Some((list, _)) => Js.Array.length(list.itemIds)
+                    | None => 0
+                    },
+                },
+              );
+              React.Ref.setCurrent(
+                numViewToggleLoggedRef,
+                React.Ref.current(numViewToggleLoggedRef) + 1,
+              );
+            };
+          }}
+          className={Cn.make([
+            Styles.viewButton,
+            Cn.ifTrue(Styles.viewButtonSelected, viewMode == List),
+          ])}>
+          <span className=Styles.listIcon />
+          {React.string("List")}
+        </button>
+        <button
+          onClick={_ => {
+            setViewMode(_ => Grid);
+            if (React.Ref.current(numViewToggleLoggedRef) < 5) {
+              Analytics.Amplitude.logEventWithProperties(
+                ~eventName="Item List Page View Toggled",
+                ~eventProperties={
+                  "view": "grid",
+                  "listId": listId,
+                  "numItems":
+                    switch (list) {
+                    | Some((list, _)) => Js.Array.length(list.itemIds)
+                    | None => 0
+                    },
+                },
+              );
+              React.Ref.setCurrent(
+                numViewToggleLoggedRef,
+                React.Ref.current(numViewToggleLoggedRef) + 1,
+              );
+            };
+          }}
+          className={Cn.make([
+            Styles.viewButton,
+            Cn.ifTrue(Styles.viewButtonSelected, viewMode == Grid),
+          ])}>
+          <span className=Styles.gridIcon />
+          {React.string("Grid")}
+        </button>
+      </div>
     </div>
     {switch (list) {
-     | Some(list) =>
+     | Some((list, _)) =>
        <div>
          <div
            className={

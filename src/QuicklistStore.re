@@ -6,6 +6,7 @@ type t = {
 
 type action =
   | StartList
+  | LoadList(string, array((int, int)))
   | AddItem(int, int)
   | RemoveItem(int, int)
   | SaveList(string)
@@ -17,6 +18,7 @@ let api =
   Restorative.createStore(None, (state, action) => {
     switch (action) {
     | StartList => Some({id: None, userId: None, itemIds: [||]})
+    | LoadList(id, itemIds) => Some({id: Some(id), userId: None, itemIds})
     | AddItem(itemId, variant) =>
       state->Option.map(state =>
         {
@@ -81,50 +83,92 @@ let startList = () => {
   );
 };
 
+let removeList = () => {
+  api.dispatch(RemoveList);
+};
+
+let hasLoggedItemListUpdate = ref(false);
+let saveList = () => {
+  let list = api.getState()->Belt.Option.getExn;
+  let itemIds = list.itemIds;
+  switch (list.id) {
+  | Some(listId) =>
+    let%Repromise responseResult =
+      BAPI.updateItemList(
+        ~sessionId=Belt.Option.getExn(UserStore.sessionId^),
+        ~listId,
+        ~items=itemIds,
+      );
+    UserStore.handleServerResponse("/item-lists/patch", responseResult);
+    if (! hasLoggedItemListUpdate^) {
+      Analytics.Amplitude.logEventWithProperties(
+        ~eventName="Item List Updated",
+        ~eventProperties={
+          "listId": listId,
+          "numItems": Js.Array.length(itemIds),
+        },
+      );
+      hasLoggedItemListUpdate := true;
+    };
+    Promise.resolved(listId);
+  | None =>
+    let%Repromise responseResult =
+      BAPI.createItemList(~sessionId=UserStore.sessionId^, ~items=itemIds);
+    UserStore.handleServerResponse("/item-lists", responseResult);
+    let response = Belt.Result.getExn(responseResult);
+    let%Repromise.JsExn json = Fetch.Response.json(response);
+    let listId = json |> Json.Decode.(field("id", string));
+    Analytics.Amplitude.logEventWithProperties(
+      ~eventName="Item List Created",
+      ~eventProperties={
+        "listId": listId,
+        "numItems": Js.Array.length(itemIds),
+      },
+    );
+    Promise.resolved(listId);
+  };
+};
+
 let hasLoggedItemAdd = ref(false);
 let addItem = (~itemId, ~variant) => {
   api.dispatch(AddItem(itemId, variant));
-  if (! hasLoggedItemAdd^) {
-    Analytics.Amplitude.logEventWithProperties(
-      ~eventName="Item List Item Added",
-      ~eventProperties={"itemId": itemId, "variant": variant},
-    );
-    hasLoggedItemAdd := true;
+  switch (api.getState()) {
+  | Some(quicklist) =>
+    switch (quicklist.id) {
+    | Some(_listId) => saveList() |> ignore
+    | None =>
+      if (! hasLoggedItemAdd^) {
+        Analytics.Amplitude.logEventWithProperties(
+          ~eventName="Item List Item Added",
+          ~eventProperties={"itemId": itemId, "variant": variant},
+        );
+        hasLoggedItemAdd := true;
+      }
+    }
+  | None => ()
   };
 };
 
 let hasLoggedItemRemove = ref(false);
 let removeItem = (~itemId, ~variant) => {
   api.dispatch(RemoveItem(itemId, variant));
-  if (! hasLoggedItemRemove^) {
-    Analytics.Amplitude.logEventWithProperties(
-      ~eventName="Item List Item Removed",
-      ~eventProperties={"itemId": itemId, "variant": variant},
-    );
-    hasLoggedItemRemove := true;
+  switch (api.getState()) {
+  | Some(quicklist) =>
+    switch (quicklist.id) {
+    | Some(_listId) => saveList() |> ignore
+    | None =>
+      if (! hasLoggedItemRemove^) {
+        Analytics.Amplitude.logEventWithProperties(
+          ~eventName="Item List Item Removed",
+          ~eventProperties={"itemId": itemId, "variant": variant},
+        );
+        hasLoggedItemRemove := true;
+      }
+    }
+  | None => ()
   };
 };
 
-let removeList = () => {
-  api.dispatch(RemoveList);
-};
-
-let saveList = () => {
-  let list = api.getState()->Belt.Option.getExn;
-  let itemIds = list.itemIds;
-  let%Repromise responseResult =
-    BAPI.createItemList(~sessionId=UserStore.sessionId^, ~items=itemIds);
-  UserStore.handleServerResponse("/item-lists", responseResult);
-  let response = Belt.Result.getExn(responseResult);
-  let%Repromise.JsExn json = Fetch.Response.json(response);
-  let listId = json |> Json.Decode.(field("id", string));
-  Analytics.Amplitude.logEventWithProperties(
-    ~eventName="Item List Created",
-    ~eventProperties={
-      "listId": listId,
-      "numItems": Js.Array.length(itemIds),
-    },
-  );
-  // api.dispatch(SaveList(listId));
-  Promise.resolved(listId);
+let loadList = (~listId, ~listItems) => {
+  api.dispatch(LoadList(listId, listItems));
 };

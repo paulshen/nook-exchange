@@ -329,6 +329,16 @@ let make = () => {
   if (visibility == Panel && quicklist == None) {
     setVisibility(_ => Bar);
   };
+  let listId = quicklist->Belt.Option.flatMap(quicklist => quicklist.id);
+  React.useEffect1(
+    () => {
+      if (listId != None) {
+        setVisibility(_ => Panel);
+      };
+      None;
+    },
+    [|listId|],
+  );
 
   let url = ReasonReactRouter.useUrl();
   let viewportWidth = Utils.useViewportWidth();
@@ -404,41 +414,55 @@ let make = () => {
            )}
         {switch (quicklist) {
          | Some(quicklist) =>
-           <a
-             href="#"
-             onClick={e => {
-               ReactEvent.Mouse.preventDefault(e);
-               let numItems = Js.Array.length(quicklist.itemIds);
-               if (numItems > 1) {
-                 ConfirmDialog.confirm(
-                   ~bodyText=
-                     "You have "
-                     ++ string_of_int(numItems)
-                     ++ " items that will be discarded. Are you sure?",
-                   ~confirmLabel="Yes, discard list",
-                   ~cancelLabel="Not yet",
-                   ~onConfirm=
-                     () => {
-                       QuicklistStore.removeList();
-                       Analytics.Amplitude.logEventWithProperties(
-                         ~eventName="Item List Removed",
-                         ~eventProperties={"numItems": numItems},
-                       );
-                     },
-                   (),
-                 );
-               } else {
+           switch (quicklist.id) {
+           | Some(listId) =>
+             <a
+               href="#"
+               onClick={e => {
+                 ReactEvent.Mouse.preventDefault(e);
                  QuicklistStore.removeList();
-                 Analytics.Amplitude.logEventWithProperties(
-                   ~eventName="Item List Removed",
-                   ~eventProperties={"numItems": numItems},
-                 );
-               };
-               setVisibility(_ => Bar);
-             }}
-             className=Styles.barLink>
-             {React.string("Discard list")}
-           </a>
+                 setVisibility(_ => Bar);
+               }}
+               className=Styles.barLink>
+               {React.string("Stop editing list")}
+             </a>
+           | None =>
+             <a
+               href="#"
+               onClick={e => {
+                 ReactEvent.Mouse.preventDefault(e);
+                 let numItems = Js.Array.length(quicklist.itemIds);
+                 if (numItems > 1) {
+                   ConfirmDialog.confirm(
+                     ~bodyText=
+                       "You have "
+                       ++ string_of_int(numItems)
+                       ++ " items that will be discarded. Are you sure?",
+                     ~confirmLabel="Yes, discard list",
+                     ~cancelLabel="Not yet",
+                     ~onConfirm=
+                       () => {
+                         QuicklistStore.removeList();
+                         Analytics.Amplitude.logEventWithProperties(
+                           ~eventName="Item List Removed",
+                           ~eventProperties={"numItems": numItems},
+                         );
+                       },
+                     (),
+                   );
+                 } else {
+                   QuicklistStore.removeList();
+                   Analytics.Amplitude.logEventWithProperties(
+                     ~eventName="Item List Removed",
+                     ~eventProperties={"numItems": numItems},
+                   );
+                 };
+                 setVisibility(_ => Bar);
+               }}
+               className=Styles.barLink>
+               {React.string("Discard list")}
+             </a>
+           }
          | None =>
            <a
              href="#"
@@ -528,29 +552,43 @@ let make = () => {
           <div className=Styles.mobileRemoveMessage>
             {React.string("Tap item to remove")}
           </div>
-          <button
-            onClick={_ => {
-              {
-                setIsSubmitting(_ => true);
-                let%Repromise listId = QuicklistStore.saveList();
-                setIsSubmitting(_ => false);
-                setVisibility(_ => Bar);
-                CreateDialog.show(~listId);
-                QuicklistStore.removeList();
-                Promise.resolved();
-              }
-              |> ignore
-            }}
-            disabled={
-              switch (quicklist) {
-              | Some(quicklist) =>
-                Js.Array.length(quicklist.itemIds) == 0 || isSubmitting
-              | None => true
-              }
-            }
-            className=Styles.saveButton>
-            {React.string("Share this list!")}
-          </button>
+          {switch (quicklist->Belt.Option.flatMap(quicklist => quicklist.id)) {
+           | None =>
+             <button
+               onClick={_ => {
+                 {
+                   setIsSubmitting(_ => true);
+                   let%Repromise listId = QuicklistStore.saveList();
+                   setIsSubmitting(_ => false);
+                   setVisibility(_ => Bar);
+                   CreateDialog.show(~listId);
+                   QuicklistStore.removeList();
+                   Promise.resolved();
+                 }
+                 |> ignore
+               }}
+               disabled={
+                 switch (quicklist) {
+                 | Some(quicklist) =>
+                   Js.Array.length(quicklist.itemIds) == 0 || isSubmitting
+                 | None => true
+                 }
+               }
+               className=Styles.saveButton>
+               {React.string("Share this list!")}
+             </button>
+           | Some(listId) =>
+             <button
+               onClick={_ => {
+                 ReasonReactRouter.push("/l/" ++ listId);
+                 setVisibility(_ => Hidden);
+                 QuicklistStore.removeList();
+               }}
+               disabled=isSubmitting
+               className=Styles.saveButton>
+               {React.string("See list")}
+             </button>
+           }}
         </div>
       </div>
     </div>

@@ -233,6 +233,35 @@ let createItemList = (~sessionId, ~items: array((int, int))) => {
   Promise.resolved(responseResult);
 };
 
+let updateItemList = (~sessionId, ~listId, ~items: array((int, int))) => {
+  let url = Constants.bapiUrl ++ "/item-lists/" ++ listId;
+  let%Repromise.Js responseResult =
+    Fetch.fetchWithInit(
+      url,
+      Fetch.RequestInit.make(
+        ~method_=Patch,
+        ~body=
+          Fetch.BodyInit.make(
+            Js.Json.stringify(
+              Json.Encode.(
+                object_([("items", array(tuple2(int, int), items))])
+              ),
+            ),
+          ),
+        ~headers=
+          Fetch.HeadersInit.make({
+            "X-Client-Version": Constants.gitCommitRef,
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " ++ sessionId,
+          }),
+        ~credentials=Include,
+        ~mode=CORS,
+        (),
+      ),
+    );
+  Promise.resolved(responseResult);
+};
+
 let getItemList = (~listId: string) => {
   let url = Constants.bapiUrl ++ "/item-lists/" ++ listId;
   let%Repromise.Js responseResult =

@@ -400,7 +400,6 @@ let getFolloweesItem = (~sessionId, ~itemId) => {
         ~headers=
           Fetch.HeadersInit.make({
             "X-Client-Version": Constants.gitCommitRef,
-            "Content-Type": "application/json",
             "Authorization": "Bearer " ++ sessionId,
           }),
         ~credentials=Include,

@@ -621,7 +621,7 @@ let hasLoggedDetailOverlay = ref(false);
 
 [@react.component]
 let make = (~item: Item.t, ~variant, ~isInitialLoad) => {
-  let isLoggedIn = UserStore.useIsLoggedIn();
+  let me = UserStore.useMe();
   let onClose = () => {
     let url = ReasonReactRouter.dangerouslyGetInitialUrl();
     ReasonReactRouter.push(
@@ -804,7 +804,15 @@ let make = (~item: Item.t, ~variant, ~isInitialLoad) => {
              }}
           </div>
         </div>
-        {isLoggedIn ? <FriendsSection item /> : React.null}
+        {switch (me->Belt.Option.flatMap(me => me.followeeIds)) {
+         | Some(followeeIds) =>
+           if (Js.Array.length(followeeIds) > 0) {
+             <FriendsSection item />;
+           } else {
+             React.null;
+           }
+         | None => React.null
+         }}
         <button
           onClick={_ => onClose()}
           className=LoginOverlay.Styles.closeButton

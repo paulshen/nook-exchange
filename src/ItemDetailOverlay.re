@@ -1,4 +1,9 @@
 let smallThreshold = 500;
+let smallThresholdMediaQuery = styles =>
+  Css.media(
+    "(max-width: " ++ string_of_int(smallThreshold) ++ "px)",
+    styles,
+  );
 
 module Div100VH = {
   [@bs.module "react-div-100vh"] [@react.component]
@@ -9,8 +14,6 @@ module Div100VH = {
 
 module Styles = {
   open Css;
-  let smallThresholdMediaQuery = styles =>
-    media("(max-width: " ++ string_of_int(smallThreshold) ++ "px)", styles);
   let backdrop =
     style([
       position(absolute),
@@ -34,11 +37,11 @@ module Styles = {
       backgroundColor(hex("ffffff")),
       borderRadius(px(8)),
       position(relative),
-      maxWidth(px(640)),
+      maxWidth(px(560)),
       boxSizing(borderBox),
       boxShadow(Shadow.box(~blur=px(32), rgba(0, 0, 0, 0.2))),
       overflow(auto),
-      maxHeight(pct(100.)),
+      maxHeight(pct(95.)),
       minHeight(px(256)),
       opacity(0.),
       transforms([scale(0.85, 0.85), translate3d(zero, zero, zero)]),
@@ -455,10 +458,163 @@ module ItemRecipe = {
   };
 };
 
+module FriendsSection = {
+  module Styles = {
+    open Css;
+    let friendItemList =
+      style([
+        backgroundColor(Colors.faintGreen),
+        borderTop(px(1), dashed, Colors.lightGreen),
+        display(flexBox),
+        flexWrap(wrap),
+        padding(px(16)),
+      ]);
+    let friendItem =
+      style([
+        display(flexBox),
+        alignItems(center),
+        boxSizing(borderBox),
+        paddingRight(px(8)),
+        marginBottom(px(2)),
+        width(pct(50.)),
+        smallThresholdMediaQuery([width(pct(100.))]),
+      ]);
+    let image =
+      style([
+        display(block),
+        width(px(32)),
+        height(px(32)),
+        marginRight(px(8)),
+      ]);
+    let hasIn = style([color(Colors.gray)]);
+    let listLink =
+      style([
+        color(Colors.charcoal),
+        textDecoration(none),
+        hover([textDecoration(underline)]),
+      ]);
+    let showAllRow = style([width(pct(100.)), paddingTop(px(8))]);
+    let showAllButton =
+      style([
+        backgroundColor(transparent),
+        border(px(1), solid, Colors.lightGreen),
+        borderRadius(px(4)),
+        color(Colors.green),
+        padding2(~v=px(10), ~h=zero),
+        width(pct(100.)),
+        transition(~duration=200, "all"),
+        hover([borderColor(Colors.green)]),
+      ]);
+  };
+
+  type friendItem = {
+    userId: string,
+    username: string,
+    variant: int,
+    status: User.itemStatus,
+  };
+
+  [@react.component]
+  let make = (~item: Item.t) => {
+    let (friendItems, setFriendItems) = React.useState(() => None);
+    let (showAll, setShowAll) = React.useState(() => false);
+    React.useEffect0(() => {
+      {
+        let%Repromise response =
+          BAPI.getFolloweesItem(
+            ~sessionId=Belt.Option.getExn(UserStore.sessionId^),
+            ~itemId=item.id,
+          );
+        let%Repromise.JsExn json = Fetch.Response.json(response);
+        open Json.Decode;
+        let friendItems =
+          json
+          |> array(json =>
+               {
+                 userId: json |> field("userId", string),
+                 username: json |> field("username", string),
+                 variant: json |> field("variant", int),
+                 status:
+                   json
+                   |> field("status", int)
+                   |> User.itemStatusFromJs
+                   |> Belt.Option.getExn,
+               }
+             );
+        setFriendItems(_ => Some(friendItems));
+        Promise.resolved();
+      }
+      |> ignore;
+      None;
+    });
+
+    switch (friendItems) {
+    | Some(friendItems) =>
+      if (Js.Array.length(friendItems) > 0) {
+        <div className=Styles.friendItemList>
+          {friendItems
+           |> (showAll ? (x => x) : Js.Array.slice(~start=0, ~end_=12))
+           |> Js.Array.map(friendItem =>
+                <div
+                  className=Styles.friendItem
+                  key={friendItem.userId ++ string_of_int(friendItem.variant)}>
+                  <img
+                    src={Item.getImageUrl(~item, ~variant=friendItem.variant)}
+                    className=Styles.image
+                  />
+                  <span>
+                    <Link path={"/u/" ++ friendItem.username}>
+                      {React.string(friendItem.username)}
+                    </Link>
+                    <span className=Styles.hasIn>
+                      {React.string(" has in ")}
+                    </span>
+                    <Link
+                      path={
+                        "/u/"
+                        ++ friendItem.username
+                        ++ "/"
+                        ++ ViewingList.viewingListToUrl(
+                             switch (friendItem.status) {
+                             | ForTrade => ForTrade
+                             | CanCraft => CanCraft
+                             | Wishlist => Wishlist
+                             | CatalogOnly => Catalog
+                             },
+                           )
+                      }
+                      className=Styles.listLink>
+                      {React.string(
+                         User.itemStatusToString(friendItem.status),
+                       )}
+                    </Link>
+                  </span>
+                </div>
+              )
+           |> React.array}
+          {!showAll && Js.Array.length(friendItems) > 12
+             ? <div className=Styles.showAllRow>
+                 <button
+                   onClick={_ => {setShowAll(_ => true)}}
+                   className=Styles.showAllButton>
+                   {React.string("Show more")}
+                 </button>
+               </div>
+             : React.null}
+        </div>;
+      } else {
+        React.null;
+      }
+    | None => React.null
+    };
+  };
+};
+
 let hasLoggedDetailOverlay = ref(false);
 
 [@react.component]
 let make = (~item: Item.t, ~variant, ~isInitialLoad) => {
+  let me = UserStore.useMe();
   let onClose = () => {
     let url = ReasonReactRouter.dangerouslyGetInitialUrl();
     ReasonReactRouter.push(
@@ -641,6 +797,15 @@ let make = (~item: Item.t, ~variant, ~isInitialLoad) => {
              }}
           </div>
         </div>
+        {switch (me->Belt.Option.flatMap(me => me.followeeIds)) {
+         | Some(followeeIds) =>
+           if (Js.Array.length(followeeIds) > 0) {
+             <FriendsSection item />;
+           } else {
+             React.null;
+           }
+         | None => React.null
+         }}
         <button
           onClick={_ => onClose()}
           className=LoginOverlay.Styles.closeButton

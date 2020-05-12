@@ -390,3 +390,23 @@ let unfollowUser = (~userId, ~sessionId) => {
     Promise.resolved(Error(text));
   };
 };
+
+let getFolloweesItem = (~sessionId, ~itemId) => {
+  let%Repromise.JsExn response =
+    Fetch.fetchWithInit(
+      Constants.bapiUrl ++ "/@me/followees/items/" ++ string_of_int(itemId),
+      Fetch.RequestInit.make(
+        ~method_=Get,
+        ~headers=
+          Fetch.HeadersInit.make({
+            "X-Client-Version": Constants.gitCommitRef,
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " ++ sessionId,
+          }),
+        ~credentials=Include,
+        ~mode=CORS,
+        (),
+      ),
+    );
+  Promise.resolved(response);
+};

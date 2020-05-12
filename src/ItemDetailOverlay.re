@@ -41,7 +41,7 @@ module Styles = {
       boxSizing(borderBox),
       boxShadow(Shadow.box(~blur=px(32), rgba(0, 0, 0, 0.2))),
       overflow(auto),
-      maxHeight(pct(100.)),
+      maxHeight(pct(95.)),
       minHeight(px(256)),
       opacity(0.),
       transforms([scale(0.85, 0.85), translate3d(zero, zero, zero)]),
@@ -493,6 +493,18 @@ module FriendsSection = {
         textDecoration(none),
         hover([textDecoration(underline)]),
       ]);
+    let showAllRow = style([width(pct(100.)), paddingTop(px(8))]);
+    let showAllButton =
+      style([
+        backgroundColor(transparent),
+        border(px(1), solid, Colors.lightGreen),
+        borderRadius(px(4)),
+        color(Colors.green),
+        padding2(~v=px(10), ~h=zero),
+        width(pct(100.)),
+        transition(~duration=200, "all"),
+        hover([borderColor(Colors.green)]),
+      ]);
   };
 
   type friendItem = {
@@ -505,6 +517,7 @@ module FriendsSection = {
   [@react.component]
   let make = (~item: Item.t) => {
     let (friendItems, setFriendItems) = React.useState(() => None);
+    let (showAll, setShowAll) = React.useState(() => false);
     React.useEffect0(() => {
       {
         let%Repromise response =
@@ -541,6 +554,7 @@ module FriendsSection = {
          if (Js.Array.length(friendItems) > 0) {
            <div className=Styles.friendItemList>
              {friendItems
+              |> (showAll ? (x => x) : Js.Array.slice(~start=0, ~end_=12))
               |> Js.Array.map(friendItem =>
                    <div
                      className=Styles.friendItem
@@ -584,6 +598,15 @@ module FriendsSection = {
                    </div>
                  )
               |> React.array}
+             {!showAll && Js.Array.length(friendItems) > 12
+                ? <div className=Styles.showAllRow>
+                    <button
+                      onClick={_ => {setShowAll(_ => true)}}
+                      className=Styles.showAllButton>
+                      {React.string("Show more")}
+                    </button>
+                  </div>
+                : React.null}
            </div>;
          } else {
            React.null;

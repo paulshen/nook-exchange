@@ -37,7 +37,7 @@ module Styles = {
       backgroundColor(hex("ffffff")),
       borderRadius(px(8)),
       position(relative),
-      maxWidth(px(560)),
+      maxWidth(px(640)),
       boxSizing(borderBox),
       boxShadow(Shadow.box(~blur=px(32), rgba(0, 0, 0, 0.2))),
       overflow(auto),
@@ -468,6 +468,7 @@ module FriendsSection = {
         display(flexBox),
         flexWrap(wrap),
         padding(px(16)),
+        maxWidth(px(512)),
       ]);
     let friendItem =
       style([
@@ -477,6 +478,7 @@ module FriendsSection = {
         paddingRight(px(8)),
         marginBottom(px(2)),
         width(pct(50.)),
+        whiteSpace(nowrap),
         smallThresholdMediaQuery([width(pct(100.))]),
       ]);
     let image =
@@ -517,7 +519,7 @@ module FriendsSection = {
   [@react.component]
   let make = (~item: Item.t) => {
     let (friendItems, setFriendItems) = React.useState(() => None);
-    let (showAll, setShowAll) = React.useState(() => false);
+    let (showLimit, setShowLimit) = React.useState(() => 12);
     React.useEffect0(() => {
       {
         let%Repromise response =
@@ -553,7 +555,7 @@ module FriendsSection = {
       if (Js.Array.length(friendItems) > 0) {
         <div className=Styles.friendItemList>
           {friendItems
-           |> (showAll ? (x => x) : Js.Array.slice(~start=0, ~end_=12))
+           |> Js.Array.slice(~start=0, ~end_=showLimit)
            |> Js.Array.map(friendItem =>
                 <div
                   className=Styles.friendItem
@@ -592,10 +594,10 @@ module FriendsSection = {
                 </div>
               )
            |> React.array}
-          {!showAll && Js.Array.length(friendItems) > 12
+          {Js.Array.length(friendItems) > showLimit
              ? <div className=Styles.showAllRow>
                  <button
-                   onClick={_ => {setShowAll(_ => true)}}
+                   onClick={_ => {setShowLimit(showLimit => showLimit + 12)}}
                    className=Styles.showAllButton>
                    {React.string("Show more")}
                  </button>

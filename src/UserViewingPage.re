@@ -3,7 +3,7 @@ module Styles = {
   let emptyProfile =
     style([
       maxWidth(px(768)),
-      margin3(~top=zero, ~bottom=px(128), ~h=auto),
+      margin3(~top=px(32), ~bottom=px(128), ~h=auto),
       textAlign(center),
     ]);
   let username =
@@ -237,7 +237,7 @@ let make = (~username, ~urlRest, ~url: ReasonReactRouter.url, ~showLogin) => {
             } else {
               <div className=Styles.emptyProfile>
                 <div className=Styles.bodyText>
-                  {React.string("I have no lists!")}
+                  {React.string({j|I have no items on my profile 😞|j})}
                 </div>
               </div>;
             }

@@ -548,72 +548,65 @@ module FriendsSection = {
       None;
     });
 
-    <div>
-      {switch (friendItems) {
-       | Some(friendItems) =>
-         if (Js.Array.length(friendItems) > 0) {
-           <div className=Styles.friendItemList>
-             {friendItems
-              |> (showAll ? (x => x) : Js.Array.slice(~start=0, ~end_=12))
-              |> Js.Array.map(friendItem =>
-                   <div
-                     className=Styles.friendItem
-                     key={
-                       friendItem.userId ++ string_of_int(friendItem.variant)
-                     }>
-                     <img
-                       src={Item.getImageUrl(
-                         ~item,
-                         ~variant=friendItem.variant,
+    switch (friendItems) {
+    | Some(friendItems) =>
+      if (Js.Array.length(friendItems) > 0) {
+        <div className=Styles.friendItemList>
+          {friendItems
+           |> (showAll ? (x => x) : Js.Array.slice(~start=0, ~end_=12))
+           |> Js.Array.map(friendItem =>
+                <div
+                  className=Styles.friendItem
+                  key={friendItem.userId ++ string_of_int(friendItem.variant)}>
+                  <img
+                    src={Item.getImageUrl(~item, ~variant=friendItem.variant)}
+                    className=Styles.image
+                  />
+                  <span>
+                    <Link path={"/u/" ++ friendItem.username}>
+                      {React.string(friendItem.username)}
+                    </Link>
+                    <span className=Styles.hasIn>
+                      {React.string(" has in ")}
+                    </span>
+                    <Link
+                      path={
+                        "/u/"
+                        ++ friendItem.username
+                        ++ "/"
+                        ++ ViewingList.viewingListToUrl(
+                             switch (friendItem.status) {
+                             | ForTrade => ForTrade
+                             | CanCraft => CanCraft
+                             | Wishlist => Wishlist
+                             | CatalogOnly => Catalog
+                             },
+                           )
+                      }
+                      className=Styles.listLink>
+                      {React.string(
+                         User.itemStatusToString(friendItem.status),
                        )}
-                       className=Styles.image
-                     />
-                     <span>
-                       <Link path={"/u/" ++ friendItem.username}>
-                         {React.string(friendItem.username)}
-                       </Link>
-                       <span className=Styles.hasIn>
-                         {React.string(" has in ")}
-                       </span>
-                       <Link
-                         path={
-                           "/u/"
-                           ++ friendItem.username
-                           ++ "/"
-                           ++ ViewingList.viewingListToUrl(
-                                switch (friendItem.status) {
-                                | ForTrade => ForTrade
-                                | CanCraft => CanCraft
-                                | Wishlist => Wishlist
-                                | CatalogOnly => Catalog
-                                },
-                              )
-                         }
-                         className=Styles.listLink>
-                         {React.string(
-                            User.itemStatusToString(friendItem.status),
-                          )}
-                       </Link>
-                     </span>
-                   </div>
-                 )
-              |> React.array}
-             {!showAll && Js.Array.length(friendItems) > 12
-                ? <div className=Styles.showAllRow>
-                    <button
-                      onClick={_ => {setShowAll(_ => true)}}
-                      className=Styles.showAllButton>
-                      {React.string("Show more")}
-                    </button>
-                  </div>
-                : React.null}
-           </div>;
-         } else {
-           React.null;
-         }
-       | None => React.null
-       }}
-    </div>;
+                    </Link>
+                  </span>
+                </div>
+              )
+           |> React.array}
+          {!showAll && Js.Array.length(friendItems) > 12
+             ? <div className=Styles.showAllRow>
+                 <button
+                   onClick={_ => {setShowAll(_ => true)}}
+                   className=Styles.showAllButton>
+                   {React.string("Show more")}
+                 </button>
+               </div>
+             : React.null}
+        </div>;
+      } else {
+        React.null;
+      }
+    | None => React.null
+    };
   };
 };
 

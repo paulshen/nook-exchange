@@ -75,6 +75,32 @@ let setItemPriority = (~sessionId, ~itemId, ~variant, ~isPriority) => {
   Promise.resolved(responseResult);
 };
 
+let importItems =
+    (~sessionId, ~updates: array(((int, int), User.itemStatus))) => {
+  let%Repromise.Js responseResult =
+    makeAuthenticatedPostRequest(
+      ~url=Constants.bapiUrl ++ "/@me/items/import",
+      ~bodyJson=[
+        (
+          "updates",
+          updates
+          |> Json.Encode.(
+               array((((itemId, variant), status)) =>
+                 tuple3(
+                   int,
+                   int,
+                   int,
+                   (itemId, variant, User.itemStatusToJs(status)),
+                 )
+               )
+             ),
+        ),
+      ],
+      ~sessionId,
+    );
+  Promise.resolved(responseResult);
+};
+
 let removeItem = (~userId, ~sessionId, ~itemId, ~variant) => {
   let url =
     Constants.bapiUrl

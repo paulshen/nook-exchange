@@ -70,7 +70,7 @@ module Styles = {
     style([
       color(Colors.charcoal),
       textDecoration(none),
-      hover([textDecoration(none)]),
+      hover([textDecoration(underline)]),
     ]);
   let itemRowVariants =
     style([media("(max-width: 550px)", [width(pct(100.))])]);
@@ -159,9 +159,26 @@ module Styles = {
       Colors.darkLayerShadow,
       selector(
         "& > a",
-        [textDecoration(none), hover([textDecoration(underline)])],
+        [
+          display(inlineBlock),
+          marginBottom(px(4)),
+          textDecoration(none),
+          hover([textDecoration(underline)]),
+        ],
       ),
     ]);
+  let successBlock =
+    style([
+      backgroundColor(Colors.white),
+      padding2(~v=px(16), ~h=px(16)),
+      borderRadius(px(8)),
+      marginBottom(px(32)),
+    ]);
+  let successMessage =
+    style([flexGrow(1.), textAlign(`right), color(Colors.green)]);
+  let errorMessage =
+    style([flexGrow(1.), textAlign(`right), color(Colors.red)]);
+  let saveButton = style([marginLeft(px(16))]);
 };
 
 [@bs.deriving jsConverter]
@@ -405,8 +422,13 @@ module BulkActions = {
 };
 
 module Results = {
+  type submitState =
+    | Submitting
+    | Success
+    | Error(string);
+
   [@react.component]
-  let make = (~rows: array((string, option(Item.t)))) => {
+  let make = (~me: User.t, ~rows: array((string, option(Item.t)))) => {
     let missingRows = rows->Array.keep(((_, item)) => item == None);
     let (itemsState, setItemStates) =
       React.useState(() => {
@@ -442,8 +464,18 @@ module Results = {
           ),
         )
       });
+    let (submitStatus, setSubmitState) = React.useState(() => None);
 
     <div>
+      {submitStatus == Some(Success)
+         ? <div className=Styles.successBlock>
+             {React.string("Your import was successful! Go to ")}
+             <Link path={"/u/" ++ me.username}>
+               {React.string("your profile")}
+             </Link>
+             {React.string("!")}
+           </div>
+         : React.null}
       {Js.Array.length(missingRows) > 0
          ? <div className=Styles.missingRows>
              <div className=Styles.sectionTitle>
@@ -486,6 +518,15 @@ module Results = {
          : <div> {React.string("No items were matched.")} </div>}
       <div className=Styles.resultsOverlay>
         <BulkActions setItemStates />
+        {switch (submitStatus) {
+         | Some(Success) =>
+           <div className=Styles.successMessage>
+             {React.string("Success!")}
+           </div>
+         | Some(Error(error)) =>
+           <div className=Styles.errorMessage> {React.string(error)} </div>
+         | _ => React.null
+         }}
         <Button
           onClick={_ => {
             let numForTrade = ref(0);
@@ -501,40 +542,96 @@ module Results = {
                 | `Ignore => ()
                 }
               });
-            ConfirmDialog.confirm(
-              ~bodyText=
-                "This will add "
-                ++ Js.Array.joinWith(
-                     ", ",
-                     Array.keepMap(
-                       [|
-                         switch (numForTrade^) {
-                         | 0 => None
-                         | numForTrade =>
-                           Some(string_of_int(numForTrade) ++ " For Trade")
-                         },
-                         switch (numCanCraft^) {
-                         | 0 => None
-                         | numCanCraft =>
-                           Some(string_of_int(numCanCraft) ++ " Can Craft")
-                         },
-                         switch (numCatalog^) {
-                         | 0 => None
-                         | numCatalog =>
-                           Some(string_of_int(numCatalog) ++ " Catalog")
-                         },
-                       |],
-                       x =>
-                       x
-                     ),
-                   )
-                ++ " items. Are you sure you want to continue?",
-              ~confirmLabel="Do it!",
-              ~cancelLabel="Never mind",
-              ~onConfirm=() => {Js.log("okay")},
-              (),
-            );
-          }}>
+            if (numForTrade^ + numCanCraft^ + numCatalog^ != 0) {
+              ConfirmDialog.confirm(
+                ~bodyText=
+                  "This will add "
+                  ++ Js.Array.joinWith(
+                       ", ",
+                       Array.keepMap(
+                         [|
+                           switch (numForTrade^) {
+                           | 0 => None
+                           | numForTrade =>
+                             Some(string_of_int(numForTrade) ++ " For Trade")
+                           },
+                           switch (numCanCraft^) {
+                           | 0 => None
+                           | numCanCraft =>
+                             Some(string_of_int(numCanCraft) ++ " Can Craft")
+                           },
+                           switch (numCatalog^) {
+                           | 0 => None
+                           | numCatalog =>
+                             Some(string_of_int(numCatalog) ++ " Catalog")
+                           },
+                         |],
+                         x =>
+                         x
+                       ),
+                     )
+                  ++ " items. Are you sure you want to continue?",
+                ~confirmLabel="Do it!",
+                ~cancelLabel="Never mind",
+                ~onConfirm=
+                  () => {
+                    setSubmitState(_ => Some(Submitting));
+                    let updates =
+                      itemsState
+                      ->Js.Dict.entries
+                      ->Array.keepMap(((itemKey, value)) => {
+                          switch (value) {
+                          | `Ignore => None
+                          | `CanCraft =>
+                            Some((
+                              Option.getExn(User.fromItemKey(~key=itemKey)),
+                              User.CanCraft,
+                            ))
+                          | `ForTrade =>
+                            Some((
+                              Option.getExn(User.fromItemKey(~key=itemKey)),
+                              User.ForTrade,
+                            ))
+                          | `CatalogOnly =>
+                            Some((
+                              Option.getExn(User.fromItemKey(~key=itemKey)),
+                              User.CatalogOnly,
+                            ))
+                          }
+                        });
+                    {
+                      let%Repromise responseResult =
+                        BAPI.importItems(
+                          ~sessionId=UserStore.sessionId^,
+                          ~updates,
+                        );
+                      switch (responseResult) {
+                      | Ok(response) =>
+                        if (Fetch.Response.status(response) < 400) {
+                          UserStore.init();
+                          setSubmitState(_ => Some(Success));
+                          Promise.resolved();
+                        } else {
+                          let%Repromise.JsExn text =
+                            Fetch.Response.text(response);
+                          setSubmitState(_ => Some(Error(text)));
+                          Promise.resolved();
+                        }
+                      | Error(_error) =>
+                        setSubmitState(_ =>
+                          Some(Error("Something went wrong. Sorry!"))
+                        );
+                        Promise.resolved();
+                      };
+                    }
+                    |> ignore;
+                  },
+                (),
+              );
+            };
+          }}
+          disabled={submitStatus == Some(Submitting)}
+          className=Styles.saveButton>
           {React.string("Save changes")}
         </Button>
       </div>
@@ -554,7 +651,8 @@ let process = value => {
 };
 
 [@react.component]
-let make = () => {
+let make = (~showLogin) => {
+  let userState = UserStore.useStore();
   let (value, setValue) = React.useState(() => "");
   let (results, setResults) = React.useState(() => None);
   let onSubmit = e => {
@@ -562,58 +660,73 @@ let make = () => {
     setResults(_ => Some(process(value)));
   };
 
+  let needsLogin = userState == NotLoggedIn;
+  React.useEffect1(
+    () => {
+      if (needsLogin) {
+        showLogin();
+      };
+      None;
+    },
+    [|needsLogin|],
+  );
+
   <div className=Styles.root>
     <PageTitle title="Import items" />
-    {switch (results) {
-     | Some(results) =>
-       <div>
-         <div className=Styles.topBlurb>
-           <p>
-             {React.string(
-                {j|For each item, choose For Trade 🤝, Can Craft 🔨, Catalog 📖 or skip. If the item is already in your profile, you will see the status next to the selector.|j},
-              )}
-           </p>
-           <p>
-             {React.string(
-                "When you are done, press the Save button in the bottom bar. There are bulk actions to help as well.",
-              )}
-           </p>
-         </div>
-         <Results rows=results />
-       </div>
-     | None =>
-       <div>
-         <div className=Styles.topBlurb>
-           <p>
-             {React.string(
-                "Have a big collection? This tool can help you add many items at once. Start by pasting a list of item names in the textbox. ",
-              )}
-           </p>
-           <p>
-             {React.string(
-                "If you don't want to type each item by hand, check out ",
-              )}
-             <a href="https://twitter.com/CatalogScanner" target="_blank">
-               {React.string("Catalog Scanner")}
-             </a>
-             {React.string("!")}
-           </p>
-         </div>
-         <form onSubmit>
-           <textarea
-             value
-             placeholder="Enter each item name on its own line"
-             onChange={e => {
-               let value = ReactEvent.Form.target(e)##value;
-               setValue(_ => value);
-             }}
-             className=Styles.textarea
-           />
-           <div className=Styles.searchButtonRow>
-             <Button> {React.string("Search for items")} </Button>
+    {switch (userState) {
+     | LoggedIn(me) =>
+       switch (results) {
+       | Some(results) =>
+         <div>
+           <div className=Styles.topBlurb>
+             <p>
+               {React.string(
+                  {j|For each item, choose For Trade 🤝, Can Craft 🔨, Catalog 📖 or skip. If the item is already in your profile, you will see the status next to the selector.|j},
+                )}
+             </p>
+             <p>
+               {React.string(
+                  "When you are done, press the Save button in the bottom bar. There are bulk actions to help as well.",
+                )}
+             </p>
            </div>
-         </form>
-       </div>
+           <Results me rows=results />
+         </div>
+       | None =>
+         <div>
+           <div className=Styles.topBlurb>
+             <p>
+               {React.string(
+                  "Have a big collection? This tool can help you add many items at once. Start by pasting a list of item names in the textbox. ",
+                )}
+             </p>
+             <p>
+               {React.string(
+                  "If you don't want to type each item by hand, check out ",
+                )}
+               <a href="https://twitter.com/CatalogScanner" target="_blank">
+                 {React.string("Catalog Scanner")}
+               </a>
+               {React.string("!")}
+             </p>
+           </div>
+           <form onSubmit>
+             <textarea
+               value
+               placeholder="Enter each item name on its own line"
+               onChange={e => {
+                 let value = ReactEvent.Form.target(e)##value;
+                 setValue(_ => value);
+               }}
+               className=Styles.textarea
+             />
+             <div className=Styles.searchButtonRow>
+               <Button> {React.string("Search for items")} </Button>
+             </div>
+           </form>
+         </div>
+       }
+     | _ => React.null
      }}
   </div>;
 };

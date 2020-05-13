@@ -191,7 +191,8 @@ let make = () => {
               | ["password-reset"] => <PasswordResetPage url />
               | ["privacy"] => <TextPages.PrivacyPolicy />
               | ["terms"] => <TextPages.TermsOfService />
-              | ["import"] => <ImporterPage />
+              | ["import"] =>
+                <ImportPage showLogin={() => setShowLogin(_ => true)} />
               | _ =>
                 <>
                   <div className=Styles.tagline>

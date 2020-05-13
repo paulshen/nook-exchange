@@ -17,13 +17,15 @@ module Styles = {
 };
 
 [@react.component]
-let make = (~onClick=?, ~small=false, ~children, ~className=?, ()) => {
+let make =
+    (~onClick=?, ~small=false, ~children, ~disabled=?, ~className=?, ()) => {
   <button
     className={Cn.make([
       Styles.button,
       Cn.ifTrue(Styles.buttonSmall, small),
       Cn.unpack(className),
     ])}
+    ?disabled
     ?onClick>
     children
   </button>;

@@ -9,6 +9,7 @@ type language = [
   | [@bs.as "ja"] `Japanese
   | [@bs.as "ko"] `Korean
   | [@bs.as "nl"] `Dutch
+  | [@bs.as "ru"] `Russian
   | [@bs.as "zh-cn"] `ChineseSimplified
   | [@bs.as "zh-tw"] `ChineseTraditional
   | [@bs.as "en"] `English
@@ -25,6 +26,7 @@ let languages: array(language) = [|
   `German,
   `Italian,
   `Dutch,
+  `Russian,
   `Japanese,
   `Korean,
   `ChineseTraditional,
@@ -42,6 +44,7 @@ let languageToString = (language: language) => {
   | `Japanese => {j|日本語|j}
   | `Korean => {j|한국어|j}
   | `Dutch => {j|Dansk|j}
+  | `Russian => {j|Русский|j}
   | `ChineseSimplified => {j|中文|j}
   | `ChineseTraditional => {j|繁體中文|j}
   | `English => {j|English|j}
@@ -71,6 +74,8 @@ let browserLanguage =
     `Korean;
   } else if (browserLanguage == "nl") {
     `Dutch;
+  } else if (browserLanguage |> Js.String.startsWith("ru")) {
+    `Russian;
   } else if (Js.String.toLowerCase(browserLanguage) == "zh-cn") {
     `ChineseSimplified;
   } else if (browserLanguage |> Js.String.startsWith("zh")) {

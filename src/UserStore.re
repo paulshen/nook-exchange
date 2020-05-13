@@ -12,8 +12,25 @@ type action =
   | FollowUser(string)
   | UnfollowUser(string);
 
+let sessionId =
+  ref(Dom.Storage.localStorage |> Dom.Storage.getItem("sessionId"));
+let updateSessionId = newValue => {
+  sessionId := newValue;
+  Dom.Storage.(
+    switch (newValue) {
+    | Some(sessionId) => localStorage |> setItem("sessionId", sessionId)
+    | None => localStorage |> removeItem("sessionId")
+    }
+  );
+};
+
 let api =
-  Restorative.createStore(Loading, (state, action) => {
+  Restorative.createStore(
+    switch (sessionId^) {
+    | Some(_) => Loading
+    | None => NotLoggedIn
+    },
+    (state, action) => {
     switch (action) {
     | Login(user) => LoggedIn(user)
     | UpdateUser(user) => LoggedIn(user)
@@ -116,18 +133,6 @@ let isLoggedIn = () =>
   | LoggedIn(_) => true
   | _ => false
   };
-
-let sessionId =
-  ref(Dom.Storage.localStorage |> Dom.Storage.getItem("sessionId"));
-let updateSessionId = newValue => {
-  sessionId := newValue;
-  Dom.Storage.(
-    switch (newValue) {
-    | Some(sessionId) => localStorage |> setItem("sessionId", sessionId)
-    | None => localStorage |> removeItem("sessionId")
-    }
-  );
-};
 
 let handleServerResponse = (url, responseResult) =>
   if (switch (responseResult) {
@@ -704,9 +709,10 @@ let init = () => {
         );
       if (Fetch.Response.status(response) < 400) {
         let%Repromise.JsExn json = Fetch.Response.json(response);
-        updateSessionId(
-          json |> Json.Decode.(optional(field("sessionId", string))),
-        );
+        switch (json |> Json.Decode.(optional(field("sessionId", string)))) {
+        | Some(sessionId) => updateSessionId(Some(sessionId))
+        | None => ()
+        };
         let user = User.fromAPI(json);
         api.dispatch(Login(user));
         Analytics.Amplitude.setUserId(~userId=Some(user.id));

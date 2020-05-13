@@ -354,6 +354,10 @@ module BulkActions = {
                        |> Js.Dict.fromArray
                      });
                      setShowPopup(_ => false);
+                     Analytics.Amplitude.logEventWithProperties(
+                       ~eventName="Item Import Bulk Set",
+                       ~eventProperties={"destination": "skip"},
+                     );
                    }}>
                    {React.string("Set every item to Skip")}
                  </a>
@@ -368,6 +372,10 @@ module BulkActions = {
                        |> Js.Dict.fromArray
                      });
                      setShowPopup(_ => false);
+                     Analytics.Amplitude.logEventWithProperties(
+                       ~eventName="Item Import Bulk Set",
+                       ~eventProperties={"destination": "for-trade"},
+                     );
                    }}>
                    {React.string("Set every item to For Trade")}
                  </a>
@@ -384,6 +392,10 @@ module BulkActions = {
                        |> Js.Dict.fromArray
                      });
                      setShowPopup(_ => false);
+                     Analytics.Amplitude.logEventWithProperties(
+                       ~eventName="Item Import Bulk Set",
+                       ~eventProperties={"destination": "catalog"},
+                     );
                    }}>
                    {React.string("Set every item to Catalog")}
                  </a>
@@ -410,6 +422,10 @@ module BulkActions = {
                        |> Js.Dict.fromArray
                      });
                      setShowPopup(_ => false);
+                     Analytics.Amplitude.logEventWithProperties(
+                       ~eventName="Item Import Bulk Set",
+                       ~eventProperties={"destination": "can-craft"},
+                     );
                    }}>
                    {React.string("Set every craftable item to Can Craft")}
                  </a>
@@ -465,6 +481,27 @@ module Results = {
         )
       });
     let (submitStatus, setSubmitState) = React.useState(() => None);
+
+    let numMissingRows =
+      React.useMemo1(
+        () => rows->Array.keep(((_, item)) => item == None)->Array.length,
+        [|rows|],
+      );
+    let numMatchingRows =
+      React.useMemo1(
+        () => rows->Array.keep(((_, item)) => item != None)->Array.length,
+        [|rows|],
+      );
+    React.useEffect0(() => {
+      Analytics.Amplitude.logEventWithProperties(
+        ~eventName="Import Page List Processed",
+        ~eventProperties={
+          "numMismatch": numMissingRows,
+          "numMatch": numMatchingRows,
+        },
+      );
+      None;
+    });
 
     <div>
       {submitStatus == Some(Success)
@@ -610,10 +647,25 @@ module Results = {
                         if (Fetch.Response.status(response) < 400) {
                           UserStore.init();
                           setSubmitState(_ => Some(Success));
+                          Analytics.Amplitude.logEventWithProperties(
+                            ~eventName="Item Import Success",
+                            ~eventProperties={
+                              "numMismatch": numMissingRows,
+                              "numMatch": numMatchingRows,
+                            },
+                          );
                           Promise.resolved();
                         } else {
                           let%Repromise.JsExn text =
                             Fetch.Response.text(response);
+                          Analytics.Amplitude.logEventWithProperties(
+                            ~eventName="Item Import Error",
+                            ~eventProperties={
+                              "error": text,
+                              "numMismatch": numMissingRows,
+                              "numMatch": numMatchingRows,
+                            },
+                          );
                           setSubmitState(_ => Some(Error(text)));
                           Promise.resolved();
                         }
@@ -670,6 +722,10 @@ let make = (~showLogin) => {
     },
     [|needsLogin|],
   );
+  React.useEffect0(() => {
+    Analytics.Amplitude.logEvent(~eventName="Import Page Viewed");
+    None;
+  });
 
   <div className=Styles.root>
     <PageTitle title="Import items" />

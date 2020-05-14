@@ -533,6 +533,14 @@ let make = (~listId, ~url: ReasonReactRouter.url) => {
                       let newListId =
                         Json.Decode.(json |> field("id", string));
                       ReasonReactRouter.push("/l/" ++ newListId ++ "?clone");
+                      Analytics.Amplitude.logEventWithProperties(
+                        ~eventName="Item List Cloned",
+                        ~eventProperties={
+                          "listId": listId,
+                          "newListId": newListId,
+                          "numItems": Js.Array.length(list.itemIds),
+                        },
+                      );
                       Promise.resolved();
                     }
                     |> ignore;

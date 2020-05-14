@@ -7,7 +7,7 @@ module Styles = {
       textAlign(center),
     ]);
   let username =
-    style([fontSize(px(36)), textAlign(center), marginBottom(px(16))]);
+    style([fontSize(px(32)), textAlign(center), marginBottom(px(16))]);
   let userBody =
     style([
       backgroundColor(hex("ffffffc0")),

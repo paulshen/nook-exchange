@@ -1,7 +1,7 @@
 module Styles = {
   open Css;
   let pageTitle =
-    style([fontSize(px(32)), textAlign(center), marginBottom(px(32))]);
+    style([fontSize(px(32)), textAlign(center), marginBottom(px(16))]);
 };
 
 [@react.component]

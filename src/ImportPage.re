@@ -5,7 +5,7 @@ module Styles = {
   let root =
     style([
       padding2(~v=zero, ~h=px(16)),
-      margin3(~top=px(16), ~bottom=px(32), ~h=auto),
+      margin3(~top=zero, ~bottom=px(32), ~h=auto),
       maxWidth(px(512)),
     ]);
   let topBlurb =

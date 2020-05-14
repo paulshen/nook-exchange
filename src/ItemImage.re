@@ -116,7 +116,7 @@ let make =
       ])}>
       {let image =
          <Link
-           path={ItemDetailOverlay.getItemDetailUrl(
+           path={Utils.getItemDetailUrl(
              ~itemId=item.id,
              ~variant=Some(variant + offset),
            )}>

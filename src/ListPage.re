@@ -207,7 +207,7 @@ module ListRow = {
   let make = (~itemId, ~variant) => {
     let item = Item.getItem(~itemId);
     <Link
-      path={ItemDetailOverlay.getItemDetailUrl(
+      path={Utils.getItemDetailUrl(
         ~itemId,
         ~variant=Some(variant),
       )}

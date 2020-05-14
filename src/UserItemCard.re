@@ -189,7 +189,7 @@ let make =
       />
       <div className=Styles.name>
         <Link
-          path={ItemDetailOverlay.getItemDetailUrl(
+          path={Utils.getItemDetailUrl(
             ~itemId=item.id,
             ~variant=variation != 0 ? Some(variation) : None,
           )}

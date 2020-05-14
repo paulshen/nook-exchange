@@ -80,3 +80,23 @@ let browserSupportsHover = {
 let getPath = (~url: ReasonReactRouter.url) => {
   "/" ++ (Belt.List.toArray(url.path) |> Js.Array.joinWith("/"));
 };
+
+let getItemDetailUrl = (~itemId, ~variant) => {
+  let url = ReasonReactRouter.dangerouslyGetInitialUrl();
+  "/"
+  ++ Js.Array.joinWith("/", Belt.List.toArray(url.path))
+  ++ (
+    switch (url.search) {
+    | "" => ""
+    | search => "?" ++ search
+    }
+  )
+  ++ "#i"
+  ++ string_of_int(itemId)
+  ++ (
+    switch (variant) {
+    | Some(variant) => ":" ++ string_of_int(variant)
+    | None => ""
+    }
+  );
+};

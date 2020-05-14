@@ -137,8 +137,6 @@ module Styles = {
   let bottomBar = style([fontSize(px(12))]);
   let bottomBarStatus = style([alignSelf(flexStart), paddingTop(px(4))]);
   let statusButtons = style([display(flexBox), alignItems(center)]);
-  let statusButtonSelected =
-    style([backgroundColor(Colors.green), color(Colors.white)]);
   let removeButton =
     style([
       position(absolute),
@@ -334,45 +332,154 @@ module OrderableIcon = {
   };
 };
 
-let renderStatusButton =
-    (
-      ~itemId,
-      ~variation,
-      ~status,
-      ~userItem: option(User.item),
-      ~showLogin=?,
-      (),
-    ) => {
-  let userItemStatus = Option.map(userItem, userItem => userItem.status);
-  <button
-    onClick={_ =>
-      if (UserStore.isLoggedIn()) {
-        UserStore.setItemStatus(~itemId, ~variation, ~status);
-      } else {
-        Option.map(showLogin, showLogin => showLogin()) |> ignore;
+module StatusButtons = {
+  let renderStatusButton =
+      (~itemId, ~variation, ~status: User.itemStatus, ~showLogin=?, ()) => {
+    <button
+      onClick={_ =>
+        if (UserStore.isLoggedIn()) {
+          UserStore.setItemStatus(~itemId, ~variation, ~status);
+        } else {
+          Option.map(showLogin, showLogin => showLogin()) |> ignore;
+        }
       }
-    }
-    className={Cn.make([
-      Styles.statusButton,
-      Cn.ifTrue(Styles.statusButtonSelected, userItemStatus == Some(status)),
-    ])}
-    title={
-      switch (status) {
-      | Wishlist => "Add to Wishlist"
-      | ForTrade => "Add to For Trade list"
-      | CanCraft => "Add to Can Craft list"
-      | CatalogOnly => raise(Constants.Uhoh)
+      className=Styles.statusButton
+      title={
+        switch (status) {
+        | Wishlist => "Add to Wishlist"
+        | ForTrade => "Add to For Trade list"
+        | CanCraft => "Add to Can Craft list"
+        | CatalogOnly => raise(Constants.Uhoh)
+        }
+      }>
+      {React.string(
+         switch (status) {
+         | Wishlist => "+ Wishlist"
+         | ForTrade => "+ For Trade"
+         | CanCraft => "+ Can Craft"
+         | CatalogOnly => raise(Constants.Uhoh)
+         },
+       )}
+    </button>;
+  };
+
+  [@react.component]
+  let make = (~item: Item.t, ~variant, ~showLogin=?, ~className=?, ()) => {
+    <div className={Cn.make([Styles.statusButtons, Cn.unpack(className)])}>
+      {renderStatusButton(
+         ~itemId=item.id,
+         ~variation=variant,
+         ~status=Wishlist,
+         ~showLogin?,
+         (),
+       )}
+      {renderStatusButton(
+         ~itemId=item.id,
+         ~variation=variant,
+         ~status=ForTrade,
+         ~showLogin?,
+         (),
+       )}
+      {(
+         switch (item.type_) {
+         | Item(Some(_)) => true
+         | _ => false
+         }
+       )
+         ? renderStatusButton(
+             ~itemId=item.id,
+             ~variation=variant,
+             ~status=CanCraft,
+             ~showLogin?,
+             (),
+           )
+         : React.null}
+    </div>;
+  };
+};
+
+module CatalogCheckbox = {
+  [@react.component]
+  let make =
+      (
+        ~item: Item.t,
+        ~variant,
+        ~userItem: option(User.item),
+        ~className=?,
+        (),
+      ) => {
+    <ReactAtmosphere.Tooltip
+      options={
+        placement: Some("top"),
+        modifiers:
+          Some([|{
+                   "name": "offset",
+                   "options": {
+                     "offset": [|0, 4|],
+                   },
+                 }|]),
       }
-    }>
-    {React.string(
-       switch (status) {
-       | Wishlist => "+ Wishlist"
-       | ForTrade => "+ For Trade"
-       | CanCraft => "+ Can Craft"
-       | CatalogOnly => raise(Constants.Uhoh)
-       },
-     )}
-  </button>;
+      text={React.string(
+        switch (userItem->Option.map(userItem => userItem.status)) {
+        | None => "Not in catalog"
+        | Some(Wishlist) => "Move to catalog from Wishlist"
+        | Some(ForTrade)
+        | Some(CanCraft)
+        | Some(CatalogOnly) => "In your catalog"
+        },
+      )}>
+      {({onMouseEnter, onMouseLeave, ref}) =>
+         <button
+           className={Cn.make([
+             Styles.catalogCheckbox,
+             Cn.ifTrue(
+               Styles.catalogCheckboxChecked,
+               switch (userItem) {
+               | Some(userItem) => userItem.status !== Wishlist
+               | None => false
+               },
+             ),
+             Cn.unpack(className),
+           ])}
+           onClick={e => {
+             let status =
+               switch (Option.map(userItem, userItem => userItem.status)) {
+               | None
+               | Some(Wishlist) => Some(User.CatalogOnly)
+               | Some(CanCraft)
+               | Some(ForTrade)
+               | Some(CatalogOnly) => None
+               };
+             switch (status) {
+             | Some(status) =>
+               let updateItem = () =>
+                 UserStore.setItemStatus(
+                   ~itemId=item.id,
+                   ~variation=variant,
+                   ~status,
+                 );
+               if (Option.map(userItem, userItem => userItem.status)
+                   == Some(Wishlist)) {
+                 WishlistToCatalog.confirm(~onConfirm=updateItem);
+               } else {
+                 updateItem();
+               };
+             | None =>
+               if (Belt.Option.getExn(userItem).status == CatalogOnly) {
+                 UserStore.removeItem(~itemId=item.id, ~variation=variant);
+               } else {
+                 DeleteFromCatalog.confirm(~onConfirm=() =>
+                   UserStore.removeItem(~itemId=item.id, ~variation=variant)
+                 );
+               }
+             };
+           }}
+           onMouseEnter
+           onMouseLeave
+           ref={ReactDOMRe.Ref.domRef(ref)}
+         />}
+    </ReactAtmosphere.Tooltip>;
+  };
 };
 
 [@react.component]
@@ -420,7 +527,7 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
     <div className=Styles.body>
       <div className=Styles.name>
         <Link
-          path={ItemDetailOverlay.getItemDetailUrl(
+          path={Utils.getItemDetailUrl(
             ~itemId=item.id,
             ~variant=variation != 0 ? Some(variation) : None,
           )}
@@ -506,80 +613,7 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
       </div>
       {showCatalogCheckbox
          ? <div className=Styles.topRightIcons>
-             <ReactAtmosphere.Tooltip
-               options={
-                 placement: Some("top"),
-                 modifiers:
-                   Some([|
-                     {
-                       "name": "offset",
-                       "options": {
-                         "offset": [|0, 4|],
-                       },
-                     },
-                   |]),
-               }
-               text={React.string(
-                 switch (userItem->Option.map(userItem => userItem.status)) {
-                 | None => "Not in catalog"
-                 | Some(Wishlist) => "Move to catalog from Wishlist"
-                 | Some(ForTrade)
-                 | Some(CanCraft)
-                 | Some(CatalogOnly) => "In your catalog"
-                 },
-               )}>
-               {({onMouseEnter, onMouseLeave, ref}) =>
-                  <button
-                    className={Cn.make([
-                      Styles.catalogCheckbox,
-                      Cn.ifTrue(
-                        Styles.catalogCheckboxChecked,
-                        switch (userItem) {
-                        | Some(userItem) => userItem.status !== Wishlist
-                        | None => false
-                        },
-                      ),
-                    ])}
-                    onClick={e => {
-                      let status =
-                        switch (
-                          Option.map(userItem, userItem => userItem.status)
-                        ) {
-                        | None
-                        | Some(Wishlist) => Some(User.CatalogOnly)
-                        | Some(CanCraft)
-                        | Some(ForTrade)
-                        | Some(CatalogOnly) => None
-                        };
-                      switch (status) {
-                      | Some(status) =>
-                        let updateItem = () =>
-                          UserStore.setItemStatus(
-                            ~itemId=item.id,
-                            ~variation,
-                            ~status,
-                          );
-                        if (Option.map(userItem, userItem => userItem.status)
-                            == Some(Wishlist)) {
-                          WishlistToCatalog.confirm(~onConfirm=updateItem);
-                        } else {
-                          updateItem();
-                        };
-                      | None =>
-                        if (Belt.Option.getExn(userItem).status == CatalogOnly) {
-                          UserStore.removeItem(~itemId=item.id, ~variation);
-                        } else {
-                          DeleteFromCatalog.confirm(~onConfirm=() =>
-                            UserStore.removeItem(~itemId=item.id, ~variation)
-                          );
-                        }
-                      };
-                    }}
-                    onMouseEnter
-                    onMouseLeave
-                    ref={ReactDOMRe.Ref.domRef(ref)}
-                  />}
-             </ReactAtmosphere.Tooltip>
+             <CatalogCheckbox item variant=variation userItem />
            </div>
          : React.null}
     </div>
@@ -615,39 +649,12 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
          />
        </>
      | _ =>
-       <div className={Cn.make([Styles.bottomBar, Styles.statusButtons])}>
-         {renderStatusButton(
-            ~itemId=item.id,
-            ~variation,
-            ~status=Wishlist,
-            ~userItem,
-            ~showLogin,
-            (),
-          )}
-         {renderStatusButton(
-            ~itemId=item.id,
-            ~variation,
-            ~status=ForTrade,
-            ~userItem,
-            ~showLogin,
-            (),
-          )}
-         {(
-            switch (item.type_) {
-            | Item(Some(_)) => true
-            | _ => false
-            }
-          )
-            ? renderStatusButton(
-                ~itemId=item.id,
-                ~variation,
-                ~status=CanCraft,
-                ~userItem,
-                ~showLogin,
-                (),
-              )
-            : React.null}
-       </div>
+       <StatusButtons
+         item
+         variant=variation
+         showLogin
+         className=Styles.bottomBar
+       />
      }}
     {hasQuicklist
        ? <QuicklistButton

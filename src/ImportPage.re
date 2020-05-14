@@ -234,7 +234,7 @@ module VariantRow = {
 
     <div className=Styles.variantRow>
       <Link
-        path={ItemDetailOverlay.getItemDetailUrl(
+        path={Utils.getItemDetailUrl(
           ~itemId=item.id,
           ~variant=Some(variant),
         )}
@@ -283,7 +283,7 @@ module ResultRowWithItem = {
     <div className=Styles.itemRow>
       <div className=Styles.itemRowName>
         <Link
-          path={ItemDetailOverlay.getItemDetailUrl(
+          path={Utils.getItemDetailUrl(
             ~itemId=item.id,
             ~variant=None,
           )}

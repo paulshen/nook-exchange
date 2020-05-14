@@ -105,8 +105,6 @@ let make = (~item: Item.t, ~userItem: User.item, ~variation, ~className) => {
                   }}
                </button>
                {switch (userItem.status) {
-                | CanCraft
-                | ForTrade => React.null
                 | CatalogOnly
                 | Wishlist =>
                   <>
@@ -149,23 +147,31 @@ let make = (~item: Item.t, ~userItem: User.item, ~variation, ~className) => {
                            {React.string("Move to Can Craft")}
                          </button>
                        : React.null}
-                    {me.enableCatalogCheckbox && userItem.status != CatalogOnly
-                       ? <button
-                           onClick={_ => {
-                             UserStore.setItemStatus(
-                               ~itemId=item.id,
-                               ~variation,
-                               ~status=CatalogOnly,
-                             )
-                           }}
-                           className=Styles.menuItem>
-                           {React.string(
-                              Item.isRecipe(~item)
-                                ? "Move DIY to Catalog" : "Move to Catalog",
-                            )}
-                         </button>
-                       : React.null}
                   </>
+                | _ => React.null
+                }}
+               {switch (userItem.status) {
+                | ForTrade
+                | Wishlist =>
+                  me.enableCatalogCheckbox
+                    ? <button
+                        onClick={_ => {
+                          UserStore.setItemStatus(
+                            ~itemId=item.id,
+                            ~variation,
+                            ~status=CatalogOnly,
+                          )
+                        }}
+                        className=Styles.menuItem>
+                        {React.string(
+                           userItem.status == ForTrade
+                             ? "Move to Catalog Only"
+                             : Item.isRecipe(~item)
+                                 ? "Move DIY to Catalog" : "Move to Catalog",
+                         )}
+                      </button>
+                    : React.null
+                | _ => React.null
                 }}
                <button
                  onClick={_ => {

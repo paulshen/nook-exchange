@@ -20,6 +20,7 @@ module Styles = {
       whiteSpace(`preLine),
       Colors.darkLayerShadow,
     ]);
+  let layerContainer = style([position(relative), zIndex(1)]);
 };
 
 [@bs.val] [@bs.scope "window"]
@@ -224,6 +225,8 @@ let make = () => {
        | None => React.null
        }}
     </TooltipConfigContextProvider>
-    <ReactAtmosphere.LayerContainer />
+    <div className=Styles.layerContainer>
+      <ReactAtmosphere.LayerContainer />
+    </div>
   </div>;
 };

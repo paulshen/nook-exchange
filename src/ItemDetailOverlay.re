@@ -265,26 +265,6 @@ module Styles = {
     ]);
 };
 
-let getItemDetailUrl = (~itemId, ~variant) => {
-  let url = ReasonReactRouter.dangerouslyGetInitialUrl();
-  "/"
-  ++ Js.Array.joinWith("/", Belt.List.toArray(url.path))
-  ++ (
-    switch (url.search) {
-    | "" => ""
-    | search => "?" ++ search
-    }
-  )
-  ++ "#i"
-  ++ string_of_int(itemId)
-  ++ (
-    switch (variant) {
-    | Some(variant) => ":" ++ string_of_int(variant)
-    | None => ""
-    }
-  );
-};
-
 module VariantWithLabel = {
   [@react.component]
   let make = (~item: Item.t, ~variant, ~selected) => {
@@ -454,6 +434,114 @@ module ItemRecipe = {
            </div>
          )
        ->React.array}
+    </div>;
+  };
+};
+
+module MyStatusSection = {
+  module Styles = {
+    open Css;
+    let root =
+      style([
+        marginTop(px(16)),
+        borderTop(px(1), dashed, Colors.veryLightGray),
+        paddingTop(px(8)),
+        position(relative),
+        selector(
+          "& ." ++ ItemCard.Styles.statusButton,
+          [
+            fontSize(px(14)),
+            backgroundColor(Colors.faintGreen),
+            paddingLeft(px(6)),
+            paddingRight(px(6)),
+          ],
+        ),
+        selector(
+          "& ." ++ ItemCard.Styles.catalogCheckbox,
+          [borderColor(Colors.lightGray), opacity(1.)],
+        ),
+        smallThresholdMediaQuery([
+          marginLeft(px(-16)),
+          marginRight(px(-16)),
+        ]),
+      ]);
+    let ellipsisButton = style([]);
+    let currentStatusRow =
+      style([
+        display(flexBox),
+        alignItems(center),
+        justifyContent(spaceBetween),
+      ]);
+    let currentStatus = style([]);
+    let itemNote = style([marginTop(px(8))]);
+    let catalogCheckbox = style([marginLeft(px(12))]);
+  };
+
+  [@react.component]
+  let make = (~item: Item.t, ~variant) => {
+    let showCatalogCheckbox = UserStore.useEnableCatalogCheckbox();
+    let userItem = UserStore.useItem(~itemId=item.id, ~variation=variant);
+    <div className=Styles.root>
+      {switch (userItem) {
+       | Some(userItem) =>
+         switch (userItem.status) {
+         | Wishlist
+         | ForTrade
+         | CanCraft =>
+           <>
+             <div className=Styles.currentStatusRow>
+               <div className=Styles.currentStatus>
+                 {React.string(
+                    {
+                      switch (userItem.status) {
+                      | Wishlist => {j|🙏 In your Wishlist|j}
+                      | ForTrade => {j|🤝 In your For Trade list|j}
+                      | CanCraft => {j|🔨 In your Can Craft list|j}
+                      | _ => raise(Constants.Uhoh)
+                      };
+                    },
+                  )}
+               </div>
+               <UserItemEllipsisButton
+                 item
+                 userItem
+                 variation=variant
+                 className=Styles.ellipsisButton
+               />
+             </div>
+             <UserItemNote
+               itemId={item.id}
+               variation=variant
+               userItem
+               className=Styles.itemNote
+             />
+           </>
+         | CatalogOnly =>
+           <div className=Styles.currentStatusRow>
+             <ItemCard.StatusButtons item variant />
+             {showCatalogCheckbox
+                ? <ItemCard.CatalogCheckbox
+                    item
+                    variant
+                    userItem={Some(userItem)}
+                    className=Styles.catalogCheckbox
+                  />
+                : React.null}
+           </div>
+         }
+       | None =>
+         <div className=Styles.currentStatusRow>
+           <ItemCard.StatusButtons item variant />
+           {showCatalogCheckbox
+              ? <ItemCard.CatalogCheckbox
+                  item
+                  variant
+                  userItem=None
+                  className=Styles.catalogCheckbox
+                />
+              : React.null}
+         </div>
+       }}
     </div>;
   };
 };
@@ -796,6 +884,14 @@ let make = (~item: Item.t, ~variant, ~isInitialLoad) => {
              | (_, OneDimension(a)) => <OneDimensionVariants item a variant />
              | (_, TwoDimensions(a, b)) =>
                <TwoDimensionVariants item a b variant />
+             }}
+            {switch (me) {
+             | Some(me) =>
+               <MyStatusSection
+                 item
+                 variant={Item.getCanonicalVariant(~item, ~variant)}
+               />
+             | None => React.null
              }}
           </div>
         </div>

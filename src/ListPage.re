@@ -13,6 +13,18 @@ module Styles = {
         [paddingTop(px(16)), marginLeft(px(16)), marginRight(px(16))],
       ),
     ]);
+  let cloneMessage =
+    style([
+      backgroundColor(hex("ffffffc0")),
+      display(flexBox),
+      alignItems(center),
+      justifyContent(spaceBetween),
+      marginBottom(px(32)),
+      padding(px(16)),
+      borderRadius(px(8)),
+    ]);
+  let cloneMessageDismissLink =
+    style([textDecoration(none), hover([textDecoration(underline)])]);
   let myListsLinkText = style([marginLeft(px(4))]);
   let myListsLink =
     style([
@@ -132,10 +144,20 @@ module Styles = {
   let grid =
     style([display(flexBox), flexWrap(wrap), marginRight(px(-16))]);
   let myListFooter =
-    style([marginTop(px(32)), display(flexBox), justifyContent(flexEnd)]);
+    style([
+      marginTop(px(32)),
+      display(flexBox),
+      flexDirection(column),
+      alignItems(flexEnd),
+    ]);
   let deleteListLink =
     style([
       color(Colors.red),
+      textDecoration(none),
+      media("(hover: hover)", [hover([textDecoration(underline)])]),
+    ]);
+  let cloneListLink =
+    style([
       textDecoration(none),
       media("(hover: hover)", [hover([textDecoration(underline)])]),
     ]);
@@ -216,7 +238,11 @@ type viewMode =
   | List;
 
 [@react.component]
-let make = (~listId) => {
+let make = (~listId, ~url: ReasonReactRouter.url) => {
+  let (showCloneMessage, setShowCloneMessage) =
+    React.useState(() => {
+      Webapi.Url.URLSearchParams.(make(url.search) |> has("clone"))
+    });
   let (list, setList) = React.useState(() => None);
   let (editTitle, setEditTitle) = React.useState(() => "");
   React.useEffect0(() => {
@@ -248,6 +274,13 @@ let make = (~listId) => {
     |> ignore;
     None;
   });
+  React.useEffect0(() => {
+    if (showCloneMessage) {
+      ReasonReactRouter.replace("/l/" ++ listId);
+    };
+    None;
+  });
+
   let onTitleSubmit = e => {
     ReactEvent.Form.preventDefault(e);
     let editTitle = editTitle |> Js.String.slice(~from=0, ~to_=48);
@@ -275,6 +308,22 @@ let make = (~listId) => {
       },
     ])}>
     <div>
+      {showCloneMessage
+         ? <div className=Styles.cloneMessage>
+             <span>
+               {React.string({j|This is your clone. Edit away!️|j})}
+             </span>
+             <a
+               href="#"
+               onClick={e => {
+                 ReactEvent.Mouse.preventDefault(e);
+                 setShowCloneMessage(_ => false);
+               }}
+               className=Styles.cloneMessageDismissLink>
+               {React.string("Hide")}
+             </a>
+           </div>
+         : React.null}
       {switch (list) {
        | Some((list, _)) =>
          list.userId
@@ -432,70 +481,106 @@ let make = (~listId) => {
     {switch (list) {
      | Some((list, _)) =>
        <div>
-         <div
-           className={
-             switch (viewMode) {
-             | Grid => Styles.grid
-             | List => Styles.list
-             }
-           }>
-           {list.itemIds
-            |> Js.Array.mapi(((itemId, variant), i) => {
-                 switch (viewMode) {
-                 | Grid =>
-                   <UserItemCard
-                     itemId
-                     variation=variant
-                     editable=false
-                     showRecipe=false
-                     showMetaIcons=false
-                     key={string_of_int(i)}
-                   />
-                 | List => <ListRow itemId variant key={string_of_int(i)} />
-                 }
-               })
-            |> React.array}
-         </div>
+         {if (Js.Array.length(list.itemIds) > 0) {
+            <div
+              className={
+                switch (viewMode) {
+                | Grid => Styles.grid
+                | List => Styles.list
+                }
+              }>
+              {list.itemIds
+               |> Js.Array.mapi(((itemId, variant), i) => {
+                    switch (viewMode) {
+                    | Grid =>
+                      <UserItemCard
+                        itemId
+                        variation=variant
+                        editable=false
+                        showRecipe=false
+                        showMetaIcons=false
+                        key={string_of_int(i)}
+                      />
+                    | List =>
+                      <ListRow itemId variant key={string_of_int(i)} />
+                    }
+                  })
+               |> React.array}
+            </div>;
+          } else {
+            React.null;
+          }}
          {switch (me) {
           | Some(me) =>
-            if (list.userId == Some(me.id)) {
-              <div className=Styles.myListFooter>
+            <div className=Styles.myListFooter>
+              <div>
                 <a
                   href="#"
                   onClick={e => {
                     ReactEvent.Mouse.preventDefault(e);
-                    ConfirmDialog.confirm(
-                      ~bodyText="Are you sure you want to delete this list?",
-                      ~confirmLabel="Delete list",
-                      ~cancelLabel="Not now",
-                      ~onConfirm=
-                        () => {
-                          {
-                            let%Repromise response =
-                              BAPI.deleteItemList(
-                                ~sessionId=
-                                  Belt.Option.getExn(UserStore.sessionId^),
-                                ~listId,
-                              );
-                            UserStore.handleServerResponse(
-                              "/item-lists/delete",
-                              response,
-                            );
-                            ReasonReactRouter.push("/lists");
-                            Promise.resolved();
-                          }
-                          |> ignore
-                        },
-                      (),
-                    );
+                    {
+                      let%Repromise response =
+                        BAPI.cloneItemList(
+                          ~sessionId=Belt.Option.getExn(UserStore.sessionId^),
+                          ~listId,
+                        );
+                      UserStore.handleServerResponse(
+                        "/item-lists/clone",
+                        response,
+                      );
+                      let%Repromise.JsExn json =
+                        Fetch.Response.json(Belt.Result.getExn(response));
+                      let newListId =
+                        Json.Decode.(json |> field("id", string));
+                      ReasonReactRouter.push("/l/" ++ newListId ++ "?clone");
+                      Promise.resolved();
+                    }
+                    |> ignore;
                   }}
-                  className=Styles.deleteListLink>
-                  {React.string("Delete list")}
+                  className=Styles.cloneListLink>
+                  {React.string("Clone list")}
                 </a>
-              </div>;
-            } else {
-              React.null;
-            }
+              </div>
+              {if (list.userId == Some(me.id)) {
+                 <div>
+                   <a
+                     href="#"
+                     onClick={e => {
+                       ReactEvent.Mouse.preventDefault(e);
+                       ConfirmDialog.confirm(
+                         ~bodyText=
+                           "Are you sure you want to delete this list?",
+                         ~confirmLabel="Delete list",
+                         ~cancelLabel="Not now",
+                         ~onConfirm=
+                           () => {
+                             {
+                               let%Repromise response =
+                                 BAPI.deleteItemList(
+                                   ~sessionId=
+                                     Belt.Option.getExn(UserStore.sessionId^),
+                                   ~listId,
+                                 );
+                               UserStore.handleServerResponse(
+                                 "/item-lists/delete",
+                                 response,
+                               );
+                               ReasonReactRouter.push("/lists");
+                               Promise.resolved();
+                             }
+                             |> ignore
+                           },
+                         (),
+                       );
+                     }}
+                     className=Styles.deleteListLink>
+                     {React.string("Delete list")}
+                   </a>
+                 </div>;
+               } else {
+                 React.null;
+               }}
+            </div>
           | None => React.null
           }}
        </div>

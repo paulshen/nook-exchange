@@ -279,6 +279,27 @@ let createItemList = (~sessionId, ~items: array((int, int))) => {
   Promise.resolved(responseResult);
 };
 
+let cloneItemList = (~sessionId, ~listId) => {
+  let url = Constants.bapiUrl ++ "/item-lists/" ++ listId ++ "/clone";
+  let%Repromise.Js responseResult =
+    Fetch.fetchWithInit(
+      url,
+      Fetch.RequestInit.make(
+        ~method_=Post,
+        ~headers=
+          Fetch.HeadersInit.make({
+            "X-Client-Version": Constants.gitCommitRef,
+            "Authorization":
+              "Bearer " ++ sessionId,
+          }),
+        ~credentials=Include,
+        ~mode=CORS,
+        (),
+      ),
+    );
+  Promise.resolved(responseResult);
+};
+
 let updateItemList =
     (
       ~sessionId,

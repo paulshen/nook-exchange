@@ -342,7 +342,7 @@ let make = (~onLogin, ~onSettings) => {
                    onLogin();
                    ReactEvent.Mouse.preventDefault(e);
                  }}>
-                 {React.string("Login")}
+                 {React.string("Register")}
                </a>
              </div>
            </>

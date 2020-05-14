@@ -196,6 +196,11 @@ let make = (~user: User.t, ~urlRest, ~url) => {
           {React.string("https://nook.exchange/u/" ++ user.username)}
         </Link>
       </div>
+      <div>
+        {React.string("Have a lot of items to add? Try the new ")}
+        <Link path="/import"> {React.string("item importer")} </Link>
+        {React.string(".")}
+      </div>
     </div>
     {switch (list) {
      | Some(list) => <UserListBrowser user list url me=true />

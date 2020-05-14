@@ -142,13 +142,16 @@ module Styles = {
       alignItems(center),
       justifyContent(spaceBetween),
       Colors.darkLayerShadow,
+      selector(
+        "& a",
+        [textDecoration(none), hover([textDecoration(underline)])],
+      ),
       media(
         "(max-width: 550px)",
         [width(auto), left(zero), right(zero), marginLeft(zero)],
       ),
     ]);
-  let bulkActionsLink =
-    style([textDecoration(none), hover([textDecoration(underline)])]);
+  let bulkActionsLink = style([]);
   let bulkActionsButtons =
     style([
       display(flexBox),
@@ -283,10 +286,7 @@ module ResultRowWithItem = {
     <div className=Styles.itemRow>
       <div className=Styles.itemRowName>
         <Link
-          path={Utils.getItemDetailUrl(
-            ~itemId=item.id,
-            ~variant=None,
-          )}
+          path={Utils.getItemDetailUrl(~itemId=item.id, ~variant=None)}
           className=Styles.itemRowNameLink>
           {React.string(Item.getName(item))}
         </Link>
@@ -444,7 +444,8 @@ module Results = {
     | Error(string);
 
   [@react.component]
-  let make = (~me: User.t, ~rows: array((string, option(Item.t)))) => {
+  let make =
+      (~me: User.t, ~rows: array((string, option(Item.t))), ~onReset) => {
     let missingRows = rows->Array.keep(((_, item)) => item == None);
     let (itemsState, setItemStates) =
       React.useState(() => {
@@ -552,7 +553,17 @@ module Results = {
                 )
               ->React.array}
            </div>
-         : <div> {React.string("No items were matched.")} </div>}
+         : <div>
+             {React.string("No items were matched. ")}
+             <a
+               href="#"
+               onClick={e => {
+                 ReactEvent.Mouse.preventDefault(e);
+                 onReset();
+               }}>
+               {React.string("Start over")}
+             </a>
+           </div>}
       <div className=Styles.resultsOverlay>
         <BulkActions setItemStates />
         {switch (submitStatus) {
@@ -562,7 +573,17 @@ module Results = {
            </div>
          | Some(Error(error)) =>
            <div className=Styles.errorMessage> {React.string(error)} </div>
-         | _ => React.null
+         | _ =>
+           <div className=Styles.successMessage>
+             <a
+               href="#"
+               onClick={e => {
+                 ReactEvent.Mouse.preventDefault(e);
+                 onReset();
+               }}>
+               {React.string("Start over")}
+             </a>
+           </div>
          }}
         <Button
           onClick={_ => {
@@ -695,7 +716,11 @@ let process = value => {
   let rows =
     value
     |> Js.String.split("\n")
-    |> Js.Array.map(Js.String.trim)
+    |> Js.Array.map(str =>
+         str
+         |> Js.String.replaceByRe([%bs.re "/\(.*?\)/g"], "")
+         |> Js.String.trim
+       )
     |> Js.Array.filter(x => x != "");
   let results =
     rows->Belt.Array.map(row => (row, Item.getByName(~name=row)));
@@ -742,11 +767,23 @@ let make = (~showLogin) => {
              </p>
              <p>
                {React.string(
-                  "When you are done, press the Save button in the bottom bar. There are bulk actions to help as well.",
+                  {j|On Nook Exchange, customizable variations are hidden. That is why you do not see all colors and patterns here.|j},
+                )}
+             </p>
+             <p>
+               {React.string(
+                  "When you are done, press the Save button in the bottom bar. There are bulk actions to help as well!",
                 )}
              </p>
            </div>
-           <Results me rows=results />
+           <Results
+             me
+             rows=results
+             onReset={() => {
+               setResults(_ => None);
+               setValue(_ => "");
+             }}
+           />
          </div>
        | None =>
          <div>
@@ -755,6 +792,10 @@ let make = (~showLogin) => {
                {React.string(
                   "Have a big collection? This tool can help you add many items at once. Start by pasting a list of item names in the textbox. ",
                 )}
+               <a href="https://twitter.com/nookexchange" target="_blank">
+                 {React.string("Let us know")}
+               </a>
+               {React.string(" if you have issues.")}
              </p>
              <p>
                {React.string(

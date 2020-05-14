@@ -78,7 +78,7 @@ module Styles = {
         ),
       ]),
     ]);
-  let cardMini = style([position(relative)]);
+  let cardMini = style([position(relative), cursor(pointer)]);
   let cardMiniHasQuicklist =
     style([
       cursor(pointer),
@@ -147,22 +147,26 @@ module UserItemCardMini = {
       ])}>
       {let image =
          <img
-           onClick=?{
-             hasQuicklist
-               ? Some(
-                   _ =>
-                     if (isInQuicklist) {
-                       QuicklistStore.removeItem(~itemId, ~variant=variation);
-                     } else {
-                       QuicklistStore.addItem(~itemId, ~variant=variation);
-                     },
-                 )
-               : None
+           onClick={_ =>
+             if (hasQuicklist) {
+               if (isInQuicklist) {
+                 QuicklistStore.removeItem(~itemId, ~variant=variation);
+               } else {
+                 QuicklistStore.addItem(~itemId, ~variant=variation);
+               };
+             } else {
+               ReasonReactRouter.push(
+                 Utils.getItemDetailUrl(
+                   ~itemId=item.id,
+                   ~variant=Some(variation),
+                 ),
+               );
+             }
            }
            src={Item.getImageUrl(~item, ~variant=variation)}
            className=Styles.cardMiniImage
          />;
-       if (Utils.browserSupportsHover || !hasQuicklist) {
+       if (Utils.browserSupportsHover) {
          <ReactAtmosphere.Tooltip text={React.string(Item.getName(item))}>
            {({onMouseEnter, onMouseLeave, onFocus, onBlur, ref}) =>
               <div

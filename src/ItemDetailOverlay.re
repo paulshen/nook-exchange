@@ -887,10 +887,13 @@ let make = (~item: Item.t, ~variant, ~isInitialLoad) => {
              }}
             {switch (me) {
              | Some(me) =>
+               let canonicalVariant =
+                 Item.getCanonicalVariant(~item, ~variant);
                <MyStatusSection
                  item
-                 variant={Item.getCanonicalVariant(~item, ~variant)}
-               />
+                 variant=canonicalVariant
+                 key={string_of_int(canonicalVariant)}
+               />;
              | None => React.null
              }}
           </div>

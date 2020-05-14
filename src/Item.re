@@ -80,7 +80,6 @@ let clothingCategories = [|
 |];
 
 let otherCategories = [|
-  "art",
   "fossils",
   "photos",
   "posters",
@@ -202,7 +201,6 @@ let getImageUrl = (~item, ~variant) => {
       base
       ++ (
         switch (item.category, item.variations) {
-        | ("art", _) => ""
         | (_, Single) => ""
         | (_, OneDimension(_)) => string_of_int(variant)
         | (_, TwoDimensions(_a, b)) =>

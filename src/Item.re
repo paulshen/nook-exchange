@@ -455,5 +455,6 @@ let getByName = (~name: string) => {
   let searchName = getCanonicalName(name);
   all->Belt.Array.getBy((item: t) => {
     getCanonicalName(item.name) == searchName
+    || getCanonicalName(getName(item)) == searchName
   });
 };

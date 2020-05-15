@@ -146,9 +146,10 @@ let make = (~showLogin, ~url: ReasonReactRouter.url) => {
           ->Belt.Array.keepMap(((itemId, variantList)) => {
               let itemId = int_of_string(itemId);
               let numVariations =
-                Item.getNumVariations(~item=Item.getItem(~itemId));
+                Item.getCollapsedVariants(~item=Item.getItem(~itemId));
               // Exclude item only if user has all variants
-              if (Js.Array.length(variantList) >= numVariations) {
+              if (Js.Array.length(variantList)
+                  >= Js.Array.length(numVariations)) {
                 Some(itemId);
               } else {
                 None;

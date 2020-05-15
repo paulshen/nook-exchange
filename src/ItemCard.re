@@ -499,14 +499,6 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
 
   let (variation, setVariation) = React.useState(() => 0);
   let numVariations = Item.getNumVariations(~item);
-  let numVariationsRef = React.useRef(numVariations);
-  React.useEffect1(
-    () => {
-      React.Ref.setCurrent(numVariationsRef, numVariations);
-      None;
-    },
-    [|numVariations|],
-  );
   if (variation > numVariations) {
     setVariation(_ => 0);
   };

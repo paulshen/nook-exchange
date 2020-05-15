@@ -47,24 +47,17 @@ module Styles = {
   let searchButtonRow = style([display(flexBox), justifyContent(flexEnd)]);
 
   let sectionTitle = style([fontSize(px(24)), marginBottom(px(8))]);
+  let results = style([maxWidth(px(400)), margin2(~v=zero, ~h=auto)]);
   let missingRows = style([marginBottom(px(64))]);
   let missingRow = style([color(Colors.red)]);
   let matchRows = style([marginBottom(px(64))]);
-  let itemRow =
-    style([
-      display(flexBox),
-      media("(max-width: 550px)", [flexWrap(wrap), marginBottom(px(8))]),
-    ]);
   let itemRowName =
     style([
-      flexGrow(1.),
       fontSize(px(16)),
-      paddingRight(px(16)),
-      paddingTop(px(7)),
-      media(
-        "(max-width: 550px)",
-        [width(pct(100.)), marginBottom(px(4))],
-      ),
+      marginBottom(px(4)),
+      display(flexBox),
+      justifyContent(spaceBetween),
+      alignItems(center),
     ]);
   let itemRowNameLink =
     style([
@@ -72,17 +65,12 @@ module Styles = {
       textDecoration(none),
       hover([textDecoration(underline)]),
     ]);
-  let itemRowVariants =
-    style([media("(max-width: 550px)", [width(pct(100.))])]);
+  let itemRowVariants = style([width(pct(100.))]);
 
   let variantRowImageLink = style([marginRight(px(8))]);
   let variantRowImage =
     style([display(block), width(px(32)), height(px(32))]);
-  let variantRowName =
-    style([
-      width(px(128)),
-      media("(max-width: 550px)", [width(auto), flexGrow(1.)]),
-    ]);
+  let variantRowName = style([flexGrow(1.)]);
   let variantRow =
     style([
       display(flexBox),
@@ -98,6 +86,24 @@ module Styles = {
     ]);
   let variantRowUserStatus = style([width(px(32))]);
   let radioButtons = style([display(flexBox)]);
+  let radioButtonsBatchLabel =
+    style([marginRight(px(8)), fontSize(px(12)), color(Colors.gray)]);
+  let radioButtonsBatch =
+    style([
+      display(flexBox),
+      alignItems(center),
+      opacity(0.1),
+      transition(~duration=200, "all"),
+      media("(hover: none)", [opacity(0.5)]),
+    ]);
+  let itemRow =
+    style([
+      marginBottom(px(16)),
+      media(
+        "(hover: hover)",
+        [hover([selector("& ." ++ radioButtonsBatch, [opacity(1.)])])],
+      ),
+    ]);
   let radioButton =
     style([
       backgroundColor(Colors.white),
@@ -107,7 +113,11 @@ module Styles = {
       borderBottomWidth(px(1)),
       borderLeftWidth(px(1)),
       borderRightWidth(zero),
+      height(px(27)),
+      boxSizing(borderBox),
+      margin(zero),
       padding2(~v=px(1), ~h=px(6)),
+      unsafe("touchAction", "manipulation"),
       firstChild([
         borderTopLeftRadius(px(4)),
         borderBottomLeftRadius(px(4)),
@@ -189,6 +199,7 @@ type itemDestination = [
   | [@bs.as "For Trade"] `ForTrade
   | [@bs.as "Can Craft"] `CanCraft
   | [@bs.as "Catalog Only"] `CatalogOnly
+  | [@bs.as "Wishlist"] `Wishlist
   | [@bs.as "Ignore"] `Ignore
 ];
 
@@ -197,6 +208,7 @@ let itemDestinationToEmoji = destination => {
   | `ForTrade => {j|🤝|j}
   | `CanCraft => {j|🔨|j}
   | `CatalogOnly => {j|📖|j}
+  | `Wishlist => {j|🙏|j}
   | `Ignore => {j|🤝|j}
   };
 };
@@ -215,6 +227,15 @@ module VariantRow = {
       <button
         onClick={_ => {onChange(item.id, variant, destination)}}
         disabled
+        title={
+          switch (destination) {
+          | `CanCraft => "Can Craft"
+          | `ForTrade => "For Trade"
+          | `Wishlist => "Wishlist"
+          | `CatalogOnly => "Catalog"
+          | `Ignore => "Skip"
+          }
+        }
         className={Cn.make([
           Styles.radioButton,
           Cn.ifTrue(
@@ -266,6 +287,7 @@ module VariantRow = {
         {renderDestinationOption(`ForTrade)}
         {renderDestinationOption(`CanCraft)}
         {renderDestinationOption(`CatalogOnly)}
+        {renderDestinationOption(`Wishlist)}
         {renderDestinationOption(`Ignore)}
       </div>
     </div>;
@@ -282,6 +304,24 @@ module ResultRowWithItem = {
         ~onChange: (int, int, itemDestination) => unit,
       ) => {
     let collapsedVariants = Item.getCollapsedVariants(~item);
+    let renderDestinationOption = destination => {
+      let disabled = destination == `CanCraft && item.recipe == None;
+      <button
+        onClick={_ => {
+          collapsedVariants->Belt.Array.forEach(variant => {
+            onChange(item.id, variant, destination)
+          })
+        }}
+        disabled
+        className=Styles.radioButton>
+        <span className={Cn.ifTrue(Styles.radioButtonDisabled, disabled)}>
+          {React.string(
+             destination == `Ignore
+               ? "Skip" : itemDestinationToEmoji(destination),
+           )}
+        </span>
+      </button>;
+    };
 
     <div className=Styles.itemRow>
       <div className=Styles.itemRowName>
@@ -290,6 +330,20 @@ module ResultRowWithItem = {
           className=Styles.itemRowNameLink>
           {React.string(Item.getName(item))}
         </Link>
+        {Js.Array.length(collapsedVariants) > 1
+           ? <div className=Styles.radioButtonsBatch>
+               <span className=Styles.radioButtonsBatchLabel>
+                 {React.string("Quick")}
+               </span>
+               <div className=Styles.radioButtons>
+                 {renderDestinationOption(`ForTrade)}
+                 {renderDestinationOption(`CanCraft)}
+                 {renderDestinationOption(`CatalogOnly)}
+                 {renderDestinationOption(`Wishlist)}
+                 {renderDestinationOption(`Ignore)}
+               </div>
+             </div>
+           : React.null}
       </div>
       <div className=Styles.itemRowVariants>
         {collapsedVariants
@@ -469,9 +523,7 @@ module Results = {
                       | CatalogOnly => `CatalogOnly
                       | Wishlist => `Ignore
                       }
-                    | None =>
-                      numVariants > 1
-                        ? `Ignore : item.recipe != None ? `CanCraft : `ForTrade
+                    | None => `Ignore
                     },
                   )
                 });
@@ -504,7 +556,7 @@ module Results = {
       None;
     });
 
-    <div>
+    <div className=Styles.results>
       {submitStatus == Some(Success)
          ? <div className=Styles.successBlock>
              {React.string("Your import was successful! Go to ")}
@@ -590,6 +642,7 @@ module Results = {
             let numForTrade = ref(0);
             let numCanCraft = ref(0);
             let numCatalog = ref(0);
+            let numWishlist = ref(0);
             itemsState
             ->Js.Dict.entries
             ->Array.forEach(((_itemKey, destination)) => {
@@ -597,6 +650,7 @@ module Results = {
                 | `ForTrade => numForTrade := numForTrade^ + 1
                 | `CanCraft => numCanCraft := numCanCraft^ + 1
                 | `CatalogOnly => numCatalog := numCatalog^ + 1
+                | `Wishlist => numWishlist := numWishlist^ + 1
                 | `Ignore => ()
                 }
               });
@@ -617,6 +671,11 @@ module Results = {
                            | 0 => None
                            | numCanCraft =>
                              Some(string_of_int(numCanCraft) ++ " Can Craft")
+                           },
+                           switch (numWishlist^) {
+                           | 0 => None
+                           | numWishlist =>
+                             Some(string_of_int(numWishlist) ++ " Wishlist")
                            },
                            switch (numCatalog^) {
                            | 0 => None
@@ -650,6 +709,11 @@ module Results = {
                               Option.getExn(User.fromItemKey(~key=itemKey)),
                               User.ForTrade,
                             ))
+                          | `Wishlist =>
+                            Some((
+                              Option.getExn(User.fromItemKey(~key=itemKey)),
+                              User.Wishlist,
+                            ))
                           | `CatalogOnly =>
                             Some((
                               Option.getExn(User.fromItemKey(~key=itemKey)),
@@ -673,6 +737,7 @@ module Results = {
                             ~eventProperties={
                               "numMismatch": numMissingRows,
                               "numMatch": numMatchingRows,
+                              "numUpdates": Js.Array.length(updates),
                             },
                           );
                           Promise.resolved();
@@ -685,6 +750,7 @@ module Results = {
                               "error": text,
                               "numMismatch": numMissingRows,
                               "numMatch": numMatchingRows,
+                              "numUpdates": Js.Array.length(updates),
                             },
                           );
                           setSubmitState(_ => Some(Error(text)));
@@ -716,11 +782,7 @@ let process = value => {
   let rows =
     value
     |> Js.String.split("\n")
-    |> Js.Array.map(str =>
-         str
-         |> Js.String.replaceByRe([%bs.re "/\(.*?\)/g"], "")
-         |> Js.String.trim
-       )
+    |> Js.Array.map(str => str |> Js.String.trim)
     |> Js.Array.filter(x => x != "");
   let results =
     rows->Belt.Array.map(row => (row, Item.getByName(~name=row)));

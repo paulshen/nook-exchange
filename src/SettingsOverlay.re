@@ -1,6 +1,12 @@
 module Styles = {
   open Css;
-  let body = style([maxWidth(px(320)), padding2(~v=px(32), ~h=px(32))]);
+  let body =
+    style([
+      boxSizing(borderBox),
+      maxWidth(px(400)),
+      padding2(~v=px(32), ~h=px(32)),
+      width(vw(90.)),
+    ]);
   let input =
     style([
       backgroundColor(rgba(0, 0, 0, 0.05)),
@@ -54,16 +60,7 @@ module Styles = {
       marginBottom(px(16)),
       paddingBottom(px(16)),
     ]);
-  let discordButton =
-    style([
-      backgroundColor(hex("7289da")),
-      color(Colors.white),
-      borderWidth(zero),
-      borderRadius(px(4)),
-      fontSize(px(16)),
-      padding2(~v=px(8), ~h=px(16)),
-      marginTop(px(8)),
-    ]);
+  let discordButton = style([marginTop(px(16))]);
 };
 
 type submitStatus =
@@ -96,7 +93,7 @@ module WithUser = {
           UserStore.patchMe(
             ~username=?usernameUpdate,
             ~newPassword=?password != "" ? Some(password) : None,
-            ~oldPassword,
+            ~oldPassword=?oldPassword != "" ? Some(oldPassword) : None,
             (),
           );
         setIsSubmitting(_ => false);
@@ -132,7 +129,7 @@ module WithUser = {
           {switch (user.discordId) {
            | Some(_) =>
              <div>
-               {React.string("Visit the ")}
+               {React.string("Your Discord account is connected. Visit the ")}
                <a href="https://discord.gg/v9fuKru" target="_blank">
                  {React.string("Discord server")}
                </a>
@@ -145,26 +142,40 @@ module WithUser = {
                     "Join the Discord server to trade with others!",
                   )}
                </div>
-               <button
-                 onClick={_ => {
-                   Webapi.Dom.window
-                   |> Webapi.Dom.Window.open_(
-                        ~url=
-                          "https://discord.com/api/oauth2/authorize?client_id=703109829610176522&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Fdiscord_oauth2&response_type=code&scope=guilds.join%20identify",
-                        ~name="",
-                        ~features=?None,
-                      )
-                   |> ignore
-                 }}
-                 className=Styles.discordButton>
-                 {React.string("Connect Discord account")}
-               </button>
+               <div>
+                 <button
+                   onClick={_ => {
+                     let state =
+                       "connect_"
+                       ++ string_of_int(Js.Math.random_int(100000, 999999));
+                     Dom.Storage.(
+                       localStorage |> setItem("discord_state", state)
+                     );
+                     Webapi.Dom.(
+                       location->Location.setHref(
+                         "https://discord.com/api/oauth2/authorize?client_id=703109829610176522&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Fdiscord_oauth2&response_type=code&scope=guilds.join%20email&prompt=none&state="
+                         ++ state,
+                       )
+                     );
+                   }}
+                   className={Cn.make([
+                     LoginOverlay.Styles.discordButton,
+                     Styles.discordButton,
+                   ])}>
+                   <span className=LoginOverlay.Styles.discordButtonLogo />
+                   {React.string("Connect Discord account")}
+                 </button>
+               </div>
              </>
            }}
         </div>
         <form onSubmit>
           <div className=Styles.blurb>
-            {React.string("You can change your username or password here!")}
+            {React.string(
+               user.discordId === None
+                 ? "You can change your username or password here!"
+                 : "You can change your username here!",
+             )}
           </div>
           <div className=Styles.urlPreview>
             {React.string("nook.exchange/u/" ++ username)}
@@ -179,26 +190,32 @@ module WithUser = {
             }}
             className=Styles.input
           />
-          <input
-            type_="password"
-            placeholder="New Password (optional)"
-            value=password
-            onChange={e => {
-              let value = ReactEvent.Form.target(e)##value;
-              setPassword(_ => value);
-            }}
-            className=Styles.input
-          />
-          <input
-            type_="password"
-            placeholder="Old Password (required)"
-            value=oldPassword
-            onChange={e => {
-              let value = ReactEvent.Form.target(e)##value;
-              setOldPassword(_ => value);
-            }}
-            className=Styles.input
-          />
+          {if (user.discordId === None) {
+             <>
+               <input
+                 type_="password"
+                 placeholder="New Password (optional)"
+                 value=password
+                 onChange={e => {
+                   let value = ReactEvent.Form.target(e)##value;
+                   setPassword(_ => value);
+                 }}
+                 className=Styles.input
+               />
+               <input
+                 type_="password"
+                 placeholder="Old Password (required)"
+                 value=oldPassword
+                 onChange={e => {
+                   let value = ReactEvent.Form.target(e)##value;
+                   setOldPassword(_ => value);
+                 }}
+                 className=Styles.input
+               />
+             </>;
+           } else {
+             React.null;
+           }}
           {switch (status) {
            | Some(Error(error)) =>
              <div className=Styles.errorMessage> {React.string(error)} </div>
@@ -212,7 +229,12 @@ module WithUser = {
                : React.null}
             <button
               type_="submit"
-              disabled={!hasChanges || isSubmitting || oldPassword == ""}
+              disabled={
+                !hasChanges
+                || isSubmitting
+                || user.discordId === None
+                && oldPassword == ""
+              }
               className=Styles.submitButton>
               {React.string("Submit")}
             </button>

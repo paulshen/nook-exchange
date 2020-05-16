@@ -4,6 +4,18 @@ module Styles = {
   open Css;
   let smallThresholdMediaQuery = styles =>
     media("(max-width: " ++ string_of_int(smallThreshold) ++ "px)", styles);
+  let overlay =
+    style([
+      position(fixed),
+      top(zero),
+      bottom(zero),
+      left(zero),
+      right(zero),
+      display(flexBox),
+      alignItems(center),
+      justifyContent(center),
+      zIndex(1),
+    ]);
   let backdrop =
     style([
       position(absolute),
@@ -58,6 +70,13 @@ module Styles = {
     style([padding(px(8)), display(flexBox), justifyContent(flexEnd)]);
 };
 
+module Div100VH = {
+  [@bs.module "react-div-100vh"] [@react.component]
+  external make:
+    (~children: React.element, ~className: string) => React.element =
+    "default";
+};
+
 module FooterBar = {
   [@react.component]
   let make = (~children) => {
@@ -75,12 +94,12 @@ let make = (~children, ~onBackdropClick=?, ()) => {
 
   <div
     className={Cn.make([
-      LoginOverlay.Styles.overlay,
+      Styles.overlay,
       Cn.ifTrue(Styles.transitionIn, transitionIn),
     ])}>
     <div className=Styles.backdrop onClick=?onBackdropClick />
-    <ItemDetailOverlay.Div100VH className=Styles.root100VH>
+    <Div100VH className=Styles.root100VH>
       <div className=Styles.root> children </div>
-    </ItemDetailOverlay.Div100VH>
+    </Div100VH>
   </div>;
 };

@@ -204,8 +204,9 @@ let patchMe =
                       Option.map(email, email =>
                         ("email", Js.Json.string(email))
                       ),
-                      Some(("userId", Js.Json.string(userId))),
-                      Some(("oldPassword", Js.Json.string(oldPassword))),
+                      Option.map(oldPassword, oldPassword =>
+                        ("oldPassword", Js.Json.string(oldPassword))
+                      ),
                     |],
                     x =>
                     x
@@ -459,7 +460,7 @@ let getFolloweesItem = (~sessionId, ~itemId) => {
 let connectDiscordAccount = (~sessionId, ~code) => {
   let%Repromise.JsExn response =
     Fetch.fetchWithInit(
-      Constants.bapiUrl ++ "/@me/discord-oauth2",
+      Constants.bapiUrl ++ "/@me/discord",
       Fetch.RequestInit.make(
         ~method_=Post,
         ~body=
@@ -479,5 +480,5 @@ let connectDiscordAccount = (~sessionId, ~code) => {
         (),
       ),
     );
-  Promise.resolved();
+  Promise.resolved(response);
 };

@@ -1,17 +1,5 @@
 module Styles = {
   open Css;
-  let overlay =
-    style([
-      position(fixed),
-      top(zero),
-      bottom(zero),
-      left(zero),
-      right(zero),
-      display(flexBox),
-      alignItems(center),
-      justifyContent(center),
-      zIndex(1),
-    ]);
   let backdrop =
     style([
       position(absolute),
@@ -19,12 +7,11 @@ module Styles = {
       bottom(zero),
       left(zero),
       right(zero),
-      backgroundColor(hex("6f8477d0")),
+      backgroundColor(hex("808080a0")),
     ]);
   let root =
     style([
       backgroundColor(hex("ffffff")),
-      padding2(~v=px(32), ~h=px(12)),
       borderRadius(px(4)),
       position(relative),
       maxWidth(px(448)),
@@ -38,7 +25,18 @@ module Styles = {
         [paddingTop(px(24)), paddingBottom(px(24))],
       ),
     ]);
-  let body = style([maxWidth(px(320)), margin2(~v=zero, ~h=auto)]);
+  let body =
+    style([
+      padding2(~v=px(32), ~h=px(32)),
+      boxSizing(borderBox),
+      maxWidth(px(400)),
+      width(vw(90.)),
+      margin2(~v=zero, ~h=auto),
+      media(
+        "(max-width: 480px)",
+        [paddingLeft(px(16)), paddingRight(px(16))],
+      ),
+    ]);
   let input =
     style([
       backgroundColor(rgba(0, 0, 0, 0.05)),
@@ -83,7 +81,36 @@ module Styles = {
     style([color(hex("a0a0a0")), fontSize(px(12)), marginTop(px(32))]);
   let registerTitle =
     style([fontSize(px(20)), textAlign(center), marginBottom(px(24))]);
-  let blurb = style([marginBottom(px(16))]);
+  let blurb = style([marginBottom(px(16)), textAlign(center)]);
+  let discordLoginRow =
+    style([
+      display(flexBox),
+      justifyContent(center),
+      marginBottom(px(8)),
+    ]);
+  [@bs.module "./assets/discord_logo.png"]
+  external discordPng: string = "default";
+  let discordButtonLogo =
+    style([
+      backgroundImage(url(discordPng)),
+      display(inlineBlock),
+      marginRight(px(8)),
+      width(px(24)),
+      height(px(24)),
+      backgroundSize(cover),
+    ]);
+  let discordButton =
+    style([
+      backgroundColor(hex("7289da")),
+      borderWidth(zero),
+      borderRadius(px(4)),
+      color(Colors.white),
+      display(flexBox),
+      alignItems(center),
+      justifyContent(spaceBetween),
+      fontSize(px(16)),
+      padding2(~v=px(8), ~h=px(16)),
+    ]);
   [@bs.module "./assets/close.png"] external closePng: string = "default";
   let closeButton =
     style([
@@ -102,6 +129,20 @@ module Styles = {
       right(zero),
       opacity(0.5),
       hover([opacity(1.)]),
+    ]);
+  let orSection =
+    style([
+      padding2(~v=px(8), ~h=zero),
+      display(flexBox),
+      alignItems(center),
+      justifyContent(center),
+    ]);
+  let orWord = style([color(Colors.gray), padding2(~v=zero, ~h=px(16))]);
+  let orLine =
+    style([
+      flexGrow(1.),
+      height(px(1)),
+      backgroundColor(Colors.veryLightGray),
     ]);
   let urlPreview =
     style([
@@ -296,185 +337,208 @@ let make = (~onClose) => {
     None;
   });
 
-  <div className=Styles.overlay>
-    <div className=Styles.backdrop onClick={_ => onClose()} />
-    <div className=Styles.root>
-      <div className=Styles.body>
-        {switch (screen) {
-         | Login =>
-           <div>
-             <form onSubmit=onLoginSubmit>
+  <Modal>
+    <div className=Styles.body>
+      {switch (screen) {
+       | Login =>
+         <div>
+           <form onSubmit=onLoginSubmit>
+             <div className=Styles.registerTitle>
+               {React.string("Welcome back!")}
+             </div>
+             <input
+               type_="text"
+               placeholder="Username"
+               value=username
+               onChange={e => {
+                 let value = ReactEvent.Form.target(e)##value;
+                 setUsername(_ => value);
+               }}
+               className=Styles.input
+             />
+             <input
+               type_="password"
+               placeholder="Password"
+               value=password
+               onChange={e => {
+                 let value = ReactEvent.Form.target(e)##value;
+                 setPassword(_ => value);
+               }}
+               className=Styles.input
+             />
+             <div className=Styles.errorMessage>
+               <a
+                 href="#"
+                 onClick={e => {
+                   ReactEvent.Mouse.preventDefault(e);
+                   setScreen(_ => PasswordReset);
+                 }}>
+                 {React.string("Forgot password?")}
+               </a>
+             </div>
+             {switch (registerStatus) {
+              | Some(Error(error)) =>
+                <div className=Styles.errorMessage>
+                  {React.string(error)}
+                </div>
+              | _ => React.null
+              }}
+             <div className=Styles.submitBar>
+               <a
+                 href="#"
+                 onClick={e => {
+                   ReactEvent.Mouse.preventDefault(e);
+                   setScreen(_ => Register);
+                 }}>
+                 {React.string("Need an account?")}
+               </a>
+               <button
+                 type_="submit"
+                 disabled=isSubmitting
+                 className=Styles.submitButton>
+                 {React.string("Login")}
+               </button>
+             </div>
+           </form>
+         </div>
+       | Register =>
+         registerStatus == Some(Success)
+           ? <div>
                <div className=Styles.registerTitle>
-                 {React.string("Welcome back!")}
+                 {React.string("Your account is created!")}
                </div>
-               <input
-                 type_="text"
-                 placeholder="Username"
-                 value=username
-                 onChange={e => {
-                   let value = ReactEvent.Form.target(e)##value;
-                   setUsername(_ => value);
-                 }}
-                 className=Styles.input
-               />
-               <input
-                 type_="password"
-                 placeholder="Password"
-                 value=password
-                 onChange={e => {
-                   let value = ReactEvent.Form.target(e)##value;
-                   setPassword(_ => value);
-                 }}
-                 className=Styles.input
-               />
-               <div className=Styles.errorMessage>
-                 <a
-                   href="#"
-                   onClick={e => {
-                     ReactEvent.Mouse.preventDefault(e);
-                     setScreen(_ => PasswordReset);
-                   }}>
-                   {React.string("Forgot password?")}
-                 </a>
+               <div className=Styles.blurb>
+                 {React.string(
+                    "Add items to profile and share it with others.",
+                  )}
                </div>
-               {switch (registerStatus) {
-                | Some(Error(error)) =>
-                  <div className=Styles.errorMessage>
-                    {React.string(error)}
-                  </div>
-                | _ => React.null
-                }}
+               <div className=Styles.url>
+                 <Link path={"/u/" ++ username}>
+                   {React.string("nook.exchange/u/" ++ username)}
+                 </Link>
+               </div>
                <div className=Styles.submitBar>
-                 <a
-                   href="#"
-                   onClick={e => {
-                     ReactEvent.Mouse.preventDefault(e);
-                     setScreen(_ => Register);
-                   }}>
-                   {React.string("Need an account?")}
-                 </a>
                  <button
-                   type_="submit"
-                   disabled=isSubmitting
-                   className=Styles.submitButton>
-                   {React.string("Login")}
+                   onClick={_ => onClose()} className=Styles.submitButton>
+                   {React.string("Okay!")}
                  </button>
                </div>
-             </form>
-           </div>
-         | Register =>
-           registerStatus == Some(Success)
-             ? <div>
-                 <div className=Styles.registerTitle>
-                   {React.string("Your account is created!")}
-                 </div>
-                 <div className=Styles.blurb>
-                   {React.string(
-                      "Add items to profile and share it with others.",
-                    )}
-                 </div>
-                 <div className=Styles.url>
-                   <Link path={"/u/" ++ username}>
-                     {React.string("nook.exchange/u/" ++ username)}
-                   </Link>
-                 </div>
-                 <div className=Styles.submitBar>
-                   <button
-                     onClick={_ => onClose()} className=Styles.submitButton>
-                     {React.string("Okay!")}
-                   </button>
-                 </div>
+             </div>
+           : <div>
+               <div className=Styles.registerTitle>
+                 {React.string("Register an account")}
                </div>
-             : <div>
-                 <div className=Styles.registerTitle>
-                   {React.string("Register an account")}
-                 </div>
-                 <div className=Styles.blurb>
-                   {React.string(
-                      "Create and share lists of Animal Crossing items!",
-                    )}
-                 </div>
-                 <div className=Styles.urlPreview>
-                   {React.string("nook.exchange/u/" ++ username)}
-                 </div>
-                 <div>
-                   <form onSubmit=onRegisterSubmit>
-                     <input
-                       type_="text"
-                       placeholder="Username"
-                       value=username
-                       onChange={e => {
-                         let value = ReactEvent.Form.target(e)##value;
-                         setUsername(_ => value);
-                       }}
-                       ref={ReactDOMRe.Ref.domRef(usernameRef)}
-                       className=Styles.input
-                     />
-                     <input
-                       type_="text"
-                       placeholder="Email (Optional for account recovery)"
-                       value=email
-                       onChange={e => {
-                         let value = ReactEvent.Form.target(e)##value;
-                         setEmail(_ => value);
-                       }}
-                       className=Styles.input
-                     />
-                     <input
-                       type_="password"
-                       placeholder="Password"
-                       value=password
-                       onChange={e => {
-                         let value = ReactEvent.Form.target(e)##value;
-                         setPassword(_ => value);
-                       }}
-                       className=Styles.input
-                     />
-                     {switch (registerStatus) {
-                      | Some(Error(error)) =>
-                        <div className=Styles.errorMessage>
-                          {React.string(error)}
-                        </div>
-                      | _ => React.null
-                      }}
-                     <div className=Styles.submitBar>
-                       <a
-                         href="#"
-                         onClick={e => {
-                           ReactEvent.Mouse.preventDefault(e);
-                           setScreen(_ => Login);
-                         }}>
-                         {React.string("Login instead?")}
-                       </a>
-                       <button
-                         type_="submit"
-                         className=Styles.submitButton
-                         disabled={
-                           Js.String.length(password) < 4 || isSubmitting
-                         }>
-                         {React.string("Register")}
-                       </button>
-                     </div>
-                     <div className=Styles.terms>
-                       {React.string(
-                          "By registering, you agree to Nook Exchange's ",
-                        )}
-                       <a href="/terms" target="_blank">
-                         {React.string("Terms of Service")}
-                       </a>
-                       {React.string(" and ")}
-                       <a href="/privacy" target="_blank">
-                         {React.string("Privacy Policy")}
-                       </a>
-                       {React.string(".")}
-                     </div>
-                   </form>
-                 </div>
+               <div className=Styles.blurb>
+                 {React.string(
+                    "Create and share lists of Animal Crossing items!",
+                  )}
                </div>
-         | PasswordReset => <PasswordReset />
-         }}
-      </div>
-      <button onClick={_ => onClose()} className=Styles.closeButton />
+               <div className=Styles.discordLoginRow>
+                 <button
+                   onClick={_ => {
+                     let state =
+                       "login_"
+                       ++ string_of_int(Js.Math.random_int(100000, 999999));
+                     Dom.Storage.(
+                       localStorage |> setItem("discord_state", state)
+                     );
+                     Webapi.Dom.(
+                       location->Location.setHref(
+                         "https://discord.com/api/oauth2/authorize?client_id=703109829610176522&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Fdiscord_oauth2&response_type=code&scope=guilds.join%20email&prompt=none&state="
+                         ++ state,
+                       )
+                     );
+                   }}
+                   className=Styles.discordButton>
+                   <span className=Styles.discordButtonLogo />
+                   {React.string("Login with Discord")}
+                 </button>
+               </div>
+               <div className=Styles.orSection>
+                 <div className=Styles.orLine />
+                 <div className=Styles.orWord> {React.string("or")} </div>
+                 <div className=Styles.orLine />
+               </div>
+               <div className=Styles.urlPreview>
+                 {React.string("nook.exchange/u/" ++ username)}
+               </div>
+               <div>
+                 <form onSubmit=onRegisterSubmit>
+                   <input
+                     type_="text"
+                     placeholder="Username"
+                     value=username
+                     onChange={e => {
+                       let value = ReactEvent.Form.target(e)##value;
+                       setUsername(_ => value);
+                     }}
+                     ref={ReactDOMRe.Ref.domRef(usernameRef)}
+                     className=Styles.input
+                   />
+                   <input
+                     type_="text"
+                     placeholder="Email (Optional for account recovery)"
+                     value=email
+                     onChange={e => {
+                       let value = ReactEvent.Form.target(e)##value;
+                       setEmail(_ => value);
+                     }}
+                     className=Styles.input
+                   />
+                   <input
+                     type_="password"
+                     placeholder="Password"
+                     value=password
+                     onChange={e => {
+                       let value = ReactEvent.Form.target(e)##value;
+                       setPassword(_ => value);
+                     }}
+                     className=Styles.input
+                   />
+                   {switch (registerStatus) {
+                    | Some(Error(error)) =>
+                      <div className=Styles.errorMessage>
+                        {React.string(error)}
+                      </div>
+                    | _ => React.null
+                    }}
+                   <div className=Styles.submitBar>
+                     <a
+                       href="#"
+                       onClick={e => {
+                         ReactEvent.Mouse.preventDefault(e);
+                         setScreen(_ => Login);
+                       }}>
+                       {React.string("Login instead?")}
+                     </a>
+                     <button
+                       type_="submit"
+                       className=Styles.submitButton
+                       disabled={
+                         Js.String.length(password) < 4 || isSubmitting
+                       }>
+                       {React.string("Register")}
+                     </button>
+                   </div>
+                   <div className=Styles.terms>
+                     {React.string(
+                        "By registering, you agree to Nook Exchange's ",
+                      )}
+                     <a href="/terms" target="_blank">
+                       {React.string("Terms of Service")}
+                     </a>
+                     {React.string(" and ")}
+                     <a href="/privacy" target="_blank">
+                       {React.string("Privacy Policy")}
+                     </a>
+                     {React.string(".")}
+                   </div>
+                 </form>
+               </div>
+             </div>
+       | PasswordReset => <PasswordReset />
+       }}
     </div>
-  </div>;
+    <button onClick={_ => onClose()} className=Styles.closeButton />
+  </Modal>;
 };

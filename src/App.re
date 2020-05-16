@@ -68,6 +68,8 @@ let tooltipConfig:
     }),
 };
 
+exception DiscordOauthStateMismatch(string);
+
 [@react.component]
 let make = () => {
   let url = ReasonReactRouter.useUrl();
@@ -166,14 +168,26 @@ let make = () => {
       forceUpdate(x => x + 1);
     });
     if (url.path == ["discord_oauth2"]) {
-      let code = {
+      let (code, state) = {
         open Webapi.Url.URLSearchParams;
         let searchParams = make(url.search);
-        searchParams |> get("code");
+        (searchParams |> get("code"), searchParams |> get("state"));
       };
-      Belt.Option.map(code, code => {UserStore.processDiscordOauth2(~code)})
-      |> ignore;
-      // ReasonReactRouter.replace("/");
+      switch (code, state) {
+      | (Some(code), Some(state)) =>
+        if (Dom.Storage.(localStorage |> getItem("discord_state"))
+            != Some(state)) {
+          raise(DiscordOauthStateMismatch(state));
+        };
+        DiscordOauth.process(
+          ~code,
+          ~isLogin=state |> Js.String.startsWith("login"),
+          ~isConnect=state |> Js.String.startsWith("connect"),
+        )
+        |> ignore;
+        ReasonReactRouter.replace("/");
+      | _ => ()
+      };
     };
     None;
   });

@@ -342,35 +342,35 @@ let make = (~onClose) => {
       {switch (screen) {
        | Login =>
          <div>
+           <div className=Styles.registerTitle>
+             {React.string("Welcome back!")}
+           </div>
+           <div className=Styles.discordLoginRow>
+             <button
+               onClick={_ => {
+                 let state =
+                   "login_"
+                   ++ string_of_int(Js.Math.random_int(100000, 999999));
+                 Dom.Storage.(
+                   localStorage |> setItem("discord_state", state)
+                 );
+                 Webapi.Dom.(
+                   location->Location.setHref(
+                     Constants.discordOauthRedirectUri(state),
+                   )
+                 );
+               }}
+               className=Styles.discordButton>
+               <span className=Styles.discordButtonLogo />
+               {React.string("Login with Discord")}
+             </button>
+           </div>
+           <div className=Styles.orSection>
+             <div className=Styles.orLine />
+             <div className=Styles.orWord> {React.string("or")} </div>
+             <div className=Styles.orLine />
+           </div>
            <form onSubmit=onLoginSubmit>
-             <div className=Styles.registerTitle>
-               {React.string("Welcome back!")}
-             </div>
-             <div className=Styles.discordLoginRow>
-               <button
-                 onClick={_ => {
-                   let state =
-                     "login_"
-                     ++ string_of_int(Js.Math.random_int(100000, 999999));
-                   Dom.Storage.(
-                     localStorage |> setItem("discord_state", state)
-                   );
-                   Webapi.Dom.(
-                     location->Location.setHref(
-                       Constants.discordOauthRedirectUri(state),
-                     )
-                   );
-                 }}
-                 className=Styles.discordButton>
-                 <span className=Styles.discordButtonLogo />
-                 {React.string("Login with Discord")}
-               </button>
-             </div>
-             <div className=Styles.orSection>
-               <div className=Styles.orLine />
-               <div className=Styles.orWord> {React.string("or")} </div>
-               <div className=Styles.orLine />
-             </div>
              <input
                type_="text"
                placeholder="Username"

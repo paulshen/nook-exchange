@@ -72,7 +72,7 @@ let tooltipConfig:
 let make = () => {
   let url = ReasonReactRouter.useUrl();
   let (showLogin, setShowLogin) = React.useState(() => false);
-  let (showSettings, setShowSettings) = React.useState(() => false);
+  let showSettings = url.hash == "settings";
   let itemDetails = {
     let result = url.hash |> Js.Re.exec_([%bs.re "/i(-?\d+)(:(\d+))?/g"]);
     switch (result) {
@@ -165,6 +165,16 @@ let make = () => {
       Item.setVariantNames(json);
       forceUpdate(x => x + 1);
     });
+    if (url.path == ["discord_oauth2"]) {
+      let code = {
+        open Webapi.Url.URLSearchParams;
+        let searchParams = make(url.search);
+        searchParams |> get("code");
+      };
+      Belt.Option.map(code, code => {UserStore.processDiscordOauth2(~code)})
+      |> ignore;
+      // ReasonReactRouter.replace("/");
+    };
     None;
   });
 
@@ -172,7 +182,11 @@ let make = () => {
     <TooltipConfigContextProvider value=tooltipConfig>
       <HeaderBar
         onLogin={_ => setShowLogin(_ => true)}
-        onSettings={_ => setShowSettings(_ => true)}
+        onSettings={_ => {
+          ReasonReactRouter.push(
+            Utils.getPathWithSearch(~url) ++ "#settings",
+          )
+        }}
       />
       {isLanguageLoaded
          ? <div className=Styles.body>
@@ -213,7 +227,11 @@ let make = () => {
          ? <LoginOverlay onClose={() => setShowLogin(_ => false)} />
          : React.null}
       {showSettings
-         ? <SettingsOverlay onClose={() => setShowSettings(_ => false)} />
+         ? <SettingsOverlay
+             onClose={() => {
+               ReasonReactRouter.push(Utils.getPathWithSearch(~url))
+             }}
+           />
          : React.null}
       {switch (itemDetails) {
        | Some((item, variant)) =>

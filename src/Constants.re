@@ -8,7 +8,7 @@ let gitCommitRef =
 
 let apiUrl = "https://paulshen-animalcrossing.builtwithdark.com";
 let bapiUrl =
-  nodeEnv === Some("production") || true
+  nodeEnv === Some("production")
     ? "https://a.nook.exchange" : "http://localhost:3000";
 let cdnUrl =
   nodeEnv === Some("production")

@@ -726,3 +726,38 @@ let init = () => {
   | None => ()
   };
 };
+
+let processDiscordOauth2 = (~code) => {
+  let processLoggedIn = user => {
+    BAPI.connectDiscordAccount(
+      ~sessionId=Belt.Option.getExn(sessionId^),
+      ~code,
+    )
+    |> ignore;
+  };
+  // TODO: error
+  let processNotLoggedIn = () => {
+    ();
+  };
+  switch (api.getState()) {
+  | Loading =>
+    let unsubscribe = ref(() => ());
+    unsubscribe :=
+      api.subscribe(
+        state => {
+          switch (state) {
+          | Loading => ()
+          | LoggedIn(user) =>
+            processLoggedIn(user);
+            unsubscribe^();
+          | NotLoggedIn =>
+            processNotLoggedIn();
+            unsubscribe^();
+          }
+        },
+        (),
+      );
+  | LoggedIn(user) => processLoggedIn(user)
+  | NotLoggedIn => processNotLoggedIn()
+  };
+};

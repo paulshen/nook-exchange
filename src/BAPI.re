@@ -289,8 +289,7 @@ let cloneItemList = (~sessionId, ~listId) => {
         ~headers=
           Fetch.HeadersInit.make({
             "X-Client-Version": Constants.gitCommitRef,
-            "Authorization":
-              "Bearer " ++ sessionId,
+            "Authorization": "Bearer " ++ sessionId,
           }),
         ~credentials=Include,
         ~mode=CORS,
@@ -455,4 +454,30 @@ let getFolloweesItem = (~sessionId, ~itemId) => {
       ),
     );
   Promise.resolved(response);
+};
+
+let connectDiscordAccount = (~sessionId, ~code) => {
+  let%Repromise.JsExn response =
+    Fetch.fetchWithInit(
+      Constants.bapiUrl ++ "/@me/discord-oauth2",
+      Fetch.RequestInit.make(
+        ~method_=Post,
+        ~body=
+          Fetch.BodyInit.make(
+            Js.Json.stringify(
+              Json.Encode.object_([("code", Js.Json.string(code))]),
+            ),
+          ),
+        ~headers=
+          Fetch.HeadersInit.make({
+            "X-Client-Version": Constants.gitCommitRef,
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " ++ sessionId,
+          }),
+        ~credentials=Include,
+        ~mode=CORS,
+        (),
+      ),
+    );
+  Promise.resolved();
 };

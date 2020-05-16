@@ -1,6 +1,6 @@
 module Styles = {
   open Css;
-  let body = style([maxWidth(px(320)), margin2(~v=zero, ~h=auto)]);
+  let body = style([maxWidth(px(320)), padding2(~v=px(32), ~h=px(32))]);
   let input =
     style([
       backgroundColor(rgba(0, 0, 0, 0.05)),
@@ -31,7 +31,7 @@ module Styles = {
       color(Colors.white),
       cursor(pointer),
       marginLeft(px(16)),
-      padding2(~v=px(10), ~h=px(16)),
+      padding2(~v=px(8), ~h=px(16)),
       fontSize(px(16)),
       transition(~duration=200, "all"),
       disabled([opacity(0.5)]),
@@ -48,73 +48,121 @@ module Styles = {
     ]);
   let errorMessage =
     style([marginTop(px(-10)), marginBottom(px(16)), color(Colors.red)]);
+  let discordSection =
+    style([
+      borderBottom(px(1), dashed, Colors.lightGray),
+      marginBottom(px(16)),
+      paddingBottom(px(16)),
+    ]);
+  let discordButton =
+    style([
+      backgroundColor(hex("7289da")),
+      color(Colors.white),
+      borderWidth(zero),
+      borderRadius(px(4)),
+      fontSize(px(16)),
+      padding2(~v=px(8), ~h=px(16)),
+      marginTop(px(8)),
+    ]);
 };
 
 type submitStatus =
   | Success
   | Error(string);
 
-[@react.component]
-let make = (~onClose) => {
-  let user = UserStore.useMe()->Belt.Option.getExn;
+module WithUser = {
+  [@react.component]
+  let make = (~user: User.t, ~onClose) => {
+    let (username, setUsername) = React.useState(() => user.username);
+    let (password, setPassword) = React.useState(() => "");
+    let (oldPassword, setOldPassword) = React.useState(() => "");
+    let hasChanges = user.username != username || password != "";
+    let (isSubmitting, setIsSubmitting) = React.useState(() => false);
+    let (status, setStatus) = React.useState(() => None);
 
-  let (username, setUsername) = React.useState(() => user.username);
-  let (password, setPassword) = React.useState(() => "");
-  let (oldPassword, setOldPassword) = React.useState(() => "");
-  let hasChanges = user.username != username || password != "";
-  let (isSubmitting, setIsSubmitting) = React.useState(() => false);
-  let (status, setStatus) = React.useState(() => None);
+    React.useEffect0(() => {
+      Analytics.Amplitude.logEvent(~eventName="Settings Viewed");
+      None;
+    });
 
-  React.useEffect0(() => {
-    Analytics.Amplitude.logEvent(~eventName="Settings Viewed");
-    None;
-  });
-
-  let onSubmit = e => {
-    ReactEvent.Form.preventDefault(e);
-    {
-      let prevUsername = user.username;
-      setIsSubmitting(_ => true);
-      let usernameUpdate = username == user.username ? None : Some(username);
-      let%Repromise result =
-        UserStore.patchMe(
-          ~username=?usernameUpdate,
-          ~newPassword=?password != "" ? Some(password) : None,
-          ~oldPassword,
-          (),
-        );
-      setIsSubmitting(_ => false);
-      switch (result) {
-      | Ok () =>
-        setStatus(_ => Some(Success));
-        setPassword(_ => "");
-        setOldPassword(_ => "");
-      | Error(err) => setStatus(_ => Some(Error(err)))
-      };
-      switch (usernameUpdate) {
-      | Some(username) =>
-        let url = ReasonReactRouter.dangerouslyGetInitialUrl();
-        switch (url.path) {
-        | ["u", pathUsername, ..._] =>
-          if (Js.String.toLowerCase(pathUsername)
-              == Js.String.toLowerCase(prevUsername)) {
-            ReasonReactRouter.push("/u/" ++ username);
-          }
-        | _ => ()
+    let onSubmit = e => {
+      ReactEvent.Form.preventDefault(e);
+      {
+        let prevUsername = user.username;
+        setIsSubmitting(_ => true);
+        let usernameUpdate =
+          username == user.username ? None : Some(username);
+        let%Repromise result =
+          UserStore.patchMe(
+            ~username=?usernameUpdate,
+            ~newPassword=?password != "" ? Some(password) : None,
+            ~oldPassword,
+            (),
+          );
+        setIsSubmitting(_ => false);
+        switch (result) {
+        | Ok () =>
+          setStatus(_ => Some(Success));
+          setPassword(_ => "");
+          setOldPassword(_ => "");
+        | Error(err) => setStatus(_ => Some(Error(err)))
         };
-      | None => ()
-      };
-      Promise.resolved();
-    }
-    |> ignore;
-  };
+        switch (usernameUpdate) {
+        | Some(username) =>
+          let url = ReasonReactRouter.dangerouslyGetInitialUrl();
+          switch (url.path) {
+          | ["u", pathUsername, ..._] =>
+            if (Js.String.toLowerCase(pathUsername)
+                == Js.String.toLowerCase(prevUsername)) {
+              ReasonReactRouter.push("/u/" ++ username);
+            }
+          | _ => ()
+          };
+        | None => ()
+        };
+        Promise.resolved();
+      }
+      |> ignore;
+    };
 
-  <div className=LoginOverlay.Styles.overlay>
-    <div className=LoginOverlay.Styles.backdrop onClick={_ => onClose()} />
-    <div className=LoginOverlay.Styles.root>
+    <Modal onBackdropClick={_ => onClose()}>
       <div className=Styles.body>
+        <div className=Styles.title> {React.string("Settings")} </div>
+        <div className=Styles.discordSection>
+          {switch (user.discordId) {
+           | Some(_) =>
+             <div>
+               {React.string("Visit the ")}
+               <a href="https://discord.gg/v9fuKru" target="_blank">
+                 {React.string("Discord server")}
+               </a>
+               {React.string(" to trade with others!")}
+             </div>
+           | None =>
+             <>
+               <div>
+                 {React.string(
+                    "Join the Discord server to trade with others!",
+                  )}
+               </div>
+               <button
+                 onClick={_ => {
+                   Webapi.Dom.window
+                   |> Webapi.Dom.Window.open_(
+                        ~url=
+                          "https://discord.com/api/oauth2/authorize?client_id=703109829610176522&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Fdiscord_oauth2&response_type=code&scope=guilds.join%20identify",
+                        ~name="",
+                        ~features=?None,
+                      )
+                   |> ignore
+                 }}
+                 className=Styles.discordButton>
+                 {React.string("Connect Discord account")}
+               </button>
+             </>
+           }}
+        </div>
         <form onSubmit>
-          <div className=Styles.title> {React.string("Settings")} </div>
           <div className=Styles.blurb>
             {React.string("You can change your username or password here!")}
           </div>
@@ -175,6 +223,15 @@ let make = (~onClose) => {
         onClick={_ => onClose()}
         className=LoginOverlay.Styles.closeButton
       />
-    </div>
-  </div>;
+    </Modal>;
+  };
+};
+
+[@react.component]
+let make = (~onClose) => {
+  let user = UserStore.useMe();
+  switch (user) {
+  | Some(user) => <WithUser user onClose />
+  | None => React.null
+  };
 };

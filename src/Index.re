@@ -1,5 +1,12 @@
 [@bs.module "@sentry/browser"]
-external initSentry: {. "dsn": string} => unit = "init";
+external initSentry:
+  {
+    .
+    "dsn": string,
+    "ignoreErrors": array(string),
+  } =>
+  unit =
+  "init";
 
 [@bs.set]
 external setOnError:
@@ -10,7 +17,13 @@ external setOnError:
   unit =
   "onerror";
 
-initSentry({"dsn": Constants.sentryId});
+initSentry({
+  "dsn": Constants.sentryId,
+  "ignoreErrors": [|
+    "Failed to execute 'insertBefore' on 'Node'",
+    "Loading chunk",
+  |],
+});
 Analytics.Amplitude.init();
 Webapi.Dom.window->setOnError((message, url, _line, _column, error) => {
   Analytics.Amplitude.logEventWithProperties(

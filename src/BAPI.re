@@ -204,8 +204,9 @@ let patchMe =
                       Option.map(email, email =>
                         ("email", Js.Json.string(email))
                       ),
-                      Some(("userId", Js.Json.string(userId))),
-                      Some(("oldPassword", Js.Json.string(oldPassword))),
+                      Option.map(oldPassword, oldPassword =>
+                        ("oldPassword", Js.Json.string(oldPassword))
+                      ),
                     |],
                     x =>
                     x
@@ -289,8 +290,7 @@ let cloneItemList = (~sessionId, ~listId) => {
         ~headers=
           Fetch.HeadersInit.make({
             "X-Client-Version": Constants.gitCommitRef,
-            "Authorization":
-              "Bearer " ++ sessionId,
+            "Authorization": "Bearer " ++ sessionId,
           }),
         ~credentials=Include,
         ~mode=CORS,
@@ -447,6 +447,32 @@ let getFolloweesItem = (~sessionId, ~itemId) => {
         ~headers=
           Fetch.HeadersInit.make({
             "X-Client-Version": Constants.gitCommitRef,
+            "Authorization": "Bearer " ++ sessionId,
+          }),
+        ~credentials=Include,
+        ~mode=CORS,
+        (),
+      ),
+    );
+  Promise.resolved(response);
+};
+
+let connectDiscordAccount = (~sessionId, ~code) => {
+  let%Repromise.JsExn response =
+    Fetch.fetchWithInit(
+      Constants.bapiUrl ++ "/@me/discord",
+      Fetch.RequestInit.make(
+        ~method_=Post,
+        ~body=
+          Fetch.BodyInit.make(
+            Js.Json.stringify(
+              Json.Encode.object_([("code", Js.Json.string(code))]),
+            ),
+          ),
+        ~headers=
+          Fetch.HeadersInit.make({
+            "X-Client-Version": Constants.gitCommitRef,
+            "Content-Type": "application/json",
             "Authorization": "Bearer " ++ sessionId,
           }),
         ~credentials=Include,

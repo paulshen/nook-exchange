@@ -81,6 +81,17 @@ let getPath = (~url: ReasonReactRouter.url) => {
   "/" ++ (Belt.List.toArray(url.path) |> Js.Array.joinWith("/"));
 };
 
+let getPathWithSearch = (~url: ReasonReactRouter.url) => {
+  "/"
+  ++ (Belt.List.toArray(url.path) |> Js.Array.joinWith("/"))
+  ++ (
+    switch (url.search) {
+    | "" => ""
+    | search => "?" ++ search
+    }
+  );
+};
+
 let getItemDetailUrl = (~itemId, ~variant) => {
   let url = ReasonReactRouter.dangerouslyGetInitialUrl();
   "/"

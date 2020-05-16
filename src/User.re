@@ -88,6 +88,7 @@ type t = {
   profileText: string,
   enableCatalogCheckbox: bool,
   followeeIds: option(array(string)),
+  discordId: option(string),
 };
 
 let fromAPI = (json: Js.Json.t) => {
@@ -145,5 +146,6 @@ let fromAPI = (json: Js.Json.t) => {
            ),
          ]),
     followeeIds: json |> optional(field("followeeIds", array(string))),
+    discordId: json |> optional(field("discordId", string)),
   };
 };

@@ -9,6 +9,7 @@ type action =
   | UpdateUser(User.t)
   | Logout
   | FetchMeFailed
+  | ConnectDiscordId(string)
   | FollowUser(string)
   | UnfollowUser(string);
 
@@ -36,6 +37,11 @@ let api =
     | UpdateUser(user) => LoggedIn(user)
     | Logout => NotLoggedIn
     | FetchMeFailed => NotLoggedIn
+    | ConnectDiscordId(discordId) =>
+      switch (state) {
+      | LoggedIn(user) => LoggedIn({...user, discordId: Some(discordId)})
+      | _ => state
+      }
     | FollowUser(followeeId) =>
       switch (state) {
       | LoggedIn(user) =>
@@ -485,7 +491,7 @@ let updateProfileText = (~profileText) => {
   );
 };
 
-let patchMe = (~username=?, ~newPassword=?, ~email=?, ~oldPassword, ()) => {
+let patchMe = (~username=?, ~newPassword=?, ~email=?, ~oldPassword=?, ()) => {
   let user = getUser();
   let%Repromise response =
     BAPI.patchMe(
@@ -600,6 +606,71 @@ let register = (~username, ~email, ~password) => {
   };
 };
 
+let loginWithDiscord = (~code, ~isRegister) => {
+  let%Repromise.JsExn response =
+    Fetch.fetchWithInit(
+      Constants.bapiUrl ++ "/login-discord",
+      Fetch.RequestInit.make(
+        ~method_=Post,
+        ~body=
+          Fetch.BodyInit.make(
+            Js.Json.stringify(
+              Json.Encode.object_([
+                ("code", Js.Json.string(code)),
+                ("isRegister", Js.Json.boolean(isRegister)),
+              ]),
+            ),
+          ),
+        ~headers=
+          Fetch.HeadersInit.make({
+            "X-Client-Version": Constants.gitCommitRef,
+            "Content-Type": "application/json",
+          }),
+        ~credentials=Include,
+        ~mode=CORS,
+        (),
+      ),
+    );
+  if (Fetch.Response.status(response) < 300) {
+    let%Repromise.JsExn json = Fetch.Response.json(response);
+    updateSessionId(
+      json |> Json.Decode.(optional(field("sessionId", string))),
+    );
+    let user = User.fromAPI(json);
+    api.dispatch(Login(user));
+    Analytics.Amplitude.setUserId(~userId=Some(user.id));
+    Analytics.Amplitude.setUsername(
+      ~username=user.username,
+      ~email=user.email->Belt.Option.getWithDefault(""),
+    );
+    let isRegister =
+      (json |> Json.Decode.(optional(field("isRegister", bool))))
+      ->Belt.Option.getWithDefault(false);
+    if (isRegister) {
+      Analytics.Amplitude.logEventWithProperties(
+        ~eventName="Registration Succeeded",
+        ~eventProperties={
+          "username": user.username,
+          "email": user.email,
+          "discordId": user.discordId,
+        },
+      );
+    };
+    Promise.resolved(Ok((user, isRegister)));
+  } else {
+    let%Repromise.JsExn text = Fetch.Response.text(response);
+    let result = text |> Js.Re.exec_(errorQuotationMarksRegex);
+    let text =
+      switch (result) {
+      | Some(match) =>
+        let captures = Js.Re.captures(match);
+        captures[1]->Option.getExn->Js.Nullable.toOption->Option.getExn;
+      | None => text
+      };
+    Promise.resolved(Error(text));
+  };
+};
+
 let followUser = (~userId) => {
   let%Repromise response =
     BAPI.followUser(~userId, ~sessionId=Belt.Option.getExn(sessionId^));
@@ -686,6 +757,50 @@ let logout = () => {
       ),
     );
   Promise.resolved();
+};
+
+let connectDiscordAccount = (~code) => {
+  let processLoggedIn = user => {
+    {
+      let%Repromise response =
+        BAPI.connectDiscordAccount(
+          ~sessionId=Belt.Option.getExn(sessionId^),
+          ~code,
+        );
+      let%Repromise.JsExn json = Fetch.Response.json(response);
+      let discordId = json |> Json.Decode.(field("discordId", string));
+      api.dispatch(ConnectDiscordId(discordId));
+      let url = ReasonReactRouter.dangerouslyGetInitialUrl();
+      ReasonReactRouter.push(Utils.getPathWithSearch(~url) ++ "#settings");
+      Promise.resolved();
+    }
+    |> ignore;
+  };
+  // TODO: error
+  let processNotLoggedIn = () => {
+    ();
+  };
+  switch (api.getState()) {
+  | Loading =>
+    let unsubscribe = ref(() => ());
+    unsubscribe :=
+      api.subscribe(
+        state => {
+          switch (state) {
+          | Loading => ()
+          | LoggedIn(user) =>
+            processLoggedIn(user);
+            unsubscribe^();
+          | NotLoggedIn =>
+            processNotLoggedIn();
+            unsubscribe^();
+          }
+        },
+        (),
+      );
+  | LoggedIn(user) => processLoggedIn(user)
+  | NotLoggedIn => processNotLoggedIn()
+  };
 };
 
 let init = () => {

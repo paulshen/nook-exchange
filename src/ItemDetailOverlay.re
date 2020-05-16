@@ -5,13 +5,6 @@ let smallThresholdMediaQuery = styles =>
     styles,
   );
 
-module Div100VH = {
-  [@bs.module "react-div-100vh"] [@react.component]
-  external make:
-    (~children: React.element, ~className: string) => React.element =
-    "default";
-};
-
 module Styles = {
   open Css;
   let backdrop =
@@ -769,11 +762,11 @@ let make = (~item: Item.t, ~variant, ~isInitialLoad) => {
 
   <div
     className={Cn.make([
-      LoginOverlay.Styles.overlay,
+      Modal.Styles.overlay,
       Cn.ifTrue(Styles.transitionIn, transitionIn),
     ])}>
     <div className=Styles.backdrop onClick={_ => onClose()} />
-    <Div100VH className=Styles.root100VH>
+    <Modal.Div100VH className=Styles.root100VH>
       <div className=Styles.root>
         <div className=Styles.body>
           {viewportWidth > 500 ? itemImage : React.null}
@@ -912,6 +905,6 @@ let make = (~item: Item.t, ~variant, ~isInitialLoad) => {
           className=LoginOverlay.Styles.closeButton
         />
       </div>
-    </Div100VH>
+    </Modal.Div100VH>
   </div>;
 };

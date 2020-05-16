@@ -68,11 +68,13 @@ let tooltipConfig:
     }),
 };
 
+exception DiscordOauthStateMismatch(string);
+
 [@react.component]
 let make = () => {
   let url = ReasonReactRouter.useUrl();
   let (showLogin, setShowLogin) = React.useState(() => false);
-  let (showSettings, setShowSettings) = React.useState(() => false);
+  let showSettings = url.hash == "settings";
   let itemDetails = {
     let result = url.hash |> Js.Re.exec_([%bs.re "/i(-?\d+)(:(\d+))?/g"]);
     switch (result) {
@@ -165,6 +167,29 @@ let make = () => {
       Item.setVariantNames(json);
       forceUpdate(x => x + 1);
     });
+    if (url.path == ["discord_oauth2"]) {
+      let (code, state) = {
+        open Webapi.Url.URLSearchParams;
+        let searchParams = make(url.search);
+        (searchParams |> get("code"), searchParams |> get("state"));
+      };
+      switch (code, state) {
+      | (Some(code), Some(state)) =>
+        if (Dom.Storage.(localStorage |> getItem("discord_state"))
+            != Some(state)) {
+          raise(DiscordOauthStateMismatch(state));
+        };
+        DiscordOauth.process(
+          ~code,
+          ~isLogin=state |> Js.String.startsWith("login"),
+          ~isRegister=state |> Js.String.startsWith("register"),
+          ~isConnect=state |> Js.String.startsWith("connect"),
+        )
+        |> ignore;
+        ReasonReactRouter.replace("/");
+      | _ => ()
+      };
+    };
     None;
   });
 
@@ -172,7 +197,11 @@ let make = () => {
     <TooltipConfigContextProvider value=tooltipConfig>
       <HeaderBar
         onLogin={_ => setShowLogin(_ => true)}
-        onSettings={_ => setShowSettings(_ => true)}
+        onSettings={_ => {
+          ReasonReactRouter.push(
+            Utils.getPathWithSearch(~url) ++ "#settings",
+          )
+        }}
       />
       {isLanguageLoaded
          ? <div className=Styles.body>
@@ -195,6 +224,7 @@ let make = () => {
               | ["terms"] => <TextPages.TermsOfService />
               | ["import"] =>
                 <ImportPage showLogin={() => setShowLogin(_ => true)} />
+              | ["discord_oauth2"] => React.null
               | _ =>
                 <>
                   <div className=Styles.tagline>
@@ -213,7 +243,11 @@ let make = () => {
          ? <LoginOverlay onClose={() => setShowLogin(_ => false)} />
          : React.null}
       {showSettings
-         ? <SettingsOverlay onClose={() => setShowSettings(_ => false)} />
+         ? <SettingsOverlay
+             onClose={() => {
+               ReasonReactRouter.push(Utils.getPathWithSearch(~url))
+             }}
+           />
          : React.null}
       {switch (itemDetails) {
        | Some((item, variant)) =>

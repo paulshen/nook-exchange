@@ -14,10 +14,10 @@ module Styles = {
   let blurb = style([lineHeight(px(18)), paddingBottom(px(24))]);
 };
 
-let process = (~code, ~isLogin, ~isConnect) =>
-  if (isLogin) {
+let process = (~code, ~isLogin, ~isRegister, ~isConnect) =>
+  if (isLogin || isRegister) {
     {
-      let%Repromise response = UserStore.loginWithDiscord(~code);
+      let%Repromise response = UserStore.loginWithDiscord(~code, ~isRegister);
       switch (response) {
       | Ok((user, true)) =>
         let modalKey = ref(None);
@@ -34,9 +34,9 @@ let process = (~code, ~isLogin, ~isConnect) =>
                     <div className=LoginOverlay.Styles.registerTitle>
                       {React.string("Your account is created!")}
                     </div>
-                    <div className=Styles.blurb>
+                    <div>
                       {React.string(
-                         "Add items to profile and share it with others.",
+                         "Add items to profile and share it with others!",
                        )}
                     </div>
                     <div className=LoginOverlay.Styles.url>

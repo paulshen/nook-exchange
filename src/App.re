@@ -182,6 +182,7 @@ let make = () => {
         DiscordOauth.process(
           ~code,
           ~isLogin=state |> Js.String.startsWith("login"),
+          ~isRegister=state |> Js.String.startsWith("register"),
           ~isConnect=state |> Js.String.startsWith("connect"),
         )
         |> ignore;
@@ -223,6 +224,7 @@ let make = () => {
               | ["terms"] => <TextPages.TermsOfService />
               | ["import"] =>
                 <ImportPage showLogin={() => setShowLogin(_ => true)} />
+              | ["discord_oauth2"] => React.null
               | _ =>
                 <>
                   <div className=Styles.tagline>

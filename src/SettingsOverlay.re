@@ -130,16 +130,16 @@ module WithUser = {
            | Some(_) =>
              <div>
                {React.string("Your Discord account is connected. Visit the ")}
-               <a href="https://discord.gg/v9fuKru" target="_blank">
+               <a href="https://discord.gg/Yf8HP25" target="_blank">
                  {React.string("Discord server")}
                </a>
-               {React.string(" to trade with others!")}
+               {React.string(" to trade and share feedback!")}
              </div>
            | None =>
              <>
                <div>
                  {React.string(
-                    "Join the Discord server to trade with others!",
+                    "Join the Discord server to trade and share feedback!",
                   )}
                </div>
                <div>
@@ -153,8 +153,7 @@ module WithUser = {
                      );
                      Webapi.Dom.(
                        location->Location.setHref(
-                         "https://discord.com/api/oauth2/authorize?client_id=703109829610176522&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Fdiscord_oauth2&response_type=code&scope=guilds.join%20email&prompt=none&state="
-                         ++ state,
+                         Constants.discordOauthRedirectUri(state),
                        )
                      );
                    }}
@@ -163,7 +162,7 @@ module WithUser = {
                      Styles.discordButton,
                    ])}>
                    <span className=LoginOverlay.Styles.discordButtonLogo />
-                   {React.string("Connect Discord account")}
+                   {React.string("Connect your Discord")}
                  </button>
                </div>
              </>

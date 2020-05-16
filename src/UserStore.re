@@ -606,7 +606,7 @@ let register = (~username, ~email, ~password) => {
   };
 };
 
-let loginWithDiscord = (~code) => {
+let loginWithDiscord = (~code, ~isRegister) => {
   let%Repromise.JsExn response =
     Fetch.fetchWithInit(
       Constants.bapiUrl ++ "/login-discord",
@@ -615,7 +615,10 @@ let loginWithDiscord = (~code) => {
         ~body=
           Fetch.BodyInit.make(
             Js.Json.stringify(
-              Json.Encode.object_([("code", Js.Json.string(code))]),
+              Json.Encode.object_([
+                ("code", Js.Json.string(code)),
+                ("isRegister", Js.Json.boolean(isRegister)),
+              ]),
             ),
           ),
         ~headers=
@@ -643,6 +646,16 @@ let loginWithDiscord = (~code) => {
     let isRegister =
       (json |> Json.Decode.(optional(field("isRegister", bool))))
       ->Belt.Option.getWithDefault(false);
+    if (isRegister) {
+      Analytics.Amplitude.logEventWithProperties(
+        ~eventName="Registration Succeeded",
+        ~eventProperties={
+          "username": user.username,
+          "email": user.email,
+          "discordId": user.discordId,
+        },
+      );
+    };
     Promise.resolved(Ok((user, isRegister)));
   } else {
     let%Repromise.JsExn text = Fetch.Response.text(response);

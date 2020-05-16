@@ -21,3 +21,11 @@ let sentryId = "https://b3e870897abf4c5caef3e12320202dee@o378523.ingest.sentry.i
 exception Uhoh;
 
 let headerHeight = 52;
+[@bs.val] external encodeURIComponent: string => string = "encodeURIComponent";
+let discordOauthRedirectUri = state =>
+  "https://discord.com/api/oauth2/authorize?client_id=703109829610176522&redirect_uri="
+  ++ encodeURIComponent(
+       Webapi.Dom.(location |> Location.origin) ++ "/discord_oauth2",
+     )
+  ++ "&response_type=code&scope=guilds.join%20identify&prompt=none&state="
+  ++ state;

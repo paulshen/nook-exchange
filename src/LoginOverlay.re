@@ -346,6 +346,31 @@ let make = (~onClose) => {
              <div className=Styles.registerTitle>
                {React.string("Welcome back!")}
              </div>
+             <div className=Styles.discordLoginRow>
+               <button
+                 onClick={_ => {
+                   let state =
+                     "login_"
+                     ++ string_of_int(Js.Math.random_int(100000, 999999));
+                   Dom.Storage.(
+                     localStorage |> setItem("discord_state", state)
+                   );
+                   Webapi.Dom.(
+                     location->Location.setHref(
+                       Constants.discordOauthRedirectUri(state),
+                     )
+                   );
+                 }}
+                 className=Styles.discordButton>
+                 <span className=Styles.discordButtonLogo />
+                 {React.string("Login with Discord")}
+               </button>
+             </div>
+             <div className=Styles.orSection>
+               <div className=Styles.orLine />
+               <div className=Styles.orWord> {React.string("or")} </div>
+               <div className=Styles.orLine />
+             </div>
              <input
                type_="text"
                placeholder="Username"
@@ -409,7 +434,7 @@ let make = (~onClose) => {
                </div>
                <div className=Styles.blurb>
                  {React.string(
-                    "Add items to profile and share it with others.",
+                    "Add items to profile and share it with others!",
                   )}
                </div>
                <div className=Styles.url>
@@ -437,21 +462,20 @@ let make = (~onClose) => {
                  <button
                    onClick={_ => {
                      let state =
-                       "login_"
+                       "register_"
                        ++ string_of_int(Js.Math.random_int(100000, 999999));
                      Dom.Storage.(
                        localStorage |> setItem("discord_state", state)
                      );
                      Webapi.Dom.(
                        location->Location.setHref(
-                         "https://discord.com/api/oauth2/authorize?client_id=703109829610176522&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Fdiscord_oauth2&response_type=code&scope=guilds.join%20email&prompt=none&state="
-                         ++ state,
+                         Constants.discordOauthRedirectUri(state),
                        )
                      );
                    }}
                    className=Styles.discordButton>
                    <span className=Styles.discordButtonLogo />
-                   {React.string("Login with Discord")}
+                   {React.string("Register with Discord")}
                  </button>
                </div>
                <div className=Styles.orSection>

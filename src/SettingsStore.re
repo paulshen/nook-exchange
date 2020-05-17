@@ -43,7 +43,7 @@ let languageToString = (language: language) => {
   | `Italian => {j|Italiano|j}
   | `Japanese => {j|日本語|j}
   | `Korean => {j|한국어|j}
-  | `Dutch => {j|Dansk|j}
+  | `Dutch => {j|Nederlands|j}
   | `Russian => {j|Русский|j}
   | `ChineseSimplified => {j|中文|j}
   | `ChineseTraditional => {j|繁體中文|j}

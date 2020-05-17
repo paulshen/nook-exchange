@@ -150,25 +150,38 @@ let jsonToItems = (json: Js.Json.t) => {
       (json |> optional(field("tags", array(string))))
       ->Belt.Option.getWithDefault([||]),
   };
-  switch (recipeInfo) {
-  | Some((recipeId, recipeSource, _)) => [|
-      item,
-      {
-        ...item,
-        id: recipeId,
-        type_: Recipe(item.id),
-        name: item.name ++ " DIY",
-        sellPrice: None,
-        buyPrice: None,
-        source: Some(recipeSource),
-        customizeCost: None,
-        orderable: false,
-        bodyCustomizable: false,
-        patternCustomizable: false,
-      },
-    |]
-  | None => [|item|]
-  };
+  let items =
+    switch (recipeInfo) {
+    | Some((recipeId, recipeSource, _)) => [|
+        item,
+        {
+          ...item,
+          id: recipeId,
+          type_: Recipe(item.id),
+          name: item.name ++ " DIY",
+          sellPrice: None,
+          buyPrice: None,
+          source: Some(recipeSource),
+          customizeCost: None,
+          orderable: false,
+          bodyCustomizable: false,
+          patternCustomizable: false,
+        },
+      |]
+    | None => [|item|]
+    };
+  items
+  |> Js.Array.map((item: t) => {
+       let extraTags = [||];
+       switch (item.source) {
+       | Some(source) =>
+         if (source == "Jolly Redd's Treasure Trawler") {
+           extraTags |> Js.Array.push("redd") |> ignore;
+         }
+       | None => ()
+       };
+       {...item, tags: item.tags |> Js.Array.concat(extraTags)};
+     });
 };
 
 let all =

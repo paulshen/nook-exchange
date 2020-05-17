@@ -193,19 +193,25 @@ let doesItemMatchFilters = (~item: Item.t, ~filters: t) => {
     switch (filters.text) {
     | "" => true
     | text =>
-      let fragments =
-        (
-          Js.String.toLowerCase(text)
-          |> Js.String.splitByRe([%bs.re {|/[\s-]+/|}])
-        )
-        ->Belt.Array.keepMap(x => x);
-      fragments->Belt.Array.every(fragment =>
-        Js.String.toLowerCase(Item.getName(item))
-        |> removeAccents
-        |> Js.String.includes(removeAccents(fragment))
-        || item.tags
-        |> Js.Array.includes(fragment)
-      );
+      let textLower = Js.String.toLowerCase(text);
+      (
+        switch (item.source) {
+        | Some(source) => textLower == Js.String.toLowerCase(source)
+        | None => false
+        }
+      )
+      || {
+        let fragments =
+          (textLower |> Js.String.splitByRe([%bs.re {|/[\s-]+/|}]))
+          ->Belt.Array.keepMap(x => x);
+        fragments->Belt.Array.every(fragment =>
+          Js.String.toLowerCase(Item.getName(item))
+          |> removeAccents
+          |> Js.String.includes(removeAccents(fragment))
+          || item.tags
+          |> Js.Array.includes(fragment)
+        );
+      };
     }
   )
   && (

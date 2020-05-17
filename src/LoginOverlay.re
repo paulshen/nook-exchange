@@ -475,7 +475,7 @@ let make = (~onClose) => {
                    }}
                    className=Styles.discordButton>
                    <span className=Styles.discordButtonLogo />
-                   {React.string("Register with Discord")}
+                   {React.string("Register and Join Discord")}
                  </button>
                </div>
                <div className=Styles.orSection>

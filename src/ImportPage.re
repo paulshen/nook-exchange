@@ -861,10 +861,14 @@ let make = (~showLogin) => {
              </p>
              <p>
                {React.string(
-                  "If you don't want to type each item by hand, check out ",
+                  "If you don't want to type each item, check out ",
                 )}
                <a href="https://twitter.com/CatalogScanner" target="_blank">
                  {React.string("Catalog Scanner")}
+               </a>
+               {React.string(" by ")}
+               <a href="https://twitter.com/@ehsankia_" target="_blank">
+                 {React.string("Ehsan Kia")}
                </a>
                {React.string("!")}
              </p>

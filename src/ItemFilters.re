@@ -243,8 +243,12 @@ let compareArrays = (a, b) => {
   Belt.Option.getWithDefault(rv^, 0);
 };
 
-let compareItemsABC = (a: Item.t, b: Item.t) =>
-  int_of_float(Js.String.localeCompare(Item.getName(b), Item.getName(a)));
+let compareItemsABC = (a: Item.t, b: Item.t) => {
+  // hack to sort "wooden-" before "wooden "
+  let aName = Item.getName(a) |> Js.String.replaceByRe([%bs.re "/ /g"], "?");
+  let bName = Item.getName(b) |> Js.String.replaceByRe([%bs.re "/ /g"], "?");
+  int_of_float(Js.String.localeCompare(bName, aName));
+};
 let compareItemsSellPriceDesc = (a: Item.t, b: Item.t) =>
   compareArrays(
     [|

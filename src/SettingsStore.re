@@ -111,6 +111,7 @@ let api =
 let useLanguage = () => {
   api.useStoreWithSelector(state => state.language, ());
 };
+let getLanguage = () => api.getState().language;
 
 let setLanguage = (~language) => {
   api.dispatch(SetLanguage(language));

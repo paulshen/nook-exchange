@@ -202,11 +202,11 @@ module Section = {
     } else if (viewportWidth >= 1040) {
       10;
     } else if (viewportWidth >= 860) {
-      12;
+      8;
     } else if (viewportWidth >= 640) {
-      12;
+      6;
     } else {
-      10;
+      6;
     };
 
   [@react.component]
@@ -248,6 +248,7 @@ module Section = {
                       switch (list) {
                       | Wishlist => [|User.ForTrade, User.CanCraft|]
                       | ForTrade
+                      | Catalog
                       | CanCraft => [|User.Wishlist|]
                       },
                     )
@@ -422,6 +423,11 @@ let make =
   let hasForTrade = forTradeList->Array.length > 0;
   let hasCanCraft = canCraftList->Array.length > 0;
   let hasWishlist = wishlist->Array.length > 0;
+  let hasCatalogOnly =
+    userItems->Array.getBy(((_, item: User.item)) =>
+      item.status == CatalogOnly
+    )
+    != None;
 
   React.useEffect0(() => {
     Some(() => {TemporaryState.state := Some(FromProfileBrowser)})
@@ -440,6 +446,25 @@ let make =
      }}
     {if (hasWishlist) {
        <Section username list=Wishlist userItems=wishlist editable />;
+     } else {
+       React.null;
+     }}
+    {if (hasCatalogOnly) {
+       <Section
+         username
+         list=Catalog
+         userItems={
+           userItems->Array.keepU((. (_, item: User.item)) =>
+             switch (item.status) {
+             | CanCraft
+             | ForTrade
+             | CatalogOnly => true
+             | Wishlist => false
+             }
+           )
+         }
+         editable
+       />;
      } else {
        React.null;
      }}

@@ -21,18 +21,17 @@ module Styles = {
     ]);
   let listLinks =
     style([
+      backgroundColor(hex("ffffff80")),
+      media("(max-width: 640px)", [overflowX(auto)]),
+    ]);
+  let listLinksContent =
+    style([
       display(flexBox),
       alignItems(center),
-      backgroundColor(hex("ffffff80")),
       padding3(~top=px(18), ~bottom=px(16), ~h=px(32)),
       media(
         "(max-width: 640px)",
-        [
-          paddingLeft(px(16)),
-          paddingRight(px(16)),
-          whiteSpace(nowrap),
-          overflowX(auto),
-        ],
+        [paddingLeft(px(16)), paddingRight(px(16)), whiteSpace(nowrap)],
       ),
     ]);
   let profileLink =
@@ -42,15 +41,15 @@ module Styles = {
       fontSize(px(20)),
       textDecoration(none),
       opacity(0.8),
-      media("(max-width: 640px)", [fontSize(px(16))]),
       hover([opacity(1.)]),
+      media("(max-width: 860px)", [display(none)]),
     ]);
   let profileLinkIcon =
     style([
       flexShrink(0.),
       margin2(~v=zero, ~h=px(8)),
       top(zero),
-      media("(max-width: 400px)", [margin2(~v=zero, ~h=px(4))]),
+      media("(max-width: 860px)", [display(none)]),
     ]);
   let listLinkEmoji =
     style([
@@ -72,7 +71,7 @@ module Styles = {
       textDecoration(none),
       marginRight(px(28)),
       media("(max-width: 640px)", [fontSize(px(16))]),
-      media("(max-width: 400px)", [marginRight(px(16))]),
+      media("(max-width: 370px)", [marginRight(px(16))]),
       lastChild([marginRight(zero)]),
       hover([
         selector(
@@ -82,6 +81,12 @@ module Styles = {
       ]),
     ]);
   let rootMini = style([important(backgroundColor(hex("fffffff0")))]);
+  let catalogNotice =
+    style([
+      lineHeight(px(18)),
+      marginBottom(px(24)),
+      media("(max-width: 640px)", [marginBottom(px(16))]),
+    ]);
   let filterBar = style([marginBottom(zero)]);
   let topPager = style([media("(max-width: 640px)", [display(none)])]);
   let sectionToggles =
@@ -165,6 +170,12 @@ let make =
     React.useMemo1(
       () =>
         userItemsHasOneWithStatus(~userItems=user.items, ~status=Wishlist),
+      [|user|],
+    );
+  let hasCatalogOnly =
+    React.useMemo1(
+      () =>
+        userItemsHasOneWithStatus(~userItems=user.items, ~status=CatalogOnly),
       [|user|],
     );
   let userItems =
@@ -277,6 +288,7 @@ let make =
         | Wishlist => hasWishlist
         | CanCraft => hasCanCraft
         | ForTrade => hasForTrade
+        | Catalog => hasCatalogOnly
         }) {
       <Link
         path={
@@ -317,24 +329,34 @@ let make =
 
   <div className=Styles.root ref={ReactDOMRe.Ref.domRef(rootRef)}>
     <div className=Styles.listLinks>
-      <Link path={"/u/" ++ user.username} className=Styles.profileLink>
-        {React.string(user.username)}
-      </Link>
-      <span
-        className={Cn.make([
-          UserProfileBrowser.Styles.sectionTitleLinkIcon,
-          Styles.profileLinkIcon,
-        ])}
-      />
-      {renderListLink(ForTrade)}
-      {renderListLink(CanCraft)}
-      {renderListLink(Wishlist)}
+      <div className=Styles.listLinksContent>
+        <Link path={"/u/" ++ user.username} className=Styles.profileLink>
+          {React.string(user.username)}
+        </Link>
+        <span
+          className={Cn.make([
+            UserProfileBrowser.Styles.sectionTitleLinkIcon,
+            Styles.profileLinkIcon,
+          ])}
+        />
+        {renderListLink(ForTrade)}
+        {renderListLink(CanCraft)}
+        {renderListLink(Wishlist)}
+        {renderListLink(Catalog)}
+      </div>
     </div>
     <div
       className={Cn.make([
         Styles.body,
         Cn.ifTrue(Styles.rootMini, showMini),
       ])}>
+      {me && list == Catalog
+         ? <div className=Styles.catalogNotice>
+             {React.string(
+                {j|This list includes your For Trade and Can Craft items. You can also add catalog-only items.|j},
+              )}
+           </div>
+         : React.null}
       {Js.Array.length(userItems) > 8
          ? <div
              className={Cn.make([

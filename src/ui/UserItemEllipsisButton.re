@@ -108,19 +108,17 @@ let make = (~item: Item.t, ~userItem: User.item, ~variation, ~className) => {
                 | CatalogOnly
                 | Wishlist =>
                   <>
-                    {!Item.isRecipe(~item)
-                       ? <button
-                           onClick={_ => {
-                             UserStore.setItemStatus(
-                               ~itemId=item.id,
-                               ~variation,
-                               ~status=ForTrade,
-                             )
-                           }}
-                           className=Styles.menuItem>
-                           {React.string("Move to For Trade")}
-                         </button>
-                       : React.null}
+                    <button
+                      onClick={_ => {
+                        UserStore.setItemStatus(
+                          ~itemId=item.id,
+                          ~variation,
+                          ~status=ForTrade,
+                        )
+                      }}
+                      className=Styles.menuItem>
+                      {React.string("Move to For Trade")}
+                    </button>
                     {item.recipe !== None
                        ? <button
                            onClick={_ =>
@@ -153,24 +151,22 @@ let make = (~item: Item.t, ~userItem: User.item, ~variation, ~className) => {
                {switch (userItem.status) {
                 | ForTrade
                 | Wishlist =>
-                  me.enableCatalogCheckbox
-                    ? <button
-                        onClick={_ => {
-                          UserStore.setItemStatus(
-                            ~itemId=item.id,
-                            ~variation,
-                            ~status=CatalogOnly,
-                          )
-                        }}
-                        className=Styles.menuItem>
-                        {React.string(
-                           userItem.status == ForTrade
-                             ? "Move to Catalog Only"
-                             : Item.isRecipe(~item)
-                                 ? "Move DIY to Catalog" : "Move to Catalog",
-                         )}
-                      </button>
-                    : React.null
+                  <button
+                    onClick={_ => {
+                      UserStore.setItemStatus(
+                        ~itemId=item.id,
+                        ~variation,
+                        ~status=CatalogOnly,
+                      )
+                    }}
+                    className=Styles.menuItem>
+                    {React.string(
+                       userItem.status == ForTrade
+                         ? "Move to Catalog Only"
+                         : Item.isRecipe(~item)
+                             ? "Move DIY to Catalog" : "Move to Catalog",
+                     )}
+                  </button>
                 | _ => React.null
                 }}
                <button

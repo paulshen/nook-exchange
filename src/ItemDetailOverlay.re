@@ -472,67 +472,64 @@ module MyStatusSection = {
 
   [@react.component]
   let make = (~item: Item.t, ~variant) => {
-    let showCatalogCheckbox = UserStore.useEnableCatalogCheckbox();
     let userItem = UserStore.useItem(~itemId=item.id, ~variation=variant);
     <div className=Styles.root>
       {switch (userItem) {
        | Some(userItem) =>
-         switch (userItem.status) {
-         | Wishlist
-         | ForTrade
-         | CanCraft =>
-           <>
-             <div className=Styles.currentStatusRow>
-               <div className=Styles.currentStatus>
-                 {React.string(
-                    {
-                      switch (userItem.status) {
-                      | Wishlist => {j|🙏 In your Wishlist|j}
-                      | ForTrade => {j|🤝 In your For Trade list|j}
-                      | CanCraft => {j|🔨 In your Can Craft list|j}
-                      | _ => raise(Constants.Uhoh)
-                      };
-                    },
-                  )}
-               </div>
-               <UserItemEllipsisButton
-                 item
-                 userItem
-                 variation=variant
-                 className=Styles.ellipsisButton
-               />
-             </div>
-             <UserItemNote
-               itemId={item.id}
-               variation=variant
-               userItem
-               className=Styles.itemNote
-             />
-           </>
-         | CatalogOnly =>
-           <div className=Styles.currentStatusRow>
-             <ItemCard.StatusButtons item variant />
-             {showCatalogCheckbox
-                ? <ItemCard.CatalogCheckbox
+         <>
+           {switch (userItem.status) {
+            | Wishlist
+            | ForTrade
+            | CanCraft =>
+              <>
+                <div className=Styles.currentStatusRow>
+                  <div className=Styles.currentStatus>
+                    {React.string(
+                       {
+                         switch (userItem.status) {
+                         | Wishlist => {j|🙏 In your Wishlist|j}
+                         | ForTrade => {j|🤝 In your For Trade list|j}
+                         | CanCraft => {j|🔨 In your Can Craft list|j}
+                         | _ => raise(Constants.Uhoh)
+                         };
+                       },
+                     )}
+                  </div>
+                  <UserItemEllipsisButton
                     item
-                    variant
-                    userItem={Some(userItem)}
-                    className=Styles.catalogCheckbox
+                    userItem
+                    variation=variant
+                    className=Styles.ellipsisButton
                   />
-                : React.null}
-           </div>
-         }
+                </div>
+              </>
+            | CatalogOnly =>
+              <div className=Styles.currentStatusRow>
+                <ItemCard.StatusButtons item variant />
+                <ItemCard.CatalogCheckbox
+                  item
+                  variant
+                  userItem={Some(userItem)}
+                  className=Styles.catalogCheckbox
+                />
+              </div>
+            }}
+           <UserItemNote
+             itemId={item.id}
+             variation=variant
+             userItem
+             className=Styles.itemNote
+           />
+         </>
        | None =>
          <div className=Styles.currentStatusRow>
            <ItemCard.StatusButtons item variant />
-           {showCatalogCheckbox
-              ? <ItemCard.CatalogCheckbox
-                  item
-                  variant
-                  userItem=None
-                  className=Styles.catalogCheckbox
-                />
-              : React.null}
+           <ItemCard.CatalogCheckbox
+             item
+             variant
+             userItem=None
+             className=Styles.catalogCheckbox
+           />
          </div>
        }}
     </div>;

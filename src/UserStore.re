@@ -103,16 +103,6 @@ let useIsLoggedIn = () => {
     (),
   );
 };
-let useEnableCatalogCheckbox = () => {
-  api.useStoreWithSelector(
-    state =>
-      switch (state) {
-      | LoggedIn(user) => user.enableCatalogCheckbox
-      | _ => false
-      },
-    (),
-  );
-};
 exception ExpectedUser;
 let getUser = () => {
   switch (api.getState()) {

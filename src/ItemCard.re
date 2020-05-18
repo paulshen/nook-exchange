@@ -483,7 +483,7 @@ module CatalogCheckbox = {
 };
 
 [@react.component]
-let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
+let make = (~item: Item.t, ~isLoggedIn, ~showLogin) => {
   let (showRecipeAlternate, setShowRecipeAlternate) =
     React.useState(() => false);
   let item =
@@ -603,51 +603,68 @@ let make = (~item: Item.t, ~showCatalogCheckbox, ~showLogin) => {
            React.null;
          }}
       </div>
-      {showCatalogCheckbox
+      {isLoggedIn
          ? <div className=Styles.topRightIcons>
              <CatalogCheckbox item variant=variation userItem />
            </div>
          : React.null}
     </div>
     {let userItemStatus = userItem->Option.map(userItem => userItem.status);
-     switch (userItem, userItemStatus) {
-     | (Some(userItem), Some(Wishlist))
-     | (Some(userItem), Some(ForTrade))
-     | (Some(userItem), Some(CanCraft)) =>
-       <>
-         <UserItemNote
-           itemId={item.id}
-           variation
-           userItem
-           key={string_of_int(variation)}
-         />
-         <div className={Cn.make([Styles.bottomBar, Styles.bottomBarStatus])}>
-           {React.string(
-              {
-                switch (userItem.status) {
-                | Wishlist => {j|🙏 In your Wishlist|j}
-                | ForTrade => {j|🤝 In your For Trade list|j}
-                | CanCraft => {j|🔨 In your Can Craft list|j}
-                | _ => raise(Constants.Uhoh)
-                };
-              },
-            )}
-         </div>
-         <UserItemEllipsisButton
-           item
-           userItem
-           variation
-           className=Styles.ellipsisButton
-         />
-       </>
-     | _ =>
-       <StatusButtons
-         item
-         variant=variation
-         showLogin
-         className=Styles.bottomBar
-       />
-     }}
+     <>
+       {switch (userItem) {
+        | Some(userItem) =>
+          <>
+            <UserItemNote
+              itemId={item.id}
+              variation
+              userItem
+              key={string_of_int(variation)}
+            />
+            {switch (userItemStatus) {
+             | Some(Wishlist)
+             | Some(ForTrade)
+             | Some(CanCraft) =>
+               <>
+                 <div
+                   className={Cn.make([
+                     Styles.bottomBar,
+                     Styles.bottomBarStatus,
+                   ])}>
+                   {React.string(
+                      {
+                        switch (userItem.status) {
+                        | Wishlist => {j|🙏 In your Wishlist|j}
+                        | ForTrade => {j|🤝 In your For Trade list|j}
+                        | CanCraft => {j|🔨 In your Can Craft list|j}
+                        | _ => raise(Constants.Uhoh)
+                        };
+                      },
+                    )}
+                 </div>
+                 <UserItemEllipsisButton
+                   item
+                   userItem
+                   variation
+                   className=Styles.ellipsisButton
+                 />
+               </>
+             | _ => React.null
+             }}
+          </>
+        | None => React.null
+        }}
+       {switch (userItemStatus) {
+        | Some(CatalogOnly)
+        | None =>
+          <StatusButtons
+            item
+            variant=variation
+            showLogin
+            className=Styles.bottomBar
+          />
+        | _ => React.null
+        }}
+     </>}
     {hasQuicklist
        ? <QuicklistButton
            itemId={item.id}

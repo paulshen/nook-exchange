@@ -1,5 +1,6 @@
 module Styles = {
   open Css;
+  let root = style([paddingTop(px(16))]);
   let emptyProfile =
     style([
       maxWidth(px(768)),
@@ -7,7 +8,13 @@ module Styles = {
       textAlign(center),
     ]);
   let username =
-    style([fontSize(px(32)), textAlign(center), marginBottom(px(16))]);
+    style([fontSize(px(32)), textAlign(center), marginBottom(px(24))]);
+  let usernameLink =
+    style([
+      color(Colors.charcoal),
+      textDecoration(none),
+      hover([textDecoration(underline)]),
+    ]);
   let userBodySpacer = style([height(px(16))]);
   let userBody =
     style([
@@ -202,8 +209,16 @@ let make = (~username, ~urlRest, ~url: ReasonReactRouter.url, ~showLogin) => {
     };
     None;
   });
-  <div>
-    <div className=Styles.username> {React.string(username)} </div>
+  <div className=Styles.root>
+    <div className=Styles.username>
+      {switch (list) {
+       | Some(_) =>
+         <Link path={"/u/" ++ username} className=Styles.usernameLink>
+           {React.string(username)}
+         </Link>
+       | None => React.string(username)
+       }}
+    </div>
     {switch (user) {
      | Some(user) =>
        <div>

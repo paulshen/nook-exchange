@@ -206,7 +206,6 @@ let make = () => {
       {isLanguageLoaded
          ? <div className=Styles.body>
              {switch (url.path) {
-              | ["catalog"] => <MyCatalogPage />
               | ["friends", ..._] => <FriendsPage />
               | ["lists", ..._] => <MyListsPage />
               | ["u", username, ...urlRest] =>

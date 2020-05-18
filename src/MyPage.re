@@ -1,5 +1,6 @@
 module Styles = {
   open Css;
+  let root = style([paddingTop(px(16))]);
   let emptyProfile =
     style([
       maxWidth(px(768)),
@@ -167,7 +168,7 @@ let make = (~user: User.t, ~urlRest, ~url) => {
     | [url] => ViewingList.urlToViewingList(url)
     | _ => None
     };
-  <div>
+  <div className=Styles.root>
     <div className=Styles.username> {React.string(user.username)} </div>
     <BodyCard>
       <ProfileTextarea user />

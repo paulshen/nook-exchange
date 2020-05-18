@@ -29,11 +29,10 @@ module Styles = {
   let catalogStatusButton =
     style([
       fontSize(px(13)),
-      opacity(0.),
+      opacity(0.5),
       cursor(`default),
       padding2(~v=zero, ~h=px(1)),
       transition(~duration=200, "all"),
-      media("(hover: none)", [opacity(0.5)]),
     ]);
   let nameLink =
     style([
@@ -272,8 +271,8 @@ let make =
        : React.null}
     {editable
        ? <>
-           {switch (onCatalogPage, userItem) {
-            | (false, Some(userItem)) =>
+           {switch (userItem) {
+            | Some(userItem) =>
               <UserItemNote
                 itemId={item.id}
                 variation

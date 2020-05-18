@@ -39,6 +39,14 @@ module Styles = {
 let make = (~itemId, ~variation, ~userItem: User.item, ~className=?, ()) => {
   let (userItemNote, setUserItemNote) = React.useState(() => userItem.note);
 
+  React.useEffect1(
+    () => {
+      setUserItemNote(_ => userItem.note);
+      None;
+    },
+    [|userItem.note|],
+  );
+
   <div className={Cn.make([Styles.root, Cn.unpack(className)])}>
     <textarea
       value=userItemNote

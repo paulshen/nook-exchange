@@ -278,7 +278,7 @@ module Followee = {
 module WithViewer = {
   module Styles = {
     open Css;
-    let root = style([paddingTop(px(16))]);
+    let root = style([]);
     let emptyFeed =
       style([
         backgroundColor(hex("ffffffc0")),

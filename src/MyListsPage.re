@@ -3,14 +3,13 @@ module WithViewer = {
     open Css;
     let root =
       style([
-        paddingTop(px(16)),
         display(flexBox),
         flexDirection(column),
         margin2(~v=zero, ~h=auto),
         maxWidth(px(560)),
         media(
           "(max-width: 630px)",
-          [paddingTop(px(16)), marginLeft(px(16)), marginRight(px(16))],
+          [marginLeft(px(16)), marginRight(px(16))],
         ),
       ]);
     let body =

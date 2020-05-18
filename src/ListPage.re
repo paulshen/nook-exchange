@@ -4,13 +4,12 @@ module Styles = {
   open Css;
   let root =
     style([
-      paddingTop(px(32)),
       display(flexBox),
       flexDirection(column),
       margin2(~v=zero, ~h=auto),
       media(
         "(max-width: 630px)",
-        [paddingTop(px(16)), marginLeft(px(16)), marginRight(px(16))],
+        [marginLeft(px(16)), marginRight(px(16))],
       ),
     ]);
   let cloneMessage =
@@ -207,10 +206,7 @@ module ListRow = {
   let make = (~itemId, ~variant) => {
     let item = Item.getItem(~itemId);
     <Link
-      path={Utils.getItemDetailUrl(
-        ~itemId,
-        ~variant=Some(variant),
-      )}
+      path={Utils.getItemDetailUrl(~itemId, ~variant=Some(variant))}
       className=Styles.row>
       <div className=Styles.imageWrapper>
         <img src={Item.getImageUrl(~item, ~variant)} className=Styles.image />

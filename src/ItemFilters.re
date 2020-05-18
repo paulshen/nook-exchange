@@ -62,7 +62,8 @@ type sort =
 
 type mask =
   | Orderable
-  | HasRecipe;
+  | Craftable
+  | NotOrderable;
 
 type excludables =
   | Catalog
@@ -97,7 +98,8 @@ let serialize = (~filters, ~defaultSort, ~pageOffset) => {
   };
   switch (filters.mask) {
   | Some(Orderable) => p |> Js.Array.push(("orderable", "")) |> ignore
-  | Some(HasRecipe) => p |> Js.Array.push(("has-recipe", "")) |> ignore
+  | Some(NotOrderable) => p |> Js.Array.push(("not-orderable", "")) |> ignore
+  | Some(Craftable) => p |> Js.Array.push(("craftable", "")) |> ignore
   | None => ()
   };
   switch (filters.category) {
@@ -135,7 +137,10 @@ let fromUrlSearch = (~urlSearch, ~defaultSort) => {
       mask:
         searchParams |> has("orderable")
           ? Some(Orderable)
-          : searchParams |> has("has-recipe") ? Some(HasRecipe) : None,
+          : searchParams |> has("craftable")
+              ? Some(Craftable)
+              : searchParams |> has("not-orderable")
+                  ? Some(NotOrderable) : None,
       category:
         Option.flatMap(searchParams |> get("c"), category =>
           if (Item.validCategoryStrings |> Js.Array.includes(category)) {
@@ -217,7 +222,8 @@ let doesItemMatchFilters = (~item: Item.t, ~filters: t) => {
   && (
     switch (filters.mask) {
     | Some(Orderable) => item.orderable
-    | Some(HasRecipe) => item.recipe !== None
+    | Some(Craftable) => item.recipe !== None
+    | Some(NotOrderable) => !item.orderable && item.recipe === None
     | None => true
     }
   )
@@ -749,7 +755,8 @@ let make =
       value={
         switch (filters.mask) {
         | Some(Orderable) => "orderable"
-        | Some(HasRecipe) => "has-recipe"
+        | Some(Craftable) => "craftable"
+        | Some(NotOrderable) => "not-orderable"
         | None => "none"
         }
       }
@@ -760,7 +767,8 @@ let make =
           mask:
             switch (value) {
             | "orderable" => Some(Orderable)
-            | "has-recipe" => Some(HasRecipe)
+            | "craftable" => Some(Craftable)
+            | "not-orderable" => Some(NotOrderable)
             | "none" => None
             | _ => None
             },
@@ -772,7 +780,8 @@ let make =
       ])}>
       <option value="none"> {React.string("No Filter")} </option>
       <option value="orderable"> {React.string("Orderable")} </option>
-      <option value="has-recipe"> {React.string("Has Recipe")} </option>
+      <option value="craftable"> {React.string("Craftable")} </option>
+      <option value="not-orderable"> {React.string("Not Orderable")} </option>
     </select>
     <select
       value={

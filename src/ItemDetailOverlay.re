@@ -539,10 +539,13 @@ module MyStatusSection = {
 module FriendsSection = {
   module Styles = {
     open Css;
+    let friendSection =
+      style([
+        borderTop(px(1), dashed, Colors.lightGreen),
+        backgroundColor(Colors.faintGreen),
+      ]);
     let friendItemList =
       style([
-        backgroundColor(Colors.faintGreen),
-        borderTop(px(1), dashed, Colors.lightGreen),
         display(flexBox),
         flexWrap(wrap),
         padding(px(16)),
@@ -631,56 +634,63 @@ module FriendsSection = {
     switch (friendItems) {
     | Some(friendItems) =>
       if (Js.Array.length(friendItems) > 0) {
-        <div className=Styles.friendItemList>
-          {friendItems
-           |> Js.Array.slice(~start=0, ~end_=showLimit)
-           |> Js.Array.map(friendItem =>
-                <div
-                  className=Styles.friendItem
-                  key={friendItem.userId ++ string_of_int(friendItem.variant)}>
-                  <img
-                    src={Item.getImageUrl(~item, ~variant=friendItem.variant)}
-                    className=Styles.image
-                  />
-                  <span>
-                    <Link path={"/u/" ++ friendItem.username}>
-                      {React.string(friendItem.username)}
-                    </Link>
-                    <span className=Styles.hasIn>
-                      {React.string(" has in ")}
+        <div className=Styles.friendSection>
+          <div className=Styles.friendItemList>
+            {friendItems
+             |> Js.Array.slice(~start=0, ~end_=showLimit)
+             |> Js.Array.map(friendItem =>
+                  <div
+                    className=Styles.friendItem
+                    key={
+                      friendItem.userId ++ string_of_int(friendItem.variant)
+                    }>
+                    <img
+                      src={Item.getImageUrl(
+                        ~item,
+                        ~variant=friendItem.variant,
+                      )}
+                      className=Styles.image
+                    />
+                    <span>
+                      <Link path={"/u/" ++ friendItem.username}>
+                        {React.string(friendItem.username)}
+                      </Link>
+                      <span className=Styles.hasIn>
+                        {React.string(" has in ")}
+                      </span>
+                      <Link
+                        path={
+                          "/u/"
+                          ++ friendItem.username
+                          ++ "/"
+                          ++ ViewingList.viewingListToUrl(
+                               switch (friendItem.status) {
+                               | ForTrade => ForTrade
+                               | CanCraft => CanCraft
+                               | Wishlist => Wishlist
+                               | CatalogOnly => Catalog
+                               },
+                             )
+                        }
+                        className=Styles.listLink>
+                        {React.string(
+                           User.itemStatusToString(friendItem.status),
+                         )}
+                      </Link>
                     </span>
-                    <Link
-                      path={
-                        "/u/"
-                        ++ friendItem.username
-                        ++ "/"
-                        ++ ViewingList.viewingListToUrl(
-                             switch (friendItem.status) {
-                             | ForTrade => ForTrade
-                             | CanCraft => CanCraft
-                             | Wishlist => Wishlist
-                             | CatalogOnly => Catalog
-                             },
-                           )
-                      }
-                      className=Styles.listLink>
-                      {React.string(
-                         User.itemStatusToString(friendItem.status),
-                       )}
-                    </Link>
-                  </span>
-                </div>
-              )
-           |> React.array}
-          {Js.Array.length(friendItems) > showLimit
-             ? <div className=Styles.showAllRow>
-                 <button
-                   onClick={_ => {setShowLimit(showLimit => showLimit + 12)}}
-                   className=Styles.showAllButton>
-                   {React.string("Show more")}
-                 </button>
-               </div>
-             : React.null}
+                  </div>
+                )
+             |> React.array}
+            {Js.Array.length(friendItems) > showLimit
+               ? <div className=Styles.showAllRow>
+                   <button
+                     onClick={_ => {setShowLimit(showLimit => showLimit + 12)}}
+                     className=Styles.showAllButton>
+                     {React.string("Show more")}
+                   </button>
+                 </div>
+               : React.null}
+          </div>
         </div>;
       } else {
         React.null;

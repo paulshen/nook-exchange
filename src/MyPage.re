@@ -8,25 +8,6 @@ module Styles = {
     ]);
   let username =
     style([fontSize(px(32)), textAlign(center), marginBottom(px(16))]);
-  let userBody =
-    style([
-      backgroundColor(hex("ffffffc0")),
-      boxSizing(borderBox),
-      lineHeight(px(20)),
-      margin3(~top=zero, ~bottom=px(48), ~h=auto),
-      maxWidth(px(512)),
-      padding2(~v=px(16), ~h=px(24)),
-      borderRadius(px(8)),
-      media(
-        "(max-width: 512px)",
-        [
-          borderRadius(zero),
-          padding(px(16)),
-          marginBottom(zero),
-          borderBottom(px(1), solid, Colors.faintGray),
-        ],
-      ),
-    ]);
   let url = style([]);
   let bodyText = style([fontSize(px(18))]);
 };
@@ -188,7 +169,7 @@ let make = (~user: User.t, ~urlRest, ~url) => {
     };
   <div>
     <div className=Styles.username> {React.string(user.username)} </div>
-    <div className=Styles.userBody>
+    <BodyCard>
       <ProfileTextarea user />
       <div className=Styles.url>
         {React.string("Share your profile! ")}
@@ -201,7 +182,7 @@ let make = (~user: User.t, ~urlRest, ~url) => {
         <Link path="/import"> {React.string("item importer")} </Link>
         {React.string(".")}
       </div>
-    </div>
+    </BodyCard>
     {switch (list) {
      | Some(list) => <UserListBrowser user list url me=true />
      | None =>

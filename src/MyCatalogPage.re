@@ -2,23 +2,6 @@ module Styles = {
   open Css;
   let title =
     style([fontSize(px(36)), textAlign(center), marginBottom(px(16))]);
-  let userBody =
-    style([
-      backgroundColor(hex("ffffffc0")),
-      boxSizing(borderBox),
-      lineHeight(px(20)),
-      margin2(~v=px(16), ~h=auto),
-      maxWidth(px(512)),
-      padding2(~v=px(16), ~h=px(24)),
-      borderRadius(px(8)),
-      media("(max-width: 512px)", [borderRadius(zero), padding(px(16))]),
-    ]);
-  let userBodyParagraph =
-    style([
-      marginBottom(px(12)),
-      whiteSpace(`preLine),
-      media("(max-width: 450px)", [whiteSpace(normal)]),
-    ]);
 };
 
 module Catalog = {
@@ -177,15 +160,15 @@ module Loaded = {
 
     <div>
       <div className=Styles.title> {React.string("My Catalog")} </div>
-      <div className=Styles.userBody>
-        <div className=Styles.userBodyParagraph>
+      <BodyCard>
+        <p>
           {React.string(
              {j|This is a list of your For Trade and Can Craft items. You can also have catalog-only items. Share your catalog! |j},
            )}
           <a href=url target="_blank"> {React.string(url)} </a>
-        </div>
+        </p>
         {user.enableCatalogCheckbox
-           ? <div className=Styles.userBodyParagraph>
+           ? <p>
                {React.string(
                   "Catalog checkboxes are enabled! Add items in the ",
                 )}
@@ -204,8 +187,8 @@ module Loaded = {
                  {React.string("Hide catalog checkboxes")}
                </a>
                {React.string(".")}
-             </div>
-           : <div className=Styles.userBodyParagraph>
+             </p>
+           : <p>
                {React.string("To add catalog-only items, ")}
                <a
                  href="#"
@@ -220,8 +203,8 @@ module Loaded = {
                  {React.string("enable catalog checkboxes")}
                </a>
                {React.string(".")}
-             </div>}
-      </div>
+             </p>}
+      </BodyCard>
       <Catalog userItems=catalog />
     </div>;
   };

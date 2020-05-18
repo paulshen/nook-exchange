@@ -2,37 +2,12 @@ open Belt;
 
 module Styles = {
   open Css;
-  let root =
+  let root = style([margin3(~top=zero, ~bottom=px(32), ~h=auto)]);
+  let body =
     style([
-      padding2(~v=zero, ~h=px(16)),
-      margin3(~top=zero, ~bottom=px(32), ~h=auto),
       maxWidth(px(512)),
-    ]);
-  let topBlurb =
-    style([
-      backgroundColor(hex("ffffffc0")),
-      boxSizing(borderBox),
-      lineHeight(px(20)),
-      marginBottom(px(32)),
-      padding2(~v=px(16), ~h=px(24)),
-      borderRadius(px(8)),
-      selector(
-        "& > p",
-        [
-          marginTop(zero),
-          marginBottom(px(8)),
-          lastChild([marginBottom(zero)]),
-        ],
-      ),
-      media(
-        "(max-width: 512px)",
-        [
-          padding(px(16)),
-          marginLeft(px(-16)),
-          marginRight(px(-16)),
-          borderRadius(zero),
-        ],
-      ),
+      margin2(~v=zero, ~h=auto),
+      padding2(~v=zero, ~h=px(16)),
     ]);
   let textarea =
     style([
@@ -821,7 +796,7 @@ let make = (~showLogin) => {
        switch (results) {
        | Some(results) =>
          <div>
-           <div className=Styles.topBlurb>
+           <BodyCard>
              <p>
                {React.string(
                   {j|For each item, choose For Trade 🤝, Can Craft 🔨, Catalog 📖 or skip. If the item is already in your profile, you will see the status next to the selector.|j},
@@ -837,19 +812,21 @@ let make = (~showLogin) => {
                   "When you are done, press the Save button in the bottom bar. There are bulk actions to help as well!",
                 )}
              </p>
+           </BodyCard>
+           <div className=Styles.body>
+             <Results
+               me
+               rows=results
+               onReset={() => {
+                 setResults(_ => None);
+                 setValue(_ => "");
+               }}
+             />
            </div>
-           <Results
-             me
-             rows=results
-             onReset={() => {
-               setResults(_ => None);
-               setValue(_ => "");
-             }}
-           />
          </div>
        | None =>
          <div>
-           <div className=Styles.topBlurb>
+           <BodyCard>
              <p>
                {React.string(
                   "Have a big collection? This tool can help you add many items at once. Start by pasting a list of item names in the textbox. ",
@@ -872,21 +849,23 @@ let make = (~showLogin) => {
                </a>
                {React.string("!")}
              </p>
+           </BodyCard>
+           <div className=Styles.body>
+             <form onSubmit>
+               <textarea
+                 value
+                 placeholder="Enter each item name on its own line"
+                 onChange={e => {
+                   let value = ReactEvent.Form.target(e)##value;
+                   setValue(_ => value);
+                 }}
+                 className=Styles.textarea
+               />
+               <div className=Styles.searchButtonRow>
+                 <Button> {React.string("Search for items")} </Button>
+               </div>
+             </form>
            </div>
-           <form onSubmit>
-             <textarea
-               value
-               placeholder="Enter each item name on its own line"
-               onChange={e => {
-                 let value = ReactEvent.Form.target(e)##value;
-                 setValue(_ => value);
-               }}
-               className=Styles.textarea
-             />
-             <div className=Styles.searchButtonRow>
-               <Button> {React.string("Search for items")} </Button>
-             </div>
-           </form>
          </div>
        }
      | _ => React.null

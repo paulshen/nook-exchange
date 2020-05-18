@@ -47,7 +47,8 @@ module WithViewer = {
     let listTitle = style([fontSize(px(16)), color(Colors.charcoal)]);
     let listNumberItems = style([color(Colors.lightGray)]);
     let listItemImages = style([display(flexBox)]);
-    let listItemImage = style([width(px(64)), height(px(64))]);
+    let listItemImage =
+      style([width(px(64)), height(px(64)), flexShrink(0.)]);
     let noLists = style([padding2(~v=px(16), ~h=px(16))]);
   };
 

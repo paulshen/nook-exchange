@@ -138,7 +138,13 @@ module Styles = {
       flexDirection(column),
     ]);
   let bodyListWrapper =
-    style([flexGrow(1.), overflow(hidden), position(relative)]);
+    style([
+      flexGrow(1.),
+      overflow(hidden),
+      position(relative),
+      display(flexBox),
+      flexDirection(column),
+    ]);
   let bodyList = style([height(pct(100.)), overflow(auto)]);
   let listImages =
     style([

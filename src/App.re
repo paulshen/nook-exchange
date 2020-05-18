@@ -6,6 +6,7 @@ module Styles = {
   let tagline =
     style([
       textAlign(center),
+      marginTop(px(-8)),
       marginBottom(px(32)),
       media("(max-width: 500px)", [marginBottom(px(32))]),
     ]);
@@ -74,7 +75,6 @@ exception DiscordOauthStateMismatch(string);
 let make = () => {
   let url = ReasonReactRouter.useUrl();
   let (showLogin, setShowLogin) = React.useState(() => false);
-  let showSettings = url.hash == "settings";
   let itemDetails = {
     let result = url.hash |> Js.Re.exec_([%bs.re "/i(-?\d+)(:(\d+))?/g"]);
     switch (result) {
@@ -195,14 +195,7 @@ let make = () => {
 
   <div className=Styles.root>
     <TooltipConfigContextProvider value=tooltipConfig>
-      <HeaderBar
-        onLogin={_ => setShowLogin(_ => true)}
-        onSettings={_ => {
-          ReasonReactRouter.push(
-            Utils.getPathWithSearch(~url) ++ "#settings",
-          )
-        }}
-      />
+      <HeaderBar onLogin={_ => setShowLogin(_ => true)} />
       {isLanguageLoaded
          ? <div className=Styles.body>
              {switch (url.path) {
@@ -223,6 +216,7 @@ let make = () => {
               | ["terms"] => <TextPages.TermsOfService />
               | ["import"] =>
                 <ImportPage showLogin={() => setShowLogin(_ => true)} />
+              | ["settings"] => <SettingsPage />
               | ["discord_oauth2"] => React.null
               | _ =>
                 <>
@@ -240,13 +234,6 @@ let make = () => {
       <QuicklistOverlay />
       {showLogin
          ? <LoginOverlay onClose={() => setShowLogin(_ => false)} />
-         : React.null}
-      {showSettings
-         ? <SettingsOverlay
-             onClose={() => {
-               ReasonReactRouter.push(Utils.getPathWithSearch(~url))
-             }}
-           />
          : React.null}
       {switch (itemDetails) {
        | Some((item, variant)) =>

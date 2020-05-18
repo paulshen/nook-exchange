@@ -760,8 +760,7 @@ let connectDiscordAccount = (~code) => {
       let%Repromise.JsExn json = Fetch.Response.json(response);
       let discordId = json |> Json.Decode.(field("discordId", string));
       api.dispatch(ConnectDiscordId(discordId));
-      let url = ReasonReactRouter.dangerouslyGetInitialUrl();
-      ReasonReactRouter.push(Utils.getPathWithSearch(~url) ++ "#settings");
+      ReasonReactRouter.push("/settings");
       Promise.resolved();
     }
     |> ignore;

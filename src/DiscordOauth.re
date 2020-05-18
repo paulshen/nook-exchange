@@ -50,7 +50,7 @@ let process = (~code, ~isLogin, ~isRegister, ~isConnect) =>
                          ++ user.username
                          ++ ". You can change it ",
                        )}
-                      <Link path="/#settings" onClick={_ => {onClose()}}>
+                      <Link path="/settings" onClick={_ => {onClose()}}>
                         {React.string("here")}
                       </Link>
                       {React.string(".")}

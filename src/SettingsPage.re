@@ -1,12 +1,6 @@
 module Styles = {
   open Css;
-  let body =
-    style([
-      boxSizing(borderBox),
-      maxWidth(px(400)),
-      padding2(~v=px(32), ~h=px(32)),
-      width(vw(90.)),
-    ]);
+  let root = style([]);
   let input =
     style([
       backgroundColor(rgba(0, 0, 0, 0.05)),
@@ -42,8 +36,6 @@ module Styles = {
       transition(~duration=200, "all"),
       disabled([opacity(0.5)]),
     ]);
-  let title =
-    style([fontSize(px(20)), textAlign(center), marginBottom(px(24))]);
   let blurb = style([marginBottom(px(16))]);
   let urlPreview =
     style([
@@ -58,6 +50,7 @@ module Styles = {
     style([
       borderBottom(px(1), dashed, Colors.lightGray),
       marginBottom(px(16)),
+      paddingTop(px(8)),
       paddingBottom(px(16)),
     ]);
   let discordButton = style([marginTop(px(16))]);
@@ -69,7 +62,7 @@ type submitStatus =
 
 module WithUser = {
   [@react.component]
-  let make = (~user: User.t, ~onClose) => {
+  let make = (~user: User.t) => {
     let (username, setUsername) = React.useState(() => user.username);
     let (password, setPassword) = React.useState(() => "");
     let (oldPassword, setOldPassword) = React.useState(() => "");
@@ -122,9 +115,9 @@ module WithUser = {
       |> ignore;
     };
 
-    <Modal onBackdropClick={_ => onClose()}>
-      <div className=Styles.body>
-        <div className=Styles.title> {React.string("Settings")} </div>
+    <div className=Styles.root>
+      <PageTitle title="Settings" />
+      <BodyCard>
         <div className=Styles.discordSection>
           {switch (user.discordId) {
            | Some(_) =>
@@ -239,20 +232,16 @@ module WithUser = {
             </button>
           </div>
         </form>
-      </div>
-      <button
-        onClick={_ => onClose()}
-        className=LoginOverlay.Styles.closeButton
-      />
-    </Modal>;
+      </BodyCard>
+    </div>;
   };
 };
 
 [@react.component]
-let make = (~onClose) => {
+let make = () => {
   let user = UserStore.useMe();
   switch (user) {
-  | Some(user) => <WithUser user onClose />
+  | Some(user) => <WithUser user />
   | None => React.null
   };
 };

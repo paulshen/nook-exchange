@@ -3,7 +3,7 @@ module Styles = {
   let wrapper =
     style([
       height(px(Constants.headerHeight)),
-      marginBottom(px(32)),
+      marginBottom(px(40)),
       media("(max-width: 500px)", [marginBottom(px(16))]),
     ]);
   let root =
@@ -145,7 +145,7 @@ module Menu = {
   };
 
   [@react.component]
-  let make = (~onClose, ~user: option(User.t), ~onLogin, ~onSettings) => {
+  let make = (~onClose, ~user: option(User.t), ~onLogin) => {
     let (animateIn, setAnimateIn) = React.useState(() => false);
     React.useEffect0(() => {
       setAnimateIn(_ => true);
@@ -178,15 +178,9 @@ module Menu = {
            <Link path="/lists" className=MenuStyles.menuItem>
              {React.string("My Lists")}
            </Link>
-           <a
-             href="#"
-             onClick={e => {
-               onSettings();
-               ReactEvent.Mouse.preventDefault(e);
-             }}
-             className=MenuStyles.menuItem>
+           <Link path="/settings" className=MenuStyles.menuItem>
              {React.string("Settings")}
-           </a>
+           </Link>
            <a
              href="https://twitter.com/nookexchange"
              target="_blank"
@@ -241,7 +235,7 @@ module Menu = {
 let nearTopThreshold = 64.;
 
 [@react.component]
-let make = (~onLogin, ~onSettings) => {
+let make = (~onLogin) => {
   let user = UserStore.useMe();
   let (isNearTop, setIsNearTop) =
     React.useState(() => {
@@ -343,12 +337,7 @@ let make = (~onLogin, ~onSettings) => {
       <h1 className=Styles.logo> {React.string("Nook Exchange")} </h1>
     </Link>
     {showMenu
-       ? <Menu
-           user
-           onLogin
-           onSettings
-           onClose={() => setShowMenu(_ => false)}
-         />
+       ? <Menu user onLogin onClose={() => setShowMenu(_ => false)} />
        : React.null}
   </div>;
 };

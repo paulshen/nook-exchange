@@ -9,6 +9,7 @@ module Styles = {
       margin2(~v=zero, ~h=auto),
       padding2(~v=zero, ~h=px(16)),
     ]);
+  let fetchingCatalogScanner = style([marginBottom(px(16))]);
   let textarea =
     style([
       borderRadius(px(4)),
@@ -783,10 +784,12 @@ let process = value => {
 };
 
 [@react.component]
-let make = (~showLogin) => {
+let make = (~showLogin, ~url: ReasonReactRouter.url) => {
   let userState = UserStore.useStore();
   let (value, setValue) = React.useState(() => "");
   let (results, setResults) = React.useState(() => None);
+  let (isFetchingFromCatalogScanner, setIsFetchingFromCatalogScanner) =
+    React.useState(() => false);
   let onSubmit = e => {
     ReactEvent.Form.preventDefault(e);
     setResults(_ => Some(process(value)));
@@ -803,6 +806,34 @@ let make = (~showLogin) => {
     [|needsLogin|],
   );
   React.useEffect0(() => {
+    open Webapi.Url.URLSearchParams;
+    let searchParams = make(url.search);
+    let catalogScannerId = searchParams |> get("cs");
+    (
+      switch (catalogScannerId) {
+      | Some(catalogScannerId) =>
+        setIsFetchingFromCatalogScanner(_ => true);
+        let%Repromise.Js response =
+          Fetch.fetchWithInit(
+            {j|http://ehsan.lol/$catalogScannerId/raw|j},
+            Fetch.RequestInit.make(~method_=Get, ~mode=CORS, ()),
+          );
+        setIsFetchingFromCatalogScanner(_ => false);
+        switch (response) {
+        | Ok(response) =>
+          if (Fetch.Response.status(response) < 400) {
+            let%Repromise.JsExn text = Fetch.Response.text(response);
+            setResults(_ => Some(process(text)));
+            Promise.resolved();
+          } else {
+            Promise.resolved();
+          }
+        | Error(_) => Promise.resolved()
+        };
+      | None => Promise.resolved()
+      }
+    )
+    |> ignore;
     Analytics.Amplitude.logEvent(~eventName="Import Page Viewed");
     None;
   });
@@ -869,6 +900,11 @@ let make = (~showLogin) => {
              </p>
            </BodyCard>
            <div className=Styles.body>
+             {isFetchingFromCatalogScanner
+                ? <div className=Styles.fetchingCatalogScanner>
+                    {React.string("Fetching from Catalog Scanner...")}
+                  </div>
+                : React.null}
              <form onSubmit>
                <textarea
                  value

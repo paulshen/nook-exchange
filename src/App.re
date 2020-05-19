@@ -215,7 +215,7 @@ let make = () => {
               | ["privacy"] => <TextPages.PrivacyPolicy />
               | ["terms"] => <TextPages.TermsOfService />
               | ["import"] =>
-                <ImportPage showLogin={() => setShowLogin(_ => true)} />
+                <ImportPage url showLogin={() => setShowLogin(_ => true)} />
               | ["settings"] => <SettingsPage />
               | ["discord_oauth2"] => React.null
               | _ =>

@@ -815,7 +815,7 @@ let make = (~showLogin, ~url: ReasonReactRouter.url) => {
         setIsFetchingFromCatalogScanner(_ => true);
         let%Repromise.Js response =
           Fetch.fetchWithInit(
-            {j|http://ehsan.lol/$catalogScannerId/raw|j},
+            {j|https://ehsan.lol/$catalogScannerId/raw|j},
             Fetch.RequestInit.make(~method_=Get, ~mode=CORS, ()),
           );
         setIsFetchingFromCatalogScanner(_ => false);

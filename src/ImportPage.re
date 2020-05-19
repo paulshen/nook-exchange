@@ -458,6 +458,24 @@ module BulkActions = {
                    }}>
                    {React.string("Set every craftable item to Can Craft")}
                  </a>
+                 <a
+                   href="#"
+                   onClick={e => {
+                     ReactEvent.Mouse.preventDefault(e);
+                     setItemStates(itemStates => {
+                       itemStates
+                       |> Js.Dict.entries
+                       |> Js.Array.map(((key, _value)) => (key, `Wishlist))
+                       |> Js.Dict.fromArray
+                     });
+                     setShowPopup(_ => false);
+                     Analytics.Amplitude.logEventWithProperties(
+                       ~eventName="Item Import Bulk Set",
+                       ~eventProperties={"destination": "wishlist"},
+                     );
+                   }}>
+                   {React.string("Set every item to Wishlist")}
+                 </a>
                </div>
              }
            />

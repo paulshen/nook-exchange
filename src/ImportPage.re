@@ -647,7 +647,7 @@ module Results = {
                 | `Ignore => ()
                 }
               });
-            if (numForTrade^ + numCanCraft^ + numCatalog^ != 0) {
+            if (numForTrade^ + numCanCraft^ + numCatalog^ + numWishlist^ != 0) {
               ConfirmDialog.confirm(
                 ~bodyText=
                   "This will add "

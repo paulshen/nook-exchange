@@ -155,7 +155,7 @@ module WithUser = {
                      Styles.discordButton,
                    ])}>
                    <span className=LoginOverlay.Styles.discordButtonLogo />
-                   {React.string("Connect your Discord")}
+                   {React.string("Connect and Join Discord")}
                  </button>
                </div>
              </>

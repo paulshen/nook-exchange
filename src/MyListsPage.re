@@ -49,6 +49,14 @@ module WithViewer = {
     let listItemImage =
       style([width(px(64)), height(px(64)), flexShrink(0.)]);
     let noLists = style([padding2(~v=px(16), ~h=px(16))]);
+    let startListFooter =
+      style([
+        paddingTop(px(32)),
+        selector(
+          "& > a",
+          [textDecoration(none), hover([textDecoration(underline)])],
+        ),
+      ]);
   };
 
   type listInfo = {
@@ -105,54 +113,63 @@ module WithViewer = {
       <PageTitle title="My Lists" />
       {switch (lists) {
        | Some(lists) =>
-         <div className=Styles.body>
-           {lists
-            |> Js.Array.map(list =>
-                 <Link
-                   path={"/l/" ++ list.id}
-                   className=Styles.listItem
-                   key={list.id}>
-                   <div className=Styles.listTitleRow>
-                     <div className=Styles.listTitle>
-                       {React.string(
-                          Belt.Option.getWithDefault(
-                            list.title,
-                            "Unnamed list",
-                          ),
-                        )}
+         <div>
+           <div className=Styles.body>
+             {lists
+              |> Js.Array.map(list =>
+                   <Link
+                     path={"/l/" ++ list.id}
+                     className=Styles.listItem
+                     key={list.id}>
+                     <div className=Styles.listTitleRow>
+                       <div className=Styles.listTitle>
+                         {React.string(
+                            Belt.Option.getWithDefault(
+                              list.title,
+                              "Unnamed list",
+                            ),
+                          )}
+                       </div>
+                       <div className=Styles.listNumberItems>
+                         {let numItems = Js.Array.length(list.itemIds);
+                          React.string(
+                            string_of_int(numItems)
+                            ++ " item"
+                            ++ (numItems == 1 ? "" : "s"),
+                          )}
+                       </div>
                      </div>
-                     <div className=Styles.listNumberItems>
-                       {let numItems = Js.Array.length(list.itemIds);
-                        React.string(
-                          string_of_int(numItems)
-                          ++ " item"
-                          ++ (numItems == 1 ? "" : "s"),
-                        )}
+                     <div className=Styles.listItemImages>
+                       {list.itemIds
+                        |> Js.Array.slice(~start=0, ~end_=8)
+                        |> Js.Array.mapi(((itemId, variant), i) => {
+                             let item = Item.getItem(~itemId);
+                             <img
+                               src={Item.getImageUrl(~item, ~variant)}
+                               className=Styles.listItemImage
+                               key={string_of_int(i)}
+                             />;
+                           })
+                        |> React.array}
                      </div>
-                   </div>
-                   <div className=Styles.listItemImages>
-                     {list.itemIds
-                      |> Js.Array.slice(~start=0, ~end_=8)
-                      |> Js.Array.mapi(((itemId, variant), i) => {
-                           let item = Item.getItem(~itemId);
-                           <img
-                             src={Item.getImageUrl(~item, ~variant)}
-                             className=Styles.listItemImage
-                             key={string_of_int(i)}
-                           />;
-                         })
-                      |> React.array}
-                   </div>
-                 </Link>
-               )
-            |> React.array}
-           {if (Js.Array.length(lists) == 0) {
-              <div className=Styles.noLists>
-                {React.string("You have no lists. ")}
-                <Link
-                  path={"/u/" ++ me.username}
-                  onClick={() => {QuicklistStore.startList()}}>
-                  {React.string("Start one!")}
+                   </Link>
+                 )
+              |> React.array}
+             {if (Js.Array.length(lists) == 0) {
+                <div className=Styles.noLists>
+                  {React.string("You have no lists. ")}
+                  <Link path="/" onClick={() => {QuicklistStore.startList()}}>
+                    {React.string("Start one!")}
+                  </Link>
+                </div>;
+              } else {
+                React.null;
+              }}
+           </div>
+           {if (Js.Array.length(lists) > 0) {
+              <div className=Styles.startListFooter>
+                <Link path="/" onClick={() => {QuicklistStore.startList()}}>
+                  {React.string("Create new list")}
                 </Link>
               </div>;
             } else {

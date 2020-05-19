@@ -4,7 +4,7 @@ module Styles = {
     style([
       height(px(Constants.headerHeight)),
       marginBottom(px(40)),
-      media("(max-width: 500px)", [marginBottom(px(16))]),
+      media("(max-width: 500px)", [marginBottom(px(28))]),
     ]);
   let root =
     style([

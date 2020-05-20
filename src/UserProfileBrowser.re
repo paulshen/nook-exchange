@@ -246,7 +246,11 @@ module Section = {
                 !editable
                   ? Some(
                       switch (list) {
-                      | Wishlist => [|User.ForTrade, User.CanCraft|]
+                      | Wishlist => [|
+                          User.ForTrade,
+                          User.CanCraft,
+                          User.CatalogOnly,
+                        |]
                       | ForTrade
                       | Catalog
                       | CanCraft => [|User.Wishlist|]

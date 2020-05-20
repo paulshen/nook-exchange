@@ -260,7 +260,11 @@ let make =
               !me
                 ? Some(
                     switch (list) {
-                    | Wishlist => [|User.ForTrade, User.CanCraft|]
+                    | Wishlist => [|
+                        User.ForTrade,
+                        User.CanCraft,
+                        User.CatalogOnly,
+                      |]
                     | ForTrade
                     | CanCraft
                     | Catalog => [|User.Wishlist|]

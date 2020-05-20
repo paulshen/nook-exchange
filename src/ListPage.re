@@ -32,12 +32,7 @@ module Styles = {
         selector("& ." ++ myListsLinkText, [textDecoration(underline)]),
       ]),
     ]);
-  let titleForm =
-    style([
-      display(flexBox),
-      marginBottom(px(16)),
-      media("(max-width: 420px)", [marginBottom(zero)]),
-    ]);
+  let titleForm = style([display(flexBox)]);
   let titleInput =
     style([
       boxSizing(borderBox),
@@ -82,12 +77,7 @@ module Styles = {
       justifyContent(flexStart),
       marginTop(px(6)),
     ]);
-  let listTitle =
-    style([
-      fontSize(px(28)),
-      marginBottom(px(16)),
-      media("(max-width: 420px)", [marginBottom(px(8))]),
-    ]);
+  let listTitle = style([fontSize(px(28))]);
   let gridWidth = numCards => numCards * cardWidth + (numCards - 1) * 16;
   let rootGrid =
     style([
@@ -105,27 +95,14 @@ module Styles = {
       justifyContent(spaceBetween),
       marginBottom(px(16)),
     ]);
-  let topRowLeft =
-    style([
-      media(
-        "(max-width: 420px)",
-        [width(pct(100.)), marginBottom(px(16))],
-      ),
-    ]);
+  let topRowLeft = style([marginRight(px(16)), marginTop(px(8))]);
   let listUserLink =
     style([
       textDecoration(none),
       media("(hover: hover)", [hover([textDecoration(underline)])]),
     ]);
   let viewToggles =
-    style([
-      display(flexBox),
-      justifyContent(flexEnd),
-      media(
-        "(max-width: 420px)",
-        [width(pct(100.)), justifyContent(flexStart)],
-      ),
-    ]);
+    style([display(flexBox), justifyContent(flexEnd), marginTop(px(8))]);
   [@bs.module "./assets/grid.png"] external gridPng: string = "default";
   [@bs.module "./assets/thumbnail.png"]
   external thumbnailPng: string = "default";
@@ -341,7 +318,7 @@ let make = (~listId, ~url: ReasonReactRouter.url) => {
     );
   };
 
-  let (viewMode, setViewMode) = React.useState(() => Thumbnail);
+  let (viewMode, setViewMode) = React.useState(() => List);
   let me = UserStore.useMe();
   let numViewToggleLoggedRef = React.useRef(0);
 

@@ -12,6 +12,14 @@ module WithViewer = {
           [marginLeft(px(16)), marginRight(px(16))],
         ),
       ]);
+    let bodyCard =
+      style([
+        maxWidth(none),
+        media(
+          "(max-width: 512px)",
+          [marginLeft(px(-16)), marginRight(px(-16))],
+        ),
+      ]);
     let body =
       style([
         backgroundColor(Colors.white),
@@ -111,6 +119,33 @@ module WithViewer = {
     });
     <div className=Styles.root>
       <PageTitle title="My Custom Lists" />
+      <BodyCard className=Styles.bodyCard>
+        <p>
+          {React.string("You can create and manage your custom lists here.")}
+        </p>
+        <p>
+          {React.string(
+             "Be sure to also try the more powerful default lists (For Trade, Wishlist, Catalog)! You can share filtered views of your profile such as ",
+           )}
+          <Link path={"/u/" ++ me.username ++ "/for-trade?c=recipes"}>
+            {React.string("DIY for Trade")}
+          </Link>
+          {React.string(", ")}
+          <Link path={"/u/" ++ me.username ++ "/wishlist?c=recipes"}>
+            {React.string("DIY I want")}
+          </Link>
+          {React.string(", ")}
+          <Link
+            path={"/u/" ++ me.username ++ "/catalog?orderable=&c=furniture"}>
+            {React.string("Furniture I can Order")}
+          </Link>
+          {React.string(", ")}
+          <Link path={"/u/" ++ me.username ++ "/wishlist?q=saharah"}>
+            {React.string("Saharah items I want")}
+          </Link>
+          {React.string(". Just use the URL!")}
+        </p>
+      </BodyCard>
       {switch (lists) {
        | Some(lists) =>
          <div>

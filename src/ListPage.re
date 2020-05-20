@@ -32,7 +32,12 @@ module Styles = {
         selector("& ." ++ myListsLinkText, [textDecoration(underline)]),
       ]),
     ]);
-  let titleForm = style([display(flexBox), marginBottom(px(16))]);
+  let titleForm =
+    style([
+      display(flexBox),
+      marginBottom(px(16)),
+      media("(max-width: 420px)", [marginBottom(zero)]),
+    ]);
   let titleInput =
     style([
       boxSizing(borderBox),
@@ -77,7 +82,12 @@ module Styles = {
       justifyContent(flexStart),
       marginTop(px(6)),
     ]);
-  let listTitle = style([fontSize(px(28)), marginBottom(px(16))]);
+  let listTitle =
+    style([
+      fontSize(px(28)),
+      marginBottom(px(16)),
+      media("(max-width: 420px)", [marginBottom(px(8))]),
+    ]);
   let gridWidth = numCards => numCards * cardWidth + (numCards - 1) * 16;
   let rootGrid =
     style([
@@ -86,20 +96,39 @@ module Styles = {
       media("(max-width: 630px)", [width(auto)]),
     ]);
   let rootList = style([maxWidth(px(560))]);
+  let rootThumbnail = style([maxWidth(px(594))]);
   let topRow =
     style([
       display(flexBox),
       alignItems(center),
+      flexWrap(wrap),
       justifyContent(spaceBetween),
       marginBottom(px(16)),
+    ]);
+  let topRowLeft =
+    style([
+      media(
+        "(max-width: 420px)",
+        [width(pct(100.)), marginBottom(px(16))],
+      ),
     ]);
   let listUserLink =
     style([
       textDecoration(none),
       media("(hover: hover)", [hover([textDecoration(underline)])]),
     ]);
-  let viewToggles = style([display(flexBox)]);
+  let viewToggles =
+    style([
+      display(flexBox),
+      justifyContent(flexEnd),
+      media(
+        "(max-width: 420px)",
+        [width(pct(100.)), justifyContent(flexStart)],
+      ),
+    ]);
   [@bs.module "./assets/grid.png"] external gridPng: string = "default";
+  [@bs.module "./assets/thumbnail.png"]
+  external thumbnailPng: string = "default";
   [@bs.module "./assets/list.png"] external listPng: string = "default";
   let viewButton =
     style([
@@ -113,6 +142,7 @@ module Styles = {
       marginLeft(px(8)),
       opacity(0.5),
       transition(~duration=200, "all"),
+      firstChild([marginLeft(zero)]),
       hover([opacity(0.8)]),
     ]);
   let viewButtonSelected = style([important(opacity(1.))]);
@@ -122,6 +152,15 @@ module Styles = {
       width(px(18)),
       height(px(18)),
       backgroundImage(url(gridPng)),
+      backgroundSize(cover),
+      marginRight(px(8)),
+    ]);
+  let thumbnailIcon =
+    style([
+      display(inlineBlock),
+      width(px(18)),
+      height(px(18)),
+      backgroundImage(url(thumbnailPng)),
       backgroundSize(cover),
       marginRight(px(8)),
     ]);
@@ -142,6 +181,16 @@ module Styles = {
     ]);
   let grid =
     style([display(flexBox), flexWrap(wrap), marginRight(px(-16))]);
+  let thumbnails =
+    style([
+      display(flexBox),
+      flexWrap(wrap),
+      justifyContent(center),
+      backgroundColor(Colors.white),
+      borderRadius(px(8)),
+      border(px(1), solid, Colors.lightGreen),
+      padding(px(8)),
+    ]);
   let myListFooter =
     style([
       marginTop(px(32)),
@@ -231,6 +280,7 @@ module ListRow = {
 
 type viewMode =
   | Grid
+  | Thumbnail
   | List;
 
 [@react.component]
@@ -291,7 +341,7 @@ let make = (~listId, ~url: ReasonReactRouter.url) => {
     );
   };
 
-  let (viewMode, setViewMode) = React.useState(() => List);
+  let (viewMode, setViewMode) = React.useState(() => Thumbnail);
   let me = UserStore.useMe();
   let numViewToggleLoggedRef = React.useRef(0);
 
@@ -301,6 +351,7 @@ let make = (~listId, ~url: ReasonReactRouter.url) => {
       switch (viewMode) {
       | Grid => Styles.rootGrid
       | List => Styles.rootList
+      | Thumbnail => Styles.rootThumbnail
       },
     ])}>
     <div>
@@ -377,7 +428,7 @@ let make = (~listId, ~url: ReasonReactRouter.url) => {
        }}
     </div>
     <div className=Styles.topRow>
-      <div>
+      <div className=Styles.topRowLeft>
         {switch (list) {
          | Some((list, username)) =>
            switch (list.userId) {
@@ -472,6 +523,42 @@ let make = (~listId, ~url: ReasonReactRouter.url) => {
           <span className=Styles.gridIcon />
           {React.string("Grid")}
         </button>
+        {(
+           switch (list) {
+           | Some((list, _)) => Js.Array.length(list.itemIds) > 8
+           | None => false
+           }
+         )
+           ? <button
+               onClick={_ => {
+                 setViewMode(_ => Thumbnail);
+                 if (React.Ref.current(numViewToggleLoggedRef) < 5) {
+                   Analytics.Amplitude.logEventWithProperties(
+                     ~eventName="Item List Page View Toggled",
+                     ~eventProperties={
+                       "view": "thumbnail",
+                       "listId": listId,
+                       "numItems":
+                         switch (list) {
+                         | Some((list, _)) => Js.Array.length(list.itemIds)
+                         | None => 0
+                         },
+                     },
+                   );
+                   React.Ref.setCurrent(
+                     numViewToggleLoggedRef,
+                     React.Ref.current(numViewToggleLoggedRef) + 1,
+                   );
+                 };
+               }}
+               className={Cn.make([
+                 Styles.viewButton,
+                 Cn.ifTrue(Styles.viewButtonSelected, viewMode == Thumbnail),
+               ])}>
+               <span className=Styles.thumbnailIcon />
+               {React.string("Thumbnail")}
+             </button>
+           : React.null}
       </div>
     </div>
     {switch (list) {
@@ -483,6 +570,7 @@ let make = (~listId, ~url: ReasonReactRouter.url) => {
                 switch (viewMode) {
                 | Grid => Styles.grid
                 | List => Styles.list
+                | Thumbnail => Styles.thumbnails
                 }
               }>
               {list.itemIds
@@ -495,6 +583,12 @@ let make = (~listId, ~url: ReasonReactRouter.url) => {
                         editable=false
                         showRecipe=false
                         showMetaIcons=false
+                        key={string_of_int(i)}
+                      />
+                    | Thumbnail =>
+                      <UserProfileBrowser.UserItemCardMini
+                        itemId
+                        variation=variant
                         key={string_of_int(i)}
                       />
                     | List =>

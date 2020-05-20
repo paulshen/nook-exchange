@@ -276,7 +276,7 @@ module CreateDialog = {
                 <div>
                   {React.string(" You can find this on your ")}
                   <Link path="/lists" onClick={() => onClose()}>
-                    {React.string("lists page")}
+                    {React.string("custom lists page")}
                   </Link>
                   {React.string(".")}
                 </div>;

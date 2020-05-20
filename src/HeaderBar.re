@@ -176,7 +176,7 @@ module Menu = {
              {React.string("My Friends")}
            </Link>
            <Link path="/lists" className=MenuStyles.menuItem>
-             {React.string("My Lists")}
+             {React.string("My Custom Lists")}
            </Link>
            <Link path="/settings" className=MenuStyles.menuItem>
              {React.string("Settings")}

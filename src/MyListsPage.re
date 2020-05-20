@@ -110,7 +110,7 @@ module WithViewer = {
       None;
     });
     <div className=Styles.root>
-      <PageTitle title="My Lists" />
+      <PageTitle title="My Custom Lists" />
       {switch (lists) {
        | Some(lists) =>
          <div>
@@ -157,7 +157,7 @@ module WithViewer = {
               |> React.array}
              {if (Js.Array.length(lists) == 0) {
                 <div className=Styles.noLists>
-                  {React.string("You have no lists. ")}
+                  {React.string("You have no custom lists. ")}
                   <Link path="/" onClick={() => {QuicklistStore.startList()}}>
                     {React.string("Start one!")}
                   </Link>
@@ -169,7 +169,7 @@ module WithViewer = {
            {if (Js.Array.length(lists) > 0) {
               <div className=Styles.startListFooter>
                 <Link path="/" onClick={() => {QuicklistStore.startList()}}>
-                  {React.string("Create new list")}
+                  {React.string("Create new custom list")}
                 </Link>
               </div>;
             } else {

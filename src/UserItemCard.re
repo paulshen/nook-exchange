@@ -163,6 +163,7 @@ let make =
       | (Some(CanCraft), Wishlist)
       | (Some(Wishlist), ForTrade)
       | (Some(Wishlist), CanCraft) => true
+      | (Some(Wishlist), CatalogOnly) => item.orderable
       | _ => false
       }
     | None => false
@@ -303,11 +304,12 @@ let make =
             }}
            {switch (viewerItem) {
             | Some(viewerItem) =>
-              switch (list, viewerItem.status) {
-              | (Some(ForTrade), Wishlist)
-              | (Some(CanCraft), Wishlist)
-              | (Some(Wishlist), ForTrade)
-              | (Some(Wishlist), CanCraft) =>
+              switch (list, viewerItem.status, item.orderable) {
+              | (Some(ForTrade), Wishlist, _)
+              | (Some(CanCraft), Wishlist, _)
+              | (Some(Wishlist), ForTrade, _)
+              | (Some(Wishlist), CanCraft, _)
+              | (Some(Wishlist), CatalogOnly, true) =>
                 <ReactAtmosphere.Tooltip
                   text={React.string(
                     "In your " ++ User.itemStatusToString(viewerItem.status),

@@ -245,7 +245,7 @@ let make =
       Webapi.Url.URLSearchParams.makeWithArray(
         ItemFilters.serialize(
           ~filters,
-          ~defaultSort=SellPriceDesc,
+          ~defaultSort=UserDefault,
           ~pageOffset=nextPageOffset,
         ),
       );

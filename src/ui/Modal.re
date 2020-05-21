@@ -68,6 +68,26 @@ module Styles = {
     ]);
   let footerBar =
     style([padding(px(8)), display(flexBox), justifyContent(flexEnd)]);
+
+  [@bs.module "../assets/close.png"] external closePng: string = "default";
+  let closeButton =
+    style([
+      backgroundColor(transparent),
+      backgroundImage(url(closePng)),
+      backgroundSize(`size((px(16), px(16)))),
+      backgroundRepeat(noRepeat),
+      backgroundPosition(center),
+      borderWidth(zero),
+      padding(zero),
+      cursor(pointer),
+      height(px(48)),
+      width(px(48)),
+      position(absolute),
+      top(zero),
+      right(zero),
+      opacity(0.5),
+      hover([opacity(1.)]),
+    ]);
 };
 
 module Div100VH = {
@@ -81,6 +101,13 @@ module FooterBar = {
   [@react.component]
   let make = (~children) => {
     <div className=Styles.footerBar> children </div>;
+  };
+};
+
+module CloseButton = {
+  [@react.component]
+  let make = (~onClose) => {
+    <button onClick={_ => onClose()} className=Styles.closeButton />;
   };
 };
 

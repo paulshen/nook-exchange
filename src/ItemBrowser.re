@@ -17,13 +17,37 @@ module Styles = {
       justifyContent(flexStart),
       media("(max-width: 600px)", [marginRight(px(-16))]),
     ]);
+  let filterBarTop =
+    style([
+      display(flexBox),
+      alignItems(center),
+      media(
+        "(max-width: 600px)",
+        [
+          marginLeft(px(-16)),
+          marginRight(px(-16)),
+          paddingLeft(px(16)),
+          overflowX(auto),
+          selector(
+            "& ." ++ ItemFilters.CategoryButtons.CategoryStyles.button,
+            [marginBottom(zero)],
+          ),
+          selector(
+            "& ." ++ ItemFilters.CategoryButtons.CategoryStyles.select,
+            [marginBottom(zero)],
+          ),
+        ],
+      ),
+    ]);
   let filterBar =
     style([
       display(flexBox),
       justifyContent(spaceBetween),
       marginBottom(px(16)),
       flexWrap(wrap),
+      alignItems(center),
     ]);
+  let filters = style([media("(max-width: 939px)", [width(pct(100.))])]);
   let bottomFilterBar = style([display(flexBox), justifyContent(flexEnd)]);
   let noResults = style([fontSize(px(20)), paddingTop(px(32))]);
 };
@@ -58,6 +82,7 @@ let getUrl =
 [@react.component]
 let make = (~showLogin, ~url: ReasonReactRouter.url) => {
   let isLoggedIn = UserStore.useIsLoggedIn();
+  let viewportWidth = Utils.useViewportWidth();
   let (numResultsPerPage, _setNumResultsPerPage) =
     React.useState(() => getNumResultsPerPage());
   let (filters, pageOffset) =
@@ -194,12 +219,25 @@ let make = (~showLogin, ~url: ReasonReactRouter.url) => {
   );
 
   <div className=Styles.root ref={ReactDOMRe.Ref.domRef(rootRef)}>
-    <ItemFilters.CategoryButtons
-      filters
-      onChange={filters => {setFilters(filters)}}
-    />
+    <div className=Styles.filterBarTop>
+      <ItemFilters.CategoryButtons
+        filters
+        onChange={filters => {setFilters(filters)}}
+      />
+      {isLoggedIn && viewportWidth >= 940
+         ? <ItemFilters.AdvancedFilter filters onChange=setFilters />
+         : React.null}
+      <div className=ItemFilters.Styles.rootScrollerSpacer />
+    </div>
     <div className=Styles.filterBar>
-      <ItemFilters filters onChange={filters => {setFilters(filters)}} />
+      <ItemFilters
+        filters
+        onChange={filters => {setFilters(filters)}}
+        className=Styles.filters
+      />
+      {isLoggedIn && viewportWidth < 940
+         ? <ItemFilters.AdvancedFilter filters onChange=setFilters />
+         : React.null}
       <ItemFilters.Pager
         numResults
         pageOffset

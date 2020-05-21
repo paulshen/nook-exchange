@@ -907,10 +907,7 @@ let make = (~item: Item.t, ~variant, ~isInitialLoad) => {
            }
          | None => React.null
          }}
-        <button
-          onClick={_ => onClose()}
-          className=LoginOverlay.Styles.closeButton
-        />
+        <Modal.CloseButton onClose />
       </div>
     </Modal.Div100VH>
   </div>;

@@ -39,22 +39,6 @@ module Modal = {
         ),
       ]);
     let body = style([maxWidth(px(320)), margin2(~v=zero, ~h=auto)]);
-    [@bs.module "./assets/close.png"] external closePng: string = "default";
-    let closeButton =
-      style([
-        backgroundImage(url(closePng)),
-        borderWidth(zero),
-        padding(zero),
-        cursor(pointer),
-        height(px(16)),
-        width(px(16)),
-        backgroundSize(cover),
-        position(absolute),
-        top(px(16)),
-        right(px(16)),
-        opacity(0.5),
-        hover([opacity(1.)]),
-      ]);
     let label = style([marginBottom(px(12))]);
     let row = style([marginBottom(px(6))]);
     let languageLink =
@@ -102,7 +86,7 @@ module Modal = {
              })
            ->React.array}
         </div>
-        <button onClick={_ => onClose()} className=Styles.closeButton />
+        <Modal.CloseButton onClose />
       </div>
     </div>;
   };

@@ -30,6 +30,8 @@ module Styles = {
       lineHeight(px(37)),
       paddingRight(px(16)),
       whiteSpace(`nowrap),
+      textDecoration(none),
+      hover([textDecoration(underline)]),
     ]);
   let root = style([display(flexBox), flexWrap(wrap)]);
   let rootScrollerSpacer =
@@ -487,25 +489,7 @@ module CategoryButtons = {
         hover([opacity(1.)]),
       ]);
     let selectSelected = style([height(px(37)), opacity(1.)]);
-    let excludeNotice =
-      style([display(inlineBlock), marginBottom(px(12))]);
-    let root =
-      style([
-        paddingBottom(px(8)),
-        media(
-          "(max-width: 600px)",
-          [
-            display(flexBox),
-            alignItems(center),
-            marginLeft(px(-16)),
-            marginRight(px(-16)),
-            paddingLeft(px(16)),
-            overflowX(auto),
-            selector("& ." ++ button, [marginBottom(zero)]),
-            selector("& ." ++ select, [marginBottom(zero)]),
-          ],
-        ),
-      ]);
+    let root = style([paddingBottom(px(8)), whiteSpace(`nowrap)]);
   };
 
   [@react.component]
@@ -614,24 +598,126 @@ module CategoryButtons = {
            )
          ->React.array}
       </select>
-      {switch (filters.exclude) {
-       | [|Wishlist, Catalog|]
-       | [|Catalog, Wishlist|] =>
-         <div className=CategoryStyles.excludeNotice>
-           {React.string("Hiding items in Catalog and Wishlist")}
-         </div>
-       | [|Catalog|] =>
-         <div className=CategoryStyles.excludeNotice>
-           {React.string("Hiding items in Catalog")}
-         </div>
-       | [|Wishlist|] =>
-         <div className=CategoryStyles.excludeNotice>
-           {React.string("Hiding items in Wishlist")}
-         </div>
-       | _ => React.null
-       }}
-      <div className=Styles.rootScrollerSpacer />
     </div>;
+  };
+};
+
+module AdvancedFilter = {
+  module Styles = {
+    open Css;
+    let link =
+      style([
+        fontSize(px(16)),
+        textDecoration(none),
+        lineHeight(px(32)),
+        marginBottom(px(8)),
+        hover([textDecoration(underline)]),
+        media("(min-width: 940px)", [lineHeight(px(37))]),
+      ]);
+    let linkSelected = style([fontWeight(`num(800))]);
+    let root =
+      style([
+        padding2(~v=px(24), ~h=px(32)),
+        width(vw(90.)),
+        boxSizing(borderBox),
+        maxWidth(px(360)),
+      ]);
+    let sectionTitle = style([fontSize(px(20)), marginBottom(px(8))]);
+    let option =
+      style([
+        display(flexBox),
+        justifyContent(spaceBetween),
+        alignItems(center),
+        selector("& > input", [fontSize(px(16)), margin(zero)]),
+      ]);
+    let optionLabel = style([fontSize(px(16)), lineHeight(px(24))]);
+  };
+
+  module AdvancedFilterModal = {
+    [@react.component]
+    let make = (~filters: t, ~onChange, ~onClose) => {
+      let onChangeCheckbox = (excludable, e) => {
+        let checked = ReactEvent.Form.target(e)##checked;
+        if (checked) {
+          onChange({
+            ...filters,
+            exclude:
+              if (filters.exclude |> Js.Array.includes(excludable)) {
+                filters.exclude;
+              } else {
+                filters.exclude->Belt.Array.concat([|excludable|]);
+              },
+          });
+        } else {
+          onChange({
+            ...filters,
+            exclude: filters.exclude->Belt.Array.keep(a => a !== excludable),
+          });
+        };
+      };
+
+      <Modal onBackdropClick={_ => onClose()}>
+        <div className=Styles.root>
+          <div className=Styles.sectionTitle>
+            {React.string("Hide items from")}
+          </div>
+          <div>
+            <label className=Styles.option>
+              <span className=Styles.optionLabel>
+                {React.string("My Catalog")}
+              </span>
+              <input
+                type_="checkbox"
+                value="catalog"
+                checked={filters.exclude |> Js.Array.includes(Catalog)}
+                onChange={onChangeCheckbox(Catalog)}
+              />
+            </label>
+          </div>
+          <div>
+            <label className=Styles.option>
+              <span className=Styles.optionLabel>
+                {React.string("My Wishlist")}
+              </span>
+              <input
+                type_="checkbox"
+                value="catalog"
+                checked={filters.exclude |> Js.Array.includes(Wishlist)}
+                onChange={onChangeCheckbox(Wishlist)}
+              />
+            </label>
+          </div>
+        </div>
+        <Modal.CloseButton onClose />
+      </Modal>;
+    };
+  };
+
+  [@react.component]
+  let make = (~filters, ~onChange, ~className=?, ()) => {
+    let (showModal, setShowModal) = React.useState(() => false);
+    <>
+      <a
+        href="#"
+        onClick={e => {
+          ReactEvent.Mouse.preventDefault(e);
+          setShowModal(_ => true);
+        }}
+        className={Cn.make([
+          Styles.link,
+          Cn.ifTrue(Styles.linkSelected, filters.exclude != [||]),
+          Cn.unpack(className),
+        ])}>
+        {React.string("Advanced")}
+      </a>
+      {showModal
+         ? <AdvancedFilterModal
+             filters
+             onChange
+             onClose={() => setShowModal(_ => false)}
+           />
+         : React.null}
+    </>;
   };
 };
 
@@ -685,6 +771,7 @@ let make =
       ~onChange,
       ~userItemIds: option(array(int))=?,
       ~isViewingSelf=false,
+      ~className=?,
       (),
     ) => {
   let inputTextRef = React.useRef(Js.Nullable.null);
@@ -728,7 +815,7 @@ let make =
     Some(() => {window |> Window.removeKeyDownEventListener(onKeyDown)});
   });
 
-  <div className=Styles.root>
+  <div className={Cn.make([Styles.root, Cn.unpack(className)])}>
     <input
       type_="text"
       ref={ReactDOMRe.Ref.domRef(inputTextRef)}

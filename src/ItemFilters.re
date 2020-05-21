@@ -58,7 +58,8 @@ type sort =
   | SellPriceDesc
   | SellPriceAsc
   | UserDefault
-  | UserTimeUpdated;
+  | UserTimeUpdated
+  | UserNote;
 
 type mask =
   | Orderable
@@ -89,6 +90,7 @@ let serialize = (~filters, ~defaultSort, ~pageOffset) => {
          | SellPriceAsc => "pa"
          | UserDefault => ""
          | UserTimeUpdated => "tu"
+         | UserNote => "note"
          },
        ))
     |> ignore;
@@ -168,6 +170,7 @@ let fromUrlSearch = (~urlSearch, ~defaultSort) => {
         | Some("pd") => SellPriceDesc
         | Some("pa") => SellPriceAsc
         | Some("tu") => UserTimeUpdated
+        | Some("note") => UserNote
         | _ => defaultSort
         },
     },
@@ -257,22 +260,12 @@ let compareItemsABC = (a: Item.t, b: Item.t) => {
 };
 let compareItemsSellPriceDesc = (a: Item.t, b: Item.t) =>
   compareArrays(
-    [|
-      Belt.Option.getWithDefault(b.sellPrice, 0),
-      Item.getName(a)
-      |> Js.String.localeCompare(Item.getName(b))
-      |> int_of_float,
-    |],
+    [|Belt.Option.getWithDefault(b.sellPrice, 0), compareItemsABC(a, b)|],
     [|Belt.Option.getWithDefault(a.sellPrice, 0), 0|],
   );
 let compareItemsSellPriceAsc = (a: Item.t, b: Item.t) =>
   compareArrays(
-    [|
-      Belt.Option.getWithDefault(a.sellPrice, 0),
-      Item.getName(a)
-      |> Js.String.localeCompare(Item.getName(b))
-      |> int_of_float,
-    |],
+    [|Belt.Option.getWithDefault(a.sellPrice, 0), compareItemsABC(a, b)|],
     [|Belt.Option.getWithDefault(b.sellPrice, 0), 0|],
   );
 
@@ -283,6 +276,7 @@ let getSort = (~sort) => {
   | SellPriceDesc => compareItemsSellPriceDesc
   | SellPriceAsc => compareItemsSellPriceAsc
   | UserTimeUpdated
+  | UserNote
   | UserDefault => raise(UnexpectedSort(sort))
   };
 };
@@ -349,8 +343,7 @@ let getUserItemSort =
             |> Js.Array.indexOf(aItem.category)
             |> float_of_int,
             - Option.getWithDefault(aItem.sellPrice, 0) |> float_of_int,
-            Item.getName(aItem)
-            |> Js.String.localeCompare(Item.getName(bItem)),
+            float_of_int(compareItemsABC(aItem, bItem)),
           |],
           [|
             switch (UserStore.getItem(~itemId=bId, ~variation=bVariant)) {
@@ -383,6 +376,26 @@ let getUserItemSort =
             |> Js.String.localeCompare(Item.getName(aItem)),
           |],
           [|-. bUserItem.timeUpdated->Belt.Option.getWithDefault(0.), 0.|],
+        );
+      })
+    | UserNote =>
+      wrapWithVariantSort(
+        (
+          ((aId, _), aUserItem: User.item),
+          ((bId, _), bUserItem: User.item),
+        ) => {
+        let aItem = Item.getItem(~itemId=aId);
+        let bItem = Item.getItem(~itemId=bId);
+        compareArrays(
+          [|
+            switch (aUserItem.note, bUserItem.note) {
+            | ("", _) => 1
+            | (_, "") => (-1)
+            | (a, b) => int_of_float(a |> Js.String.localeCompare(b))
+            },
+            compareItemsABC(aItem, bItem),
+          |],
+          [|0, 0|],
         );
       })
     }
@@ -791,6 +804,7 @@ let make =
         | SellPriceAsc => "sell-asc"
         | UserDefault => "user-default"
         | UserTimeUpdated => "time-updated"
+        | UserNote => "note"
         }
       }
       onChange={e => {
@@ -804,6 +818,7 @@ let make =
             | "sell-asc" => SellPriceAsc
             | "user-default" => UserDefault
             | "time-updated" => UserTimeUpdated
+            | "note" => UserNote
             | _ => SellPriceDesc
             },
         });
@@ -826,6 +841,11 @@ let make =
       </option>
       <option value="sell-asc"> {React.string({j|Sell Price ↑|j})} </option>
       <option value="abc"> {React.string("A - Z")} </option>
+      {if (userItemIds !== None) {
+         <option value="note"> {React.string({j|Item Note|j})} </option>;
+       } else {
+         React.null;
+       }}
     </select>
     {if (filters.text != ""
          || filters.mask != None

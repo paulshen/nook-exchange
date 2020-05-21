@@ -168,16 +168,16 @@ module Styles = {
       border(px(1), solid, Colors.lightGreen),
       padding(px(8)),
     ]);
-  let myListFooter =
+  let listFooter =
     style([
       marginTop(px(32)),
       display(flexBox),
       flexDirection(column),
       alignItems(flexEnd),
     ]);
+  let numItems = style([color(Colors.gray)]);
   let deleteListLink =
     style([
-      color(Colors.red),
       textDecoration(none),
       media("(hover: hover)", [hover([textDecoration(underline)])]),
     ]);
@@ -577,87 +577,102 @@ let make = (~listId, ~url: ReasonReactRouter.url) => {
           } else {
             React.null;
           }}
-         {switch (me) {
-          | Some(me) =>
-            <div className=Styles.myListFooter>
-              <div>
-                <a
-                  href="#"
-                  onClick={e => {
-                    ReactEvent.Mouse.preventDefault(e);
-                    {
-                      let%Repromise response =
-                        BAPI.cloneItemList(
-                          ~sessionId=Belt.Option.getExn(UserStore.sessionId^),
-                          ~listId,
+         <div className=Styles.listFooter>
+           {let numItems = Js.Array.length(list.itemIds);
+            if (numItems > 8) {
+              <div className=Styles.numItems>
+                {React.string(string_of_int(numItems) ++ " items")}
+              </div>;
+            } else {
+              React.null;
+            }}
+           {switch (me) {
+            | Some(me) =>
+              <>
+                <div>
+                  <a
+                    href="#"
+                    onClick={e => {
+                      ReactEvent.Mouse.preventDefault(e);
+                      {
+                        let%Repromise response =
+                          BAPI.cloneItemList(
+                            ~sessionId=
+                              Belt.Option.getExn(UserStore.sessionId^),
+                            ~listId,
+                          );
+                        UserStore.handleServerResponse(
+                          "/item-lists/clone",
+                          response,
                         );
-                      UserStore.handleServerResponse(
-                        "/item-lists/clone",
-                        response,
-                      );
-                      let%Repromise.JsExn json =
-                        Fetch.Response.json(Belt.Result.getExn(response));
-                      let newListId =
-                        Json.Decode.(json |> field("id", string));
-                      ReasonReactRouter.push("/l/" ++ newListId ++ "?clone");
-                      Analytics.Amplitude.logEventWithProperties(
-                        ~eventName="Item List Cloned",
-                        ~eventProperties={
-                          "listId": listId,
-                          "newListId": newListId,
-                          "numItems": Js.Array.length(list.itemIds),
-                        },
-                      );
-                      Promise.resolved();
-                    }
-                    |> ignore;
-                  }}
-                  className=Styles.cloneListLink>
-                  {React.string("Clone list")}
-                </a>
-              </div>
-              {if (list.userId == Some(me.id)) {
-                 <div>
-                   <a
-                     href="#"
-                     onClick={e => {
-                       ReactEvent.Mouse.preventDefault(e);
-                       ConfirmDialog.confirm(
-                         ~bodyText=
-                           "Are you sure you want to delete this list?",
-                         ~confirmLabel="Delete list",
-                         ~cancelLabel="Not now",
-                         ~onConfirm=
-                           () => {
-                             {
-                               let%Repromise response =
-                                 BAPI.deleteItemList(
-                                   ~sessionId=
-                                     Belt.Option.getExn(UserStore.sessionId^),
-                                   ~listId,
+                        let%Repromise.JsExn json =
+                          Fetch.Response.json(Belt.Result.getExn(response));
+                        let newListId =
+                          Json.Decode.(json |> field("id", string));
+                        ReasonReactRouter.push(
+                          "/l/" ++ newListId ++ "?clone",
+                        );
+                        Analytics.Amplitude.logEventWithProperties(
+                          ~eventName="Item List Cloned",
+                          ~eventProperties={
+                            "listId": listId,
+                            "newListId": newListId,
+                            "numItems": Js.Array.length(list.itemIds),
+                          },
+                        );
+                        Promise.resolved();
+                      }
+                      |> ignore;
+                    }}
+                    className=Styles.cloneListLink>
+                    {React.string("Clone list")}
+                  </a>
+                </div>
+                {if (list.userId == Some(me.id)) {
+                   <div>
+                     <a
+                       href="#"
+                       onClick={e => {
+                         ReactEvent.Mouse.preventDefault(e);
+                         ConfirmDialog.confirm(
+                           ~bodyText=
+                             "Are you sure you want to delete this list?",
+                           ~confirmLabel="Delete list",
+                           ~cancelLabel="Not now",
+                           ~onConfirm=
+                             () => {
+                               {
+                                 let%Repromise response =
+                                   BAPI.deleteItemList(
+                                     ~sessionId=
+                                       Belt.Option.getExn(
+                                         UserStore.sessionId^,
+                                       ),
+                                     ~listId,
+                                   );
+                                 UserStore.handleServerResponse(
+                                   "/item-lists/delete",
+                                   response,
                                  );
-                               UserStore.handleServerResponse(
-                                 "/item-lists/delete",
-                                 response,
-                               );
-                               ReasonReactRouter.push("/lists");
-                               Promise.resolved();
-                             }
-                             |> ignore
-                           },
-                         (),
-                       );
-                     }}
-                     className=Styles.deleteListLink>
-                     {React.string("Delete list")}
-                   </a>
-                 </div>;
-               } else {
-                 React.null;
-               }}
-            </div>
-          | None => React.null
-          }}
+                                 ReasonReactRouter.push("/lists");
+                                 Promise.resolved();
+                               }
+                               |> ignore
+                             },
+                           (),
+                         );
+                       }}
+                       className=Styles.deleteListLink>
+                       {React.string("Delete list")}
+                     </a>
+                   </div>;
+                 } else {
+                   React.null;
+                 }}
+              </>
+            | None => React.null
+            }}
+         </div>
        </div>
      | None => React.null
      }}

@@ -54,6 +54,18 @@ module Styles = {
       paddingBottom(px(16)),
     ]);
   let discordButton = style([marginTop(px(16))]);
+  let deleteSection =
+    style([
+      borderTop(px(1), dashed, Colors.lightGray),
+      marginTop(px(16)),
+      paddingTop(px(16)),
+    ]);
+  let deleteLink =
+    style([
+      color(Colors.red),
+      textDecoration(none),
+      hover([textDecoration(underline)]),
+    ]);
 };
 
 type submitStatus =
@@ -232,6 +244,24 @@ module WithUser = {
             </button>
           </div>
         </form>
+        <div className=Styles.deleteSection>
+          <a
+            href="#"
+            onClick={e => {
+              ReactEvent.Mouse.preventDefault(e);
+              ConfirmDialog.confirm(
+                ~bodyText=
+                  "Are you sure you want to delete your account? THIS CANNOT BE UNDONE!",
+                ~confirmLabel="Delete account",
+                ~cancelLabel="Never mind",
+                ~onConfirm=() => {UserStore.deleteAccount() |> ignore},
+                (),
+              );
+            }}
+            className=Styles.deleteLink>
+            {React.string("Delete account")}
+          </a>
+        </div>
       </BodyCard>
     </div>;
   };

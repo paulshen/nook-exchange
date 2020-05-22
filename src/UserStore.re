@@ -749,6 +749,25 @@ let logout = () => {
   Promise.resolved();
 };
 
+let deleteAccount = () => {
+  let sessionId = Belt.Option.getExn(sessionId^);
+  let%Repromise responseResult =
+    BAPI.deleteAccount(~sessionId, ~userId=getUser().id);
+  handleServerResponse("/@me/delete", responseResult);
+  switch (responseResult) {
+  | Ok(response) =>
+    if (Fetch.Response.status(response) < 300) {
+      api.dispatch(Logout);
+      Dom.Storage.localStorage |> Dom.Storage.removeItem("sessionId");
+      Analytics.Amplitude.setUserId(~userId=None);
+      ReasonReactRouter.push("/");
+      updateSessionId(None);
+    }
+  | Error(_) => ()
+  };
+  Promise.resolved();
+};
+
 let connectDiscordAccount = (~code) => {
   let processLoggedIn = user => {
     {

@@ -482,3 +482,23 @@ let connectDiscordAccount = (~sessionId, ~code) => {
     );
   Promise.resolved(response);
 };
+
+let deleteAccount = (~sessionId, ~userId) => {
+  let%Repromise.Js responseResult =
+    Fetch.fetchWithInit(
+      Constants.bapiUrl ++ "/@me/" ++ userId,
+      Fetch.RequestInit.make(
+        ~method_=Delete,
+        ~headers=
+          Fetch.HeadersInit.make({
+            "X-Client-Version": Constants.gitCommitRef,
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " ++ sessionId,
+          }),
+        ~credentials=Include,
+        ~mode=CORS,
+        (),
+      ),
+    );
+  Promise.resolved(responseResult);
+};

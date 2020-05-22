@@ -340,6 +340,7 @@ module CreateDialog = {
 
 [@react.component]
 let make = () => {
+  let me = UserStore.useMe();
   let quicklist = QuicklistStore.useQuicklist();
   let (visibility, setVisibility) = React.useState(() => Bar);
   let (isSubmitting, setIsSubmitting) = React.useState(() => false);
@@ -360,6 +361,16 @@ let make = () => {
 
   let url = ReasonReactRouter.useUrl();
   let viewportWidth = Utils.useViewportWidth();
+  let isShown =
+    quicklist != None
+    || visibility != Hidden
+    && (
+      switch (url.path) {
+      | ["u", username, ..._] =>
+        me->Belt.Option.map(me => me.username) != Some(username)
+      | _ => false
+      }
+    );
   <>
     {visibility == Panel
        ? <div
@@ -370,17 +381,7 @@ let make = () => {
     <div
       className={Cn.make([
         Styles.root,
-        Cn.ifTrue(
-          Styles.shown,
-          quicklist != None
-          || visibility != Hidden
-          && (
-            switch (url.path) {
-            | ["u", ..._] => true
-            | _ => false
-            }
-          ),
-        ),
+        Cn.ifTrue(Styles.shown, isShown),
         Cn.ifTrue(Styles.shownPanel, visibility == Panel),
         Cn.ifTrue(Styles.rootWithQuicklist, quicklist != None),
       ])}>
@@ -610,5 +611,6 @@ let make = () => {
         </div>
       </div>
     </div>
+    {!isShown ? <DiscordBotUpsell /> : React.null}
   </>;
 };

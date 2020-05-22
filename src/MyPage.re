@@ -204,10 +204,12 @@ let make = (~user: User.t, ~urlRest, ~url) => {
            <div className=Styles.emptyProfile>
              <div className=Styles.bodyText>
                <div> {React.string("Your profile is empty!")} </div>
-               <div> {React.string("Add your first item below.")} </div>
+               <div>
+                 {React.string("Add items from the ")}
+                 <Link path="/"> {React.string("Item Browser")} </Link>
+               </div>
              </div>
            </div>
-           <ItemBrowser showLogin={() => ()} url />
          </>;
        }
      }}

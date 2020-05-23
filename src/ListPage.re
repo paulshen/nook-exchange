@@ -397,7 +397,9 @@ let make = (~listId, ~url: ReasonReactRouter.url) => {
          ->Belt.Option.getWithDefault(
              switch (list.title) {
              | Some(title) =>
-               <div className=Styles.listTitle> {React.string(title)} </div>
+               <div className=Styles.listTitle>
+                 {Emoji.parseText(title)}
+               </div>
              | None => React.null
              },
            )

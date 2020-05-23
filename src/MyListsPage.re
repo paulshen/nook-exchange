@@ -158,12 +158,10 @@ module WithViewer = {
                      key={list.id}>
                      <div className=Styles.listTitleRow>
                        <div className=Styles.listTitle>
-                         {React.string(
-                            Belt.Option.getWithDefault(
-                              list.title,
-                              "Unnamed list",
-                            ),
-                          )}
+                         {switch (list.title) {
+                          | Some(title) => Emoji.parseText(title)
+                          | None => React.string("Unnamed list")
+                          }}
                        </div>
                        <div className=Styles.listNumberItems>
                          {let numItems = Js.Array.length(list.itemIds);

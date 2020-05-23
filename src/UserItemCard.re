@@ -163,6 +163,7 @@ let make =
       | (Some(CanCraft), Wishlist)
       | (Some(Wishlist), ForTrade)
       | (Some(Wishlist), CanCraft) => true
+      | (Some(Catalog), Wishlist)
       | (Some(Wishlist), CatalogOnly) => item.orderable
       | _ => false
       }
@@ -305,6 +306,7 @@ let make =
            {switch (viewerItem) {
             | Some(viewerItem) =>
               switch (list, viewerItem.status, item.orderable) {
+              | (Some(Catalog), Wishlist, true)
               | (Some(ForTrade), Wishlist, _)
               | (Some(CanCraft), Wishlist, _)
               | (Some(Wishlist), ForTrade, _)

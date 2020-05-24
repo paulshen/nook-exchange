@@ -367,7 +367,12 @@ let make = () => {
     && (
       switch (url.path) {
       | ["u", username, ..._] =>
-        me->Belt.Option.map(me => me.username) != Some(username)
+        switch (me) {
+        | Some(me) =>
+          me.username != username
+          || Js.Dict.keys(me.items)->Js.Array.length >= 8
+        | None => true
+        }
       | _ => false
       }
     );

@@ -811,7 +811,10 @@ let process = value => {
     ->Js.Dict.entries
     ->Array.map(((itemId, variants)) =>
         (Item.getItem(~itemId=int_of_string(itemId)), variants)
-      ),
+      )
+    |> Js.Array.sortInPlaceWith(((aItem, _), (bItem, _)) =>
+         ItemFilters.compareItemsABC(aItem, bItem)
+       ),
     missingQueries,
   );
 };

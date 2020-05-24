@@ -189,12 +189,6 @@ let itemDestinationToEmoji = destination => {
   };
 };
 
-type itemState = {
-  itemId: int,
-  selectedVariants: array(int),
-  destination: itemDestination,
-};
-
 module VariantRow = {
   [@react.component]
   let make = (~item: Item.t, ~variant, ~itemsState, ~onChange) => {
@@ -274,17 +268,16 @@ module ResultRowWithItem = {
   [@react.component]
   let make =
       (
-        ~query,
-        ~item,
+        ~item: Item.t,
+        ~variants,
         ~itemsState,
         ~onChange: (int, int, itemDestination) => unit,
       ) => {
-    let collapsedVariants = Item.getCollapsedVariants(~item);
     let renderDestinationOption = destination => {
       let disabled = destination == `CanCraft && item.recipe == None;
       <button
         onClick={_ => {
-          collapsedVariants->Belt.Array.forEach(variant => {
+          variants->Belt.Array.forEach(variant => {
             onChange(item.id, variant, destination)
           })
         }}
@@ -306,7 +299,7 @@ module ResultRowWithItem = {
           className=Styles.itemRowNameLink>
           {React.string(Item.getName(item))}
         </Link>
-        {Js.Array.length(collapsedVariants) > 1
+        {Js.Array.length(variants) > 1
            ? <div className=Styles.radioButtonsBatch>
                <span className=Styles.radioButtonsBatchLabel>
                  {React.string("Quick")}
@@ -322,7 +315,7 @@ module ResultRowWithItem = {
            : React.null}
       </div>
       <div className=Styles.itemRowVariants>
-        {collapsedVariants
+        {variants
          |> Js.Array.map(variant => {
               <VariantRow
                 item
@@ -493,52 +486,42 @@ module Results = {
 
   [@react.component]
   let make =
-      (~me: User.t, ~rows: array((string, option(Item.t))), ~onReset) => {
-    let missingRows = rows->Array.keep(((_, item)) => item == None);
+      (
+        ~me: User.t,
+        ~matches: array((Item.t, array(int))),
+        ~misses: array(string),
+        ~onReset,
+      ) => {
     let (itemsState, setItemStates) =
       React.useState(() => {
         Js.Dict.fromArray(
           Array.concatMany(
-            rows->Array.map(((query, itemOption)) =>
-              switch (itemOption) {
-              | Some(item) =>
-                let collapsedVariants = Item.getCollapsedVariants(~item);
-                let numVariants = Js.Array.length(collapsedVariants);
-                collapsedVariants->Belt.Array.map(variant => {
-                  (
-                    User.getItemKey(~itemId=item.id, ~variation=variant),
-                    switch (
-                      UserStore.getItem(~itemId=item.id, ~variation=variant)
-                    ) {
-                    | Some(userItem) =>
-                      switch (userItem.status) {
-                      | CanCraft => `CanCraft
-                      | ForTrade => `ForTrade
-                      | CatalogOnly => `CatalogOnly
-                      | Wishlist => `Ignore
-                      }
-                    | None => `Ignore
-                    },
-                  )
-                });
-              | None => [||]
-              }
+            matches->Array.map(((item, variants)) =>
+              variants->Belt.Array.map(variant => {
+                (
+                  User.getItemKey(~itemId=item.id, ~variation=variant),
+                  switch (
+                    UserStore.getItem(~itemId=item.id, ~variation=variant)
+                  ) {
+                  | Some(userItem) =>
+                    switch (userItem.status) {
+                    | CanCraft => `CanCraft
+                    | ForTrade => `ForTrade
+                    | CatalogOnly => `CatalogOnly
+                    | Wishlist => `Ignore
+                    }
+                  | None => `Ignore
+                  },
+                )
+              })
             ),
           ),
         )
       });
     let (submitStatus, setSubmitState) = React.useState(() => None);
 
-    let numMissingRows =
-      React.useMemo1(
-        () => rows->Array.keep(((_, item)) => item == None)->Array.length,
-        [|rows|],
-      );
-    let numMatchingRows =
-      React.useMemo1(
-        () => rows->Array.keep(((_, item)) => item != None)->Array.length,
-        [|rows|],
-      );
+    let numMissingRows = Array.length(misses);
+    let numMatchingRows = Array.length(matches);
     React.useEffect0(() => {
       Analytics.Amplitude.logEventWithProperties(
         ~eventName="Import Page List Processed",
@@ -560,13 +543,13 @@ module Results = {
              {React.string("!")}
            </div>
          : React.null}
-      {Js.Array.length(missingRows) > 0
+      {Js.Array.length(misses) > 0
          ? <div className=Styles.missingRows>
              <div className=Styles.sectionTitle>
                {React.string("Items without matches")}
              </div>
-             {missingRows
-              ->Array.mapWithIndex((i, (query, _)) =>
+             {misses
+              ->Array.mapWithIndex((i, query) =>
                   <div className=Styles.missingRow key={string_of_int(i)}>
                     {React.string(query)}
                   </div>
@@ -574,28 +557,26 @@ module Results = {
               ->React.array}
            </div>
          : React.null}
-      {Js.Array.length(rows) > 0
+      {Js.Array.length(matches) > 0
          ? <div className=Styles.matchRows>
-             {rows
-              ->Belt.Array.keepMap(((query, item)) =>
-                  item->Option.map(item =>
-                    <ResultRowWithItem
-                      query
-                      item
-                      itemsState
-                      onChange={(itemId, variant, destination) => {
-                        setItemStates(itemsState => {
-                          let clone = Utils.cloneJsDict(itemsState);
-                          clone->Js.Dict.set(
-                            User.getItemKey(~itemId, ~variation=variant),
-                            destination,
-                          );
-                          clone;
-                        })
-                      }}
-                      key={item.name}
-                    />
-                  )
+             {matches
+              ->Belt.Array.map(((item, variants)) =>
+                  <ResultRowWithItem
+                    item
+                    variants
+                    itemsState
+                    onChange={(itemId, variant, destination) => {
+                      setItemStates(itemsState => {
+                        let clone = Utils.cloneJsDict(itemsState);
+                        clone->Js.Dict.set(
+                          User.getItemKey(~itemId, ~variation=variant),
+                          destination,
+                        );
+                        clone;
+                      })
+                    }}
+                    key={string_of_int(item.id)}
+                  />
                 )
               ->React.array}
            </div>
@@ -778,9 +759,61 @@ let process = value => {
     |> Js.String.split("\n")
     |> Js.Array.map(str => str |> Js.String.trim)
     |> Js.Array.filter(x => x != "");
-  let results =
-    rows->Belt.Array.map(row => (row, Item.getByName(~name=row)));
-  results;
+  let resultMap = Js.Dict.empty();
+  let missingQueries = [||];
+  rows->Array.forEach(row => {
+    let result = row |> Js.Re.exec_([%bs.re "/(.*?) \[(.*?)\]$/g"]);
+    let itemWithVariant =
+      switch (result) {
+      | Some(match) =>
+        let captures = Js.Re.captures(match);
+        let itemName = Array.getUnsafe(captures, 1)->Js.Nullable.toOption;
+        let variantName = Array.getUnsafe(captures, 2)->Js.Nullable.toOption;
+        switch (itemName, variantName) {
+        | (Some(itemName), Some(variantName)) =>
+          Item.getByName(~name=itemName)
+          ->Option.flatMap(item => {
+              Item.getVariantByName(~item, ~variantName)
+              ->Option.map(variant => (item, variant))
+            })
+        | _ => None
+        };
+      | None => None
+      };
+    let itemWithVariants =
+      switch (itemWithVariant) {
+      | Some((item, variant)) => Some((item, [|variant|]))
+      | None =>
+        Item.getByName(~name=row)
+        ->Option.map(item => (item, Item.getCollapsedVariants(~item)))
+      };
+    switch (itemWithVariants) {
+    | Some((item, variants)) =>
+      let resultMapVariants =
+        switch (resultMap->Js.Dict.get(string_of_int(item.id))) {
+        | Some(arr) => arr
+        | None =>
+          let arr = [||];
+          resultMap->Js.Dict.set(string_of_int(item.id), arr);
+          arr;
+        };
+      variants
+      |> Js.Array.forEach(variant =>
+           if (!(resultMapVariants |> Js.Array.includes(variant))) {
+             resultMapVariants |> Js.Array.push(variant) |> ignore;
+           }
+         );
+    | None => missingQueries |> Js.Array.push(row) |> ignore
+    };
+  });
+  (
+    resultMap
+    ->Js.Dict.entries
+    ->Array.map(((itemId, variants)) =>
+        (Item.getItem(~itemId=int_of_string(itemId)), variants)
+      ),
+    missingQueries,
+  );
 };
 
 [@react.component]
@@ -843,7 +876,7 @@ let make = (~showLogin, ~url: ReasonReactRouter.url) => {
     {switch (userState) {
      | LoggedIn(me) =>
        switch (results) {
-       | Some(results) =>
+       | Some((matches, misses)) =>
          <div>
            <BodyCard>
              <p>
@@ -865,7 +898,8 @@ let make = (~showLogin, ~url: ReasonReactRouter.url) => {
            <div className=Styles.body>
              <Results
                me
-               rows=results
+               matches
+               misses
                onReset={() => {
                  setResults(_ => None);
                  setValue(_ => "");

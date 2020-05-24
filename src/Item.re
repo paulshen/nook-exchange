@@ -82,6 +82,7 @@ let otherCategories = [|
 |];
 
 [@bs.val] [@bs.scope "window"] external itemsJson: Js.Json.t = "items";
+[@bs.val] [@bs.scope "window"] external variantsJson: Js.Json.t = "variants";
 
 let loadTranslation: (string, Js.Json.t => unit) => unit = [%raw
   {|function(language, callback) {
@@ -282,32 +283,22 @@ let getCanonicalVariant = (~item, ~variant) => {
   };
 };
 
-let loadVariants: (Js.Json.t => unit) => unit = [%raw
-  {|function(callback) {
-    import(/* webpackChunkName variants */ './variants.json').then(j => callback(j.default))
-  }|}
-];
 type variantNames =
   | NameOneDimension(array(string))
   | NameTwoDimensions((array(string), array(string)));
-let variantNames: ref(option(Js.Dict.t(variantNames))) = ref(None);
-let setVariantNames = json => {
-  Json.Decode.(
-    variantNames :=
-      Some(
-        json
-        |> dict(
-             oneOf([
-               json =>
-                 NameTwoDimensions(
-                   json |> tuple2(array(string), array(string)),
-                 ),
-               json => NameOneDimension(json |> array(string)),
-             ]),
-           ),
-      )
-  );
-};
+let variantNames: Js.Dict.t(variantNames) =
+  variantsJson
+  |> Json.Decode.(
+       dict(
+         oneOf([
+           json =>
+             NameTwoDimensions(
+               json |> tuple2(array(string), array(string)),
+             ),
+           json => NameOneDimension(json |> array(string)),
+         ]),
+       )
+     );
 
 let loadTranslation: (string, Js.Json.t => unit) => unit = [%raw
   {|function(language, callback) {
@@ -394,9 +385,7 @@ let getVariantName =
           ->Option.flatMap(translationItem => translationItem.variants)
         ) {
         | Some(value) => Some(value)
-        | None =>
-          (variantNames^)
-          ->Option.flatMap(Js.Dict.get(_, string_of_int(item.id)))
+        | None => variantNames->Js.Dict.get(_, string_of_int(item.id))
         }
       )
       ->Option.flatMap(value =>
@@ -415,9 +404,7 @@ let getVariantName =
           ->Option.flatMap(translationItem => translationItem.variants)
         ) {
         | Some(value) => Some(value)
-        | None =>
-          (variantNames^)
-          ->Option.flatMap(Js.Dict.get(_, string_of_int(item.id)))
+        | None => variantNames->Js.Dict.get(_, string_of_int(item.id))
         }
       )
       ->Belt.Option.flatMap(value =>
@@ -454,13 +441,23 @@ let getMaterialName = (material: string) =>
     ->Option.getWithDefault(material)
   );
 
+let getCanonicalName = text => {
+  Js.String.toLowerCase(text) |> Js.String.replaceByRe(spaceRegex, "-");
+};
 let getByName = (~name: string) => {
-  let getCanonicalName = text => {
-    Js.String.toLowerCase(text) |> Js.String.replaceByRe(spaceRegex, "-");
-  };
   let searchName = getCanonicalName(name);
   all->Belt.Array.getBy((item: t) => {
     getCanonicalName(item.name) == searchName
     || getCanonicalName(getName(item)) == searchName
+  });
+};
+
+let getVariantByName = (~item: t, ~variantName: string) => {
+  let collapsedVariants = getCollapsedVariants(~item);
+  collapsedVariants->Belt.Array.getBy(variant => {
+    switch (getVariantName(~item, ~variant, ~hidePattern=true, ())) {
+    | Some(name) => getCanonicalName(name) == getCanonicalName(variantName)
+    | None => false
+    }
   });
 };

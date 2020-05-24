@@ -163,10 +163,6 @@ let make = () => {
   let isInitialLoadRef = React.useRef(true);
   React.useEffect0(() => {
     React.Ref.setCurrent(isInitialLoadRef, false);
-    Item.loadVariants(json => {
-      Item.setVariantNames(json);
-      forceUpdate(x => x + 1);
-    });
     if (url.path == ["discord_oauth2"]) {
       let (code, state) = {
         open Webapi.Url.URLSearchParams;

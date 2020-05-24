@@ -121,6 +121,7 @@ module Styles = {
       justifyContent(center),
       marginBottom(px(8)),
     ]);
+  let variationImageWrapper = style([position(relative)]);
   let variationImage =
     style([
       display(block),
@@ -131,6 +132,18 @@ module Styles = {
       hover([backgroundColor(hex("00000010"))]),
     ]);
   let variationImageSelected = style([backgroundColor(hex("3aa56320"))]);
+  [@bs.module "./assets/check_small.png"]
+  external checkSmall: string = "default";
+  let variationImageCheck =
+    style([
+      position(absolute),
+      backgroundImage(url(checkSmall)),
+      width(px(12)),
+      height(px(12)),
+      backgroundSize(cover),
+      top(px(-2)),
+      right(px(-2)),
+    ]);
   let metaIcons = style([position(absolute), top(px(8)), left(px(6))]);
   let topRightIcons =
     style([position(absolute), top(px(10)), right(px(10))]);
@@ -482,6 +495,28 @@ module CatalogCheckbox = {
   };
 };
 
+module VariantImage = {
+  [@react.component]
+  let make = (~item: Item.t, ~variant, ~selected) => {
+    let userItem = UserStore.useItem(~itemId=item.id, ~variation=variant);
+    <div className=Styles.variationImageWrapper>
+      <img
+        src={Item.getImageUrl(~item, ~variant)}
+        className={Cn.make([
+          Styles.variationImage,
+          Cn.ifTrue(Styles.variationImageSelected, selected),
+        ])}
+      />
+      {switch (userItem->Belt.Option.map(userItem => userItem.status)) {
+       | Some(ForTrade)
+       | Some(CanCraft)
+       | Some(CatalogOnly) => <span className=Styles.variationImageCheck />
+       | _ => React.null
+       }}
+    </div>;
+  };
+};
+
 [@react.component]
 let make = (~item: Item.t, ~isLoggedIn, ~showLogin) => {
   let (showRecipeAlternate, setShowRecipeAlternate) =
@@ -541,16 +576,7 @@ let make = (~item: Item.t, ~isLoggedIn, ~showLogin) => {
            {collapsedVariants
             ->Belt.Array.map(v => {
                 let image =
-                  <img
-                    src={Item.getImageUrl(~item, ~variant=v)}
-                    className={Cn.make([
-                      Styles.variationImage,
-                      Cn.ifTrue(
-                        Styles.variationImageSelected,
-                        v == variation,
-                      ),
-                    ])}
-                  />;
+                  <VariantImage item variant=v selected={v == variation} />;
                 switch (
                   Item.getVariantName(
                     ~item,

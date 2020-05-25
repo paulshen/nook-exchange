@@ -749,6 +749,21 @@ let logout = () => {
   Promise.resolved();
 };
 
+let removeAllItems = () => {
+  let sessionId = Belt.Option.getExn(sessionId^);
+  let%Repromise responseResult = BAPI.removeAllItems(~sessionId);
+  handleServerResponse("/@me/items/all/delete", responseResult);
+  switch (responseResult) {
+  | Ok(response) =>
+    if (Fetch.Response.status(response) < 300) {
+      let user = getUser();
+      api.dispatch(UpdateUser({...user, items: Js.Dict.empty()}));
+    }
+  | Error(_) => ()
+  };
+  Promise.resolved();
+};
+
 let deleteAccount = () => {
   let sessionId = Belt.Option.getExn(sessionId^);
   let%Repromise responseResult =

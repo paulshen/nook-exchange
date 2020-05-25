@@ -245,22 +245,42 @@ module WithUser = {
           </div>
         </form>
         <div className=Styles.deleteSection>
-          <a
-            href="#"
-            onClick={e => {
-              ReactEvent.Mouse.preventDefault(e);
-              ConfirmDialog.confirm(
-                ~bodyText=
-                  "Are you sure you want to delete your account? THIS CANNOT BE UNDONE!",
-                ~confirmLabel="Delete account",
-                ~cancelLabel="Never mind",
-                ~onConfirm=() => {UserStore.deleteAccount() |> ignore},
-                (),
-              );
-            }}
-            className=Styles.deleteLink>
-            {React.string("Delete account")}
-          </a>
+          <div>
+            <a
+              href="#"
+              onClick={e => {
+                ReactEvent.Mouse.preventDefault(e);
+                ConfirmDialog.confirm(
+                  ~bodyText=
+                    "Are you sure you want to remove ALL ITEMS from your account? This includes all items in your For Trade, Can Craft, Wishlist, and Catalog.",
+                  ~confirmLabel="Remove items",
+                  ~cancelLabel="Never mind",
+                  ~onConfirm=() => {UserStore.removeAllItems() |> ignore},
+                  (),
+                );
+              }}
+              className=Styles.deleteLink>
+              {React.string("Remove all items")}
+            </a>
+          </div>
+          <div>
+            <a
+              href="#"
+              onClick={e => {
+                ReactEvent.Mouse.preventDefault(e);
+                ConfirmDialog.confirm(
+                  ~bodyText=
+                    "Are you sure you want to delete your account? THIS CANNOT BE UNDONE!",
+                  ~confirmLabel="Delete account",
+                  ~cancelLabel="Never mind",
+                  ~onConfirm=() => {UserStore.deleteAccount() |> ignore},
+                  (),
+                );
+              }}
+              className=Styles.deleteLink>
+              {React.string("Delete account")}
+            </a>
+          </div>
         </div>
       </BodyCard>
     </div>;

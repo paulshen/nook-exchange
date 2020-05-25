@@ -483,6 +483,26 @@ let connectDiscordAccount = (~sessionId, ~code) => {
   Promise.resolved(response);
 };
 
+let removeAllItems = (~sessionId) => {
+  let%Repromise.Js responseResult =
+    Fetch.fetchWithInit(
+      Constants.bapiUrl ++ "/@me/items/all",
+      Fetch.RequestInit.make(
+        ~method_=Delete,
+        ~headers=
+          Fetch.HeadersInit.make({
+            "X-Client-Version": Constants.gitCommitRef,
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " ++ sessionId,
+          }),
+        ~credentials=Include,
+        ~mode=CORS,
+        (),
+      ),
+    );
+  Promise.resolved(responseResult);
+};
+
 let deleteAccount = (~sessionId, ~userId) => {
   let%Repromise.Js responseResult =
     Fetch.fetchWithInit(

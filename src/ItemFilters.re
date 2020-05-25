@@ -61,7 +61,8 @@ type sort =
   | SellPriceAsc
   | UserDefault
   | UserTimeUpdated
-  | UserNote;
+  | UserNote
+  | ListTimeAdded;
 
 type mask =
   | Orderable
@@ -80,22 +81,29 @@ type t = {
   sort,
 };
 
+let serializeSort = (~sort, ~defaultSort) =>
+  if (sort != defaultSort && sort != UserDefault) {
+    Some((
+      "s",
+      switch (sort) {
+      | ABC => "abc"
+      | SellPriceDesc => "pd"
+      | SellPriceAsc => "pa"
+      | UserDefault => ""
+      | UserTimeUpdated => "tu"
+      | UserNote => "note"
+      | ListTimeAdded => ""
+      },
+    ));
+  } else {
+    None;
+  };
+
 let serialize = (~filters, ~defaultSort, ~pageOffset) => {
   let p = [||];
-  if (filters.sort != defaultSort && filters.sort != UserDefault) {
-    p
-    |> Js.Array.push((
-         "s",
-         switch (filters.sort) {
-         | ABC => "abc"
-         | SellPriceDesc => "pd"
-         | SellPriceAsc => "pa"
-         | UserDefault => ""
-         | UserTimeUpdated => "tu"
-         | UserNote => "note"
-         },
-       ))
-    |> ignore;
+  switch (serializeSort(~sort=filters.sort, ~defaultSort)) {
+  | Some(param) => p |> Js.Array.push(param) |> ignore
+  | None => ()
   };
   if (filters.text != "") {
     p |> Js.Array.push(("q", filters.text)) |> ignore;
@@ -129,6 +137,19 @@ let serialize = (~filters, ~defaultSort, ~pageOffset) => {
     p |> Js.Array.push(("p", string_of_int(pageOffset + 1))) |> ignore;
   };
   p;
+};
+
+let sortFromUrlSearch = (~searchParams, ~defaultSort) => {
+  Webapi.Url.URLSearchParams.(
+    switch (searchParams |> get("s")) {
+    | Some("abc") => ABC
+    | Some("pd") => SellPriceDesc
+    | Some("pa") => SellPriceAsc
+    | Some("tu") => UserTimeUpdated
+    | Some("note") => UserNote
+    | _ => defaultSort
+    }
+  );
 };
 
 let fromUrlSearch = (~urlSearch, ~defaultSort) => {
@@ -166,15 +187,7 @@ let fromUrlSearch = (~urlSearch, ~defaultSort) => {
             })
         | None => [||]
         },
-      sort:
-        switch (searchParams |> get("s")) {
-        | Some("abc") => ABC
-        | Some("pd") => SellPriceDesc
-        | Some("pa") => SellPriceAsc
-        | Some("tu") => UserTimeUpdated
-        | Some("note") => UserNote
-        | _ => defaultSort
-        },
+      sort: sortFromUrlSearch(~searchParams, ~defaultSort),
     },
     Option.map(searchParams |> get("p"), s => int_of_string(s) - 1)
     ->Option.getWithDefault(0),
@@ -277,6 +290,7 @@ let getSort = (~sort) => {
   | ABC => compareItemsABC
   | SellPriceDesc => compareItemsSellPriceDesc
   | SellPriceAsc => compareItemsSellPriceAsc
+  | ListTimeAdded
   | UserTimeUpdated
   | UserNote
   | UserDefault => raise(UnexpectedSort(sort))
@@ -400,6 +414,7 @@ let getUserItemSort =
           [|0, 0|],
         );
       })
+    | ListTimeAdded => raise(UnexpectedSort(sort))
     }
   );
 };
@@ -764,6 +779,79 @@ module UserCategorySelector = {
   };
 };
 
+module SortSelector = {
+  [@react.component]
+  let make =
+      (
+        ~sort,
+        ~onChange,
+        ~onListPage=false,
+        ~userItemIds,
+        ~isViewingSelf,
+        ~className=?,
+        (),
+      ) => {
+    <select
+      value={
+        switch (sort) {
+        | ABC => "abc"
+        | SellPriceDesc => "sell-desc"
+        | SellPriceAsc => "sell-asc"
+        | UserDefault => "user-default"
+        | UserTimeUpdated => "time-updated"
+        | UserNote => "note"
+        | ListTimeAdded => "list-added"
+        }
+      }
+      onChange={e => {
+        let value = ReactEvent.Form.target(e)##value;
+        onChange(
+          switch (value) {
+          | "abc" => ABC
+          | "sell-desc" => SellPriceDesc
+          | "sell-asc" => SellPriceAsc
+          | "user-default" => UserDefault
+          | "time-updated" => UserTimeUpdated
+          | "note" => UserNote
+          | "list-added" => ListTimeAdded
+          | _ => SellPriceDesc
+          },
+        );
+      }}
+      className={Cn.unpack(className)}>
+      {if (onListPage) {
+         <option value="list-added">
+           {React.string({j|Time Added ↓|j})}
+         </option>;
+       } else {
+         React.null;
+       }}
+      {if (userItemIds !== None) {
+         <>
+           <option value="user-default">
+             {React.string(isViewingSelf ? "Sort: Category" : "Sort: Default")}
+           </option>
+           <option value="time-updated">
+             {React.string({j|Time Updated ↓|j})}
+           </option>
+         </>;
+       } else {
+         React.null;
+       }}
+      <option value="sell-desc">
+        {React.string({j|Sell Price ↓|j})}
+      </option>
+      <option value="sell-asc"> {React.string({j|Sell Price ↑|j})} </option>
+      <option value="abc"> {React.string("A - Z")} </option>
+      {if (userItemIds !== None) {
+         <option value="note"> {React.string({j|Item Note|j})} </option>;
+       } else {
+         React.null;
+       }}
+    </select>;
+  };
+};
+
 [@react.component]
 let make =
     (
@@ -883,57 +971,13 @@ let make =
       <option value="craftable"> {React.string("Craftable")} </option>
       <option value="not-orderable"> {React.string("Not Orderable")} </option>
     </select>
-    <select
-      value={
-        switch (filters.sort) {
-        | ABC => "abc"
-        | SellPriceDesc => "sell-desc"
-        | SellPriceAsc => "sell-asc"
-        | UserDefault => "user-default"
-        | UserTimeUpdated => "time-updated"
-        | UserNote => "note"
-        }
-      }
-      onChange={e => {
-        let value = ReactEvent.Form.target(e)##value;
-        onChange({
-          ...filters,
-          sort:
-            switch (value) {
-            | "abc" => ABC
-            | "sell-desc" => SellPriceDesc
-            | "sell-asc" => SellPriceAsc
-            | "user-default" => UserDefault
-            | "time-updated" => UserTimeUpdated
-            | "note" => UserNote
-            | _ => SellPriceDesc
-            },
-        });
-      }}
-      className={Cn.make([Styles.select, Styles.selectSort])}>
-      {if (userItemIds !== None) {
-         <>
-           <option value="user-default">
-             {React.string(isViewingSelf ? "Sort: Category" : "Sort: Default")}
-           </option>
-           <option value="time-updated">
-             {React.string({j|Time Updated ↓|j})}
-           </option>
-         </>;
-       } else {
-         React.null;
-       }}
-      <option value="sell-desc">
-        {React.string({j|Sell Price ↓|j})}
-      </option>
-      <option value="sell-asc"> {React.string({j|Sell Price ↑|j})} </option>
-      <option value="abc"> {React.string("A - Z")} </option>
-      {if (userItemIds !== None) {
-         <option value="note"> {React.string({j|Item Note|j})} </option>;
-       } else {
-         React.null;
-       }}
-    </select>
+    <SortSelector
+      sort={filters.sort}
+      onChange={sort => {onChange({...filters, sort})}}
+      userItemIds
+      isViewingSelf
+      className={Cn.make([Styles.select, Styles.selectSort])}
+    />
     {if (filters.text != ""
          || filters.mask != None
          || filters.exclude != [||]

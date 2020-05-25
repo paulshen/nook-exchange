@@ -95,7 +95,8 @@ module Styles = {
       justifyContent(spaceBetween),
       marginBottom(px(16)),
     ]);
-  let topRowLeft = style([marginRight(px(16)), marginTop(px(8))]);
+  let topRowLeft =
+    style([flexGrow(1.), marginRight(px(16)), marginTop(px(8))]);
   let listUserLink =
     style([
       textDecoration(none),
@@ -103,6 +104,14 @@ module Styles = {
     ]);
   let viewToggles =
     style([display(flexBox), justifyContent(flexEnd), marginTop(px(8))]);
+  let sortSelector =
+    style([
+      height(px(30)),
+      boxSizing(borderBox),
+      marginTop(px(8)),
+      marginRight(px(8)),
+      media("(max-width: 520px)", [marginRight(zero)]),
+    ]);
   [@bs.module "./assets/grid.png"] external gridPng: string = "default";
   [@bs.module "./assets/thumbnail.png"]
   external thumbnailPng: string = "default";
@@ -321,6 +330,9 @@ let make = (~listId, ~url: ReasonReactRouter.url) => {
   let (viewMode, setViewMode) = React.useState(() => List);
   let me = UserStore.useMe();
   let numViewToggleLoggedRef = React.useRef(0);
+  let searchParams = Webapi.Url.URLSearchParams.make(url.search);
+  let sort =
+    ItemFilters.sortFromUrlSearch(~searchParams, ~defaultSort=ListTimeAdded);
 
   <div
     className={Cn.make([
@@ -443,6 +455,35 @@ let make = (~listId, ~url: ReasonReactRouter.url) => {
          | None => React.null
          }}
       </div>
+      {switch (list) {
+       | Some((list, _)) =>
+         if (Js.Array.length(list.itemIds) >= 4) {
+           <ItemFilters.SortSelector
+             sort
+             onChange={sort => {
+               let p = [||];
+               switch (
+                 ItemFilters.serializeSort(~sort, ~defaultSort=ListTimeAdded)
+               ) {
+               | Some(param) => p |> Js.Array.push(param) |> ignore
+               | None => ()
+               };
+               let urlSearchParams =
+                 Webapi.Url.URLSearchParams.makeWithArray(p);
+               ReasonReactRouter.push(
+                 ItemBrowser.getUrl(~url, ~urlSearchParams),
+               );
+             }}
+             onListPage=true
+             userItemIds=None
+             isViewingSelf=false
+             className=Styles.sortSelector
+           />;
+         } else {
+           React.null;
+         }
+       | None => React.null
+       }}
       <div className=Styles.viewToggles>
         <button
           onClick={_ => {
@@ -553,6 +594,25 @@ let make = (~listId, ~url: ReasonReactRouter.url) => {
                 }
               }>
               {list.itemIds
+               |> (
+                 sort !== ListTimeAdded
+                   ? (
+                     x => {
+                       let sortFn = ItemFilters.getSort(~sort);
+                       x
+                       |> Js.Array.sortInPlaceWith(
+                            ((aItemId, aVariant), (bItemId, bVariant)) => {
+                            let aItem = Item.getItem(~itemId=aItemId);
+                            let bItem = Item.getItem(~itemId=bItemId);
+                            switch (sortFn(aItem, bItem)) {
+                            | 0 => aVariant - bVariant
+                            | y => y
+                            };
+                          });
+                     }
+                   )
+                   : (x => x)
+               )
                |> Js.Array.mapi(((itemId, variant), i) => {
                     switch (viewMode) {
                     | Grid =>

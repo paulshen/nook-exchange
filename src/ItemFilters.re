@@ -309,114 +309,84 @@ let wrapWithVariantSort = (sort, a, b) => {
 };
 let getUserItemSort =
     (~prioritizeViewerStatuses: array(User.itemStatus)=[||], ~sort) => {
-  Belt.(
-    switch (sort) {
-    | ABC =>
-      wrapWithVariantSort((((aId, _), _), ((bId, _), _)) =>
-        compareItemsABC(
-          Item.getItem(~itemId=aId),
-          Item.getItem(~itemId=bId),
-        )
+  switch (sort) {
+  | ABC =>
+    wrapWithVariantSort((((aId, _), _), ((bId, _), _)) =>
+      compareItemsABC(Item.getItem(~itemId=aId), Item.getItem(~itemId=bId))
+    )
+  | SellPriceDesc =>
+    wrapWithVariantSort((((aId, _), _), ((bId, _), _)) =>
+      compareItemsSellPriceDesc(
+        Item.getItem(~itemId=aId),
+        Item.getItem(~itemId=bId),
       )
-    | SellPriceDesc =>
-      wrapWithVariantSort((((aId, _), _), ((bId, _), _)) =>
-        compareItemsSellPriceDesc(
-          Item.getItem(~itemId=aId),
-          Item.getItem(~itemId=bId),
-        )
+    )
+  | SellPriceAsc =>
+    wrapWithVariantSort((((aId, _), _), ((bId, _), _)) =>
+      compareItemsSellPriceAsc(
+        Item.getItem(~itemId=aId),
+        Item.getItem(~itemId=bId),
       )
-    | SellPriceAsc =>
-      wrapWithVariantSort((((aId, _), _), ((bId, _), _)) =>
-        compareItemsSellPriceAsc(
-          Item.getItem(~itemId=aId),
-          Item.getItem(~itemId=bId),
-        )
-      )
-    | UserDefault =>
-      wrapWithVariantSort(
-        (
-          (
-            (aId, aVariant),
-            {priorityTimestamp: aPriorityTimestamp}: User.item,
-          ),
-          (
-            (bId, bVariant),
-            {priorityTimestamp: bPriorityTimestamp}: User.item,
-          ),
-        ) => {
-        let aItem = Item.getItem(~itemId=aId);
-        let bItem = Item.getItem(~itemId=bId);
-        compareArrays(
-          [|
-            switch (UserStore.getItem(~itemId=aId, ~variation=aVariant)) {
-            | Some(aUserItem) =>
-              prioritizeViewerStatuses |> Js.Array.includes(aUserItem.status)
-                ? (-1.) : 0.
-            | None => 0.
-            },
-            -. Option.getWithDefault(aPriorityTimestamp, 0.),
-            Item.categories
-            |> Js.Array.indexOf(aItem.category)
-            |> float_of_int,
-            - Option.getWithDefault(aItem.sellPrice, 0) |> float_of_int,
-            float_of_int(compareItemsABC(aItem, bItem)),
-          |],
-          [|
-            switch (UserStore.getItem(~itemId=bId, ~variation=bVariant)) {
-            | Some(bUserItem) =>
-              prioritizeViewerStatuses |> Js.Array.includes(bUserItem.status)
-                ? (-1.) : 0.
-            | None => 0.
-            },
-            -. Option.getWithDefault(bPriorityTimestamp, 0.),
-            Item.categories
-            |> Js.Array.indexOf(bItem.category)
-            |> float_of_int,
-            - Option.getWithDefault(bItem.sellPrice, 0) |> float_of_int,
-            0.,
-          |],
-        );
-      })
-    | UserTimeUpdated =>
-      wrapWithVariantSort(
-        (
-          ((aId, _), aUserItem: User.item),
-          ((bId, _), bUserItem: User.item),
-        ) => {
-        let aItem = Item.getItem(~itemId=aId);
-        let bItem = Item.getItem(~itemId=bId);
-        compareArrays(
-          [|
-            -. aUserItem.timeUpdated->Belt.Option.getWithDefault(0.),
-            Item.getName(bItem)
-            |> Js.String.localeCompare(Item.getName(aItem)),
-          |],
-          [|-. bUserItem.timeUpdated->Belt.Option.getWithDefault(0.), 0.|],
-        );
-      })
-    | UserNote =>
-      wrapWithVariantSort(
-        (
-          ((aId, _), aUserItem: User.item),
-          ((bId, _), bUserItem: User.item),
-        ) => {
-        let aItem = Item.getItem(~itemId=aId);
-        let bItem = Item.getItem(~itemId=bId);
-        compareArrays(
-          [|
-            switch (aUserItem.note, bUserItem.note) {
-            | ("", _) => 1
-            | (_, "") => (-1)
-            | (a, b) => int_of_float(a |> Js.String.localeCompare(b))
-            },
-            compareItemsABC(aItem, bItem),
-          |],
-          [|0, 0|],
-        );
-      })
-    | ListTimeAdded => raise(UnexpectedSort(sort))
-    }
-  );
+    )
+  | UserDefault =>
+    wrapWithVariantSort((((aId, aVariant), _), ((bId, bVariant), _)) => {
+      let aItem = Item.getItem(~itemId=aId);
+      let bItem = Item.getItem(~itemId=bId);
+      compareArrays(
+        [|
+          switch (UserStore.getItem(~itemId=aId, ~variation=aVariant)) {
+          | Some(aUserItem) =>
+            prioritizeViewerStatuses |> Js.Array.includes(aUserItem.status)
+              ? (-1.) : 0.
+          | None => 0.
+          },
+          Item.categories |> Js.Array.indexOf(aItem.category) |> float_of_int,
+          float_of_int(compareItemsABC(aItem, bItem)),
+        |],
+        [|
+          switch (UserStore.getItem(~itemId=bId, ~variation=bVariant)) {
+          | Some(bUserItem) =>
+            prioritizeViewerStatuses |> Js.Array.includes(bUserItem.status)
+              ? (-1.) : 0.
+          | None => 0.
+          },
+          Item.categories |> Js.Array.indexOf(bItem.category) |> float_of_int,
+          0.,
+        |],
+      );
+    })
+  | UserTimeUpdated =>
+    wrapWithVariantSort(
+      (((aId, _), aUserItem: User.item), ((bId, _), bUserItem: User.item)) => {
+      let aItem = Item.getItem(~itemId=aId);
+      let bItem = Item.getItem(~itemId=bId);
+      compareArrays(
+        [|
+          -. aUserItem.timeUpdated->Belt.Option.getWithDefault(0.),
+          float_of_int(compareItemsABC(aItem, bItem)),
+        |],
+        [|-. bUserItem.timeUpdated->Belt.Option.getWithDefault(0.), 0.|],
+      );
+    })
+  | UserNote =>
+    wrapWithVariantSort(
+      (((aId, _), aUserItem: User.item), ((bId, _), bUserItem: User.item)) => {
+      let aItem = Item.getItem(~itemId=aId);
+      let bItem = Item.getItem(~itemId=bId);
+      compareArrays(
+        [|
+          switch (aUserItem.note, bUserItem.note) {
+          | ("", _) => 1
+          | (_, "") => (-1)
+          | (a, b) => int_of_float(a |> Js.String.localeCompare(b))
+          },
+          compareItemsABC(aItem, bItem),
+        |],
+        [|0, 0|],
+      );
+    })
+  | ListTimeAdded => raise(UnexpectedSort(sort))
+  };
 };
 
 module Pager = {

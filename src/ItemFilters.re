@@ -822,6 +822,21 @@ module SortSelector = {
   };
 };
 
+[@bs.get]
+external activeElementForDocument:
+  Webapi.Dom.Document.t => Webapi.Dom.HtmlElement.t =
+  "activeElement";
+
+let isInputActiveElement = () => {
+  open Webapi.Dom;
+
+  let activeElementTagName =
+    activeElementForDocument(document)->HtmlElement.tagName;
+  activeElementTagName == "INPUT"
+  || activeElementTagName == "SELECT"
+  || activeElementTagName == "TEXTAREA";
+};
+
 [@react.component]
 let make =
     (
@@ -866,6 +881,18 @@ let make =
         if (!(url.hash |> Js.Re.test_([%bs.re "/i(-?\d+)(:(\d+))?/g"]))) {
           onChange({...filters, text: ""});
         };
+      | "/" =>
+        if (!isInputActiveElement()) {
+          Js.Global.setTimeout(
+            () => {
+              Utils.getElementForDomRef(inputTextRef)
+              ->unsafeAsHtmlInputElement
+              ->HtmlInputElement.focus
+            },
+            20,
+          )
+          |> ignore;
+        }
       | _ => ()
       };
     };

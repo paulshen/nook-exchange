@@ -48,6 +48,7 @@ module Styles = {
       alignItems(center),
     ]);
   let filters = style([media("(max-width: 939px)", [width(pct(100.))])]);
+  let topPager = style([marginBottom(px(8))]);
   let bottomFilterBar = style([display(flexBox), justifyContent(flexEnd)]);
   let noResults = style([fontSize(px(20)), paddingTop(px(32))]);
 };
@@ -243,6 +244,7 @@ let make = (~showLogin, ~url: ReasonReactRouter.url) => {
         pageOffset
         numResultsPerPage
         setPageOffset
+        className=Styles.topPager
       />
     </div>
     <div className=Styles.cards>

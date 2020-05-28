@@ -88,7 +88,11 @@ module Styles = {
       media("(max-width: 640px)", [marginBottom(px(16))]),
     ]);
   let filterBar = style([marginBottom(zero)]);
-  let topPager = style([media("(max-width: 640px)", [display(none)])]);
+  let topPager =
+    style([
+      marginBottom(px(8)),
+      media("(max-width: 640px)", [display(none)]),
+    ]);
   let sectionToggles =
     style([
       display(flexBox),
@@ -105,6 +109,12 @@ module Styles = {
         ],
       ),
       media("(max-width: 470px)", [marginBottom(px(16))]),
+    ]);
+  let bottomBar =
+    style([
+      display(flexBox),
+      alignItems(center),
+      justifyContent(spaceBetween),
     ]);
 };
 
@@ -141,6 +151,174 @@ let userItemsHasOneWithStatus = (~userItems, ~status) => {
   userItems
   ->Js.Dict.values
   ->Belt.Array.someU((. item: User.item) => item.status == status);
+};
+
+module BulkActions = {
+  module Styles = {
+    open Css;
+    let bulkActionsLink =
+      style([textDecoration(none), hover([textDecoration(underline)])]);
+    let note = style([color(Colors.gray), marginBottom(px(8))]);
+    let bulkActionsButtons =
+      style([
+        display(flexBox),
+        flexDirection(column),
+        padding(px(16)),
+        backgroundColor(Colors.white),
+        borderRadius(px(8)),
+        Colors.darkLayerShadow,
+        selector(
+          "& > a",
+          [
+            display(inlineBlock),
+            marginBottom(px(4)),
+            textDecoration(none),
+            lastChild([marginBottom(zero)]),
+            hover([textDecoration(underline)]),
+          ],
+        ),
+      ]);
+  };
+
+  [@react.component]
+  let make = (~filteredItems, ~list: ViewingList.t) => {
+    let (showPopup, setShowPopup) = React.useState(() => false);
+    let reference = React.useRef(Js.Nullable.null);
+
+    <>
+      <a
+        href="#"
+        onClick={e => {
+          ReactEvent.Mouse.preventDefault(e);
+          setShowPopup(show => !show);
+        }}
+        className=Styles.bulkActionsLink
+        ref={ReactDOMRe.Ref.domRef(reference)}>
+        {React.string("Bulk Actions")}
+      </a>
+      {showPopup
+         ? <ReactAtmosphere.PopperLayer
+             reference
+             onOutsideClick={() => setShowPopup(_ => false)}
+             options={
+               placement: Some("top-start"),
+               modifiers:
+                 Some([|
+                   {
+                     "name": "offset",
+                     "options": {
+                       "offset": [|(-16), 8|],
+                     },
+                   },
+                 |]),
+             }
+             render={_ => {
+               let numItems = Js.Array.length(filteredItems);
+               let itemsString =
+                 string_of_int(numItems)
+                 ++ " item"
+                 ++ (numItems !== 1 ? "s" : "");
+               <div className=Styles.bulkActionsButtons>
+                 <div className=Styles.note>
+                   {React.string(
+                      "These actions operate on this filtered list.",
+                    )}
+                 </div>
+                 {switch (list) {
+                  | Wishlist
+                  | ForTrade =>
+                    <a
+                      href="#"
+                      onClick={e => {
+                        ReactEvent.Mouse.preventDefault(e);
+                        ConfirmDialog.confirm(
+                          ~bodyText=
+                            "Are you sure you want to move these "
+                            ++ itemsString
+                            ++ " to your Catalog?",
+                          ~confirmLabel="Move items",
+                          ~cancelLabel="Never mind",
+                          ~onConfirm=
+                            () => {
+                              UserStore.setItemStatusBatch(
+                                ~items=
+                                  filteredItems->Belt.Array.map(((item, _)) =>
+                                    item
+                                  ),
+                                ~status=CatalogOnly,
+                              )
+                            },
+                          (),
+                        );
+                        setShowPopup(_ => false);
+                      }}>
+                      {React.string("Move " ++ itemsString ++ " to Catalog")}
+                    </a>
+                  | _ => React.null
+                  }}
+                 {switch (list) {
+                  | Wishlist =>
+                    <a
+                      href="#"
+                      onClick={e => {
+                        ReactEvent.Mouse.preventDefault(e);
+                        ConfirmDialog.confirm(
+                          ~bodyText=
+                            "Are you sure you want to move these "
+                            ++ itemsString
+                            ++ " to your For Trade?",
+                          ~confirmLabel="Move items",
+                          ~cancelLabel="Never mind",
+                          ~onConfirm=
+                            () => {
+                              UserStore.setItemStatusBatch(
+                                ~items=
+                                  filteredItems->Belt.Array.map(((item, _)) =>
+                                    item
+                                  ),
+                                ~status=ForTrade,
+                              )
+                            },
+                          (),
+                        );
+                        setShowPopup(_ => false);
+                      }}>
+                      {React.string("Move " ++ itemsString ++ " to For Trade")}
+                    </a>
+                  | _ => React.null
+                  }}
+                 <a
+                   href="#"
+                   onClick={e => {
+                     ReactEvent.Mouse.preventDefault(e);
+                     ConfirmDialog.confirm(
+                       ~bodyText=
+                         "Are you sure you want to remove these "
+                         ++ itemsString
+                         ++ "?",
+                       ~confirmLabel="Remove items",
+                       ~cancelLabel="Never mind",
+                       ~onConfirm=
+                         () => {
+                           UserStore.removeItems(
+                             ~items=
+                               filteredItems->Belt.Array.map(((item, _)) =>
+                                 item
+                               ),
+                           )
+                         },
+                       (),
+                     );
+                     setShowPopup(_ => false);
+                   }}>
+                   {React.string("Remove " ++ itemsString)}
+                 </a>
+               </div>;
+             }}
+           />
+         : React.null}
+    </>;
+  };
 };
 
 [@react.component]
@@ -483,21 +661,28 @@ let make =
            })
          ->React.array}
       </div>
-      {!showMini && Js.Array.length(filteredItems) > numResultsPerPage
-         ? <div className=ItemBrowser.Styles.bottomFilterBar>
-             <ItemFilters.Pager
-               numResults
-               pageOffset
-               numResultsPerPage
-               setPageOffset={f => {
-                 setPageOffset(f);
-                 let rootElement = Utils.getElementForDomRef(rootRef);
-                 open Webapi.Dom;
-                 let boundingRect =
-                   Element.getBoundingClientRect(rootElement);
-                 window |> Window.scrollBy(0., DomRect.top(boundingRect));
-               }}
-             />
+      {!showMini
+         ? <div className=Styles.bottomBar>
+             {me && Js.Array.length(filteredItems) >= 3
+                ? <BulkActions filteredItems list /> : React.null}
+             {Js.Array.length(filteredItems) > numResultsPerPage
+                ? <div className=ItemBrowser.Styles.bottomFilterBar>
+                    <ItemFilters.Pager
+                      numResults
+                      pageOffset
+                      numResultsPerPage
+                      setPageOffset={f => {
+                        setPageOffset(f);
+                        let rootElement = Utils.getElementForDomRef(rootRef);
+                        open Webapi.Dom;
+                        let boundingRect =
+                          Element.getBoundingClientRect(rootElement);
+                        window
+                        |> Window.scrollBy(0., DomRect.top(boundingRect));
+                      }}
+                    />
+                  </div>
+                : React.null}
            </div>
          : React.null}
     </div>

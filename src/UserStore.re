@@ -251,6 +251,55 @@ let setItemStatus = (~itemId: int, ~variation: int, ~status: User.itemStatus) =>
   );
 };
 
+let setItemStatusBatch = (~items: array((int, int)), ~status) => {
+  let user = getUser();
+  let updatedUser = {
+    ...user,
+    items: {
+      let clone = Utils.cloneJsDict(user.items);
+      items
+      |> Js.Array.forEach(((itemId, variant)) => {
+           let itemKey = User.getItemKey(~itemId, ~variation=variant);
+           clone->Js.Dict.set(
+             itemKey,
+             switch (user.items->Js.Dict.get(itemKey)) {
+             | Some(item) => {...item, status}
+             | None => {
+                 status,
+                 note: "",
+                 priorityTimestamp: None,
+                 timeUpdated: None,
+               }
+             },
+           );
+         });
+      clone;
+    },
+  };
+  api.dispatch(UpdateUser(updatedUser));
+  {
+    let%Repromise responseResult =
+      BAPI.setItemStatusBatch(
+        ~sessionId=Belt.Option.getExn(sessionId^),
+        ~items,
+        ~status,
+      );
+    handleServerResponse("/@me/items/batch/status", responseResult);
+    Analytics.Amplitude.logEventWithProperties(
+      ~eventName="Item Status Batch Updated",
+      ~eventProperties={
+        "numItems": Js.Array.length(items),
+        "status": User.itemStatusToJs(status),
+      },
+    );
+    Promise.resolved();
+  }
+  |> ignore;
+  Analytics.Amplitude.setItemCount(
+    ~itemCount=Js.Dict.keys(updatedUser.items)->Js.Array.length,
+  );
+};
+
 let setItemNote = (~itemId: int, ~variation: int, ~note: string) => {
   let item = Item.getItem(~itemId);
   if (Item.getCanonicalVariant(~item, ~variant=variation) != variation) {
@@ -458,6 +507,37 @@ let removeItem = (~itemId, ~variation) => {
       ~itemCount=Js.Dict.keys(updatedUser.items)->Js.Array.length,
     );
   };
+};
+
+let removeItems = (~items: array((int, int))) => {
+  let user = getUser();
+  let updatedUser = {
+    ...user,
+    items: {
+      let clone = Utils.cloneJsDict(user.items);
+      items
+      |> Js.Array.forEach(((itemId, variant)) => {
+           let key = User.getItemKey(~itemId, ~variation=variant);
+           Utils.deleteJsDictKey(clone, key);
+         });
+      clone;
+    },
+  };
+  api.dispatch(UpdateUser(updatedUser));
+  {
+    let%Repromise responseResult =
+      BAPI.removeItems(~sessionId=Belt.Option.getExn(sessionId^), ~items);
+    handleServerResponse("/@me/items/batch/remove", responseResult);
+    Analytics.Amplitude.logEventWithProperties(
+      ~eventName="Item Batch Removed",
+      ~eventProperties={"numItems": Js.Array.length(items)},
+    );
+    Promise.resolved();
+  }
+  |> ignore;
+  Analytics.Amplitude.setItemCount(
+    ~itemCount=Js.Dict.keys(updatedUser.items)->Js.Array.length,
+  );
 };
 
 let updateProfileText = (~profileText) => {

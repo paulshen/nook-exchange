@@ -40,6 +40,38 @@ let setItemStatus = (~userId, ~sessionId, ~itemId, ~variant, ~status) => {
   Promise.resolved(responseResult);
 };
 
+let setItemStatusBatch = (~sessionId, ~items: array((int, int)), ~status) => {
+  let url = Constants.bapiUrl ++ "/@me/items/batch/status";
+  let%Repromise.Js responseResult =
+    Fetch.fetchWithInit(
+      url,
+      Fetch.RequestInit.make(
+        ~method_=Post,
+        ~body=
+          Fetch.BodyInit.make(
+            Js.Json.stringify(
+              Json.Encode.(
+                object_([
+                  ("items", array(tuple2(int, int), items)),
+                  ("status", int(User.itemStatusToJs(status))),
+                ])
+              ),
+            ),
+          ),
+        ~headers=
+          Fetch.HeadersInit.make({
+            "X-Client-Version": Constants.gitCommitRef,
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " ++ sessionId,
+          }),
+        ~credentials=Include,
+        ~mode=CORS,
+        (),
+      ),
+    );
+  Promise.resolved(responseResult);
+};
+
 let setItemNote = (~userId, ~sessionId, ~itemId, ~variant, ~note) => {
   let%Repromise.Js responseResult =
     makeAuthenticatedPostRequest(
@@ -125,6 +157,35 @@ let removeItem = (~userId, ~sessionId, ~itemId, ~variant) => {
             "Content-Type": "application/json",
             "Authorization":
               "Bearer " ++ Belt.Option.getWithDefault(sessionId, ""),
+          }),
+        ~credentials=Include,
+        ~mode=CORS,
+        (),
+      ),
+    );
+  Promise.resolved(responseResult);
+};
+
+let removeItems = (~sessionId, ~items: array((int, int))) => {
+  let url = Constants.bapiUrl ++ "/@me/items/batch";
+  let%Repromise.Js responseResult =
+    Fetch.fetchWithInit(
+      url,
+      Fetch.RequestInit.make(
+        ~method_=Delete,
+        ~body=
+          Fetch.BodyInit.make(
+            Js.Json.stringify(
+              Json.Encode.(
+                object_([("items", array(tuple2(int, int), items))])
+              ),
+            ),
+          ),
+        ~headers=
+          Fetch.HeadersInit.make({
+            "X-Client-Version": Constants.gitCommitRef,
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " ++ sessionId,
           }),
         ~credentials=Include,
         ~mode=CORS,

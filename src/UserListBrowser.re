@@ -257,6 +257,7 @@ module BulkActions = {
                   | _ => React.null
                   }}
                  {switch (list) {
+                  | Catalog
                   | Wishlist =>
                     <a
                       href="#"

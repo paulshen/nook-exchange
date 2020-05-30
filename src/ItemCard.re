@@ -149,6 +149,7 @@ module Styles = {
     style([position(absolute), top(px(10)), right(px(10))]);
   let bottomBar = style([fontSize(px(12))]);
   let bottomBarStatus = style([alignSelf(flexStart), paddingTop(px(4))]);
+  let bottomBarEmoji = style([display(inlineBlock), marginRight(px(8))]);
   let statusButtons = style([display(flexBox), alignItems(center)]);
   let removeButton =
     style([
@@ -656,12 +657,15 @@ let make = (~item: Item.t, ~isLoggedIn, ~showLogin) => {
                      Styles.bottomBar,
                      Styles.bottomBarStatus,
                    ])}>
+                   <span className=Styles.bottomBarEmoji>
+                     {React.string(User.itemStatusToEmoji(userItem.status))}
+                   </span>
                    {React.string(
                       {
                         switch (userItem.status) {
-                        | Wishlist => {j|🙏 In your Wishlist|j}
-                        | ForTrade => {j|🤝 In your For Trade list|j}
-                        | CanCraft => {j|🔨 In your Can Craft list|j}
+                        | Wishlist => {j|In your Wishlist|j}
+                        | ForTrade => {j|In your For Trade list|j}
+                        | CanCraft => {j|In your Can Craft list|j}
                         | _ => raise(Constants.Uhoh)
                         };
                       },

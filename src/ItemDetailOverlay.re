@@ -466,6 +466,7 @@ module MyStatusSection = {
         justifyContent(spaceBetween),
       ]);
     let currentStatus = style([]);
+    let currentStatusEmoji = style([display(inlineBlock), marginRight(px(8))]);
     let itemNote = style([marginTop(px(8))]);
     let catalogCheckbox = style([marginLeft(px(12))]);
   };
@@ -484,12 +485,15 @@ module MyStatusSection = {
               <>
                 <div className=Styles.currentStatusRow>
                   <div className=Styles.currentStatus>
+                   <span className=Styles.currentStatusEmoji>
+                     {React.string(User.itemStatusToEmoji(userItem.status))}
+                   </span>
                     {React.string(
                        {
                          switch (userItem.status) {
-                         | Wishlist => {j|🙏 In your Wishlist|j}
-                         | ForTrade => {j|🤝 In your For Trade list|j}
-                         | CanCraft => {j|🔨 In your Can Craft list|j}
+                         | Wishlist => {j|In your Wishlist|j}
+                         | ForTrade => {j|In your For Trade list|j}
+                         | CanCraft => {j|In your Can Craft list|j}
                          | _ => raise(Constants.Uhoh)
                          };
                        },

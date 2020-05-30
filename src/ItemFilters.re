@@ -198,7 +198,6 @@ let doesItemMatchCategory = (~item: Item.t, ~category: string) => {
   | "furniture" =>
     Item.furnitureCategories |> Js.Array.includes(item.category)
   | "clothing" => Item.clothingCategories |> Js.Array.includes(item.category)
-  | "other" => Item.otherCategories |> Js.Array.includes(item.category)
   | "recipes" => Item.isRecipe(~item)
   | category => item.category == category
   };
@@ -531,9 +530,9 @@ module CategoryButtons = {
           "wallpapers",
           "floors",
           "rugs",
+          "other",
         |],
         Item.clothingCategories,
-        Item.otherCategories,
       |]);
 
     <div className=CategoryStyles.root>

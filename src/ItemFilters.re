@@ -536,6 +536,7 @@ module CategoryButtons = {
           "other",
         |],
         Item.clothingCategories,
+        [|"fossils", "photos", "posters", "fencing", "tools", "music"|],
       |]);
 
     <div className=CategoryStyles.root>

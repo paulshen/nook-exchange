@@ -70,6 +70,7 @@ type mask =
 
 type excludables =
   | Catalog
+  | CanCraft
   | Wishlist;
 
 type t = {
@@ -125,6 +126,7 @@ let serialize = (~filters, ~defaultSort, ~pageOffset) => {
          ->Belt.Array.map(exclude =>
              switch (exclude) {
              | Catalog => "catalog"
+             | CanCraft => "can-craft"
              | Wishlist => "wishlist"
              }
            )
@@ -180,6 +182,7 @@ let fromUrlSearch = (~urlSearch, ~defaultSort) => {
           ->Belt.Array.keepMap(fragment => {
               switch (fragment) {
               | "wishlist" => Some(Wishlist)
+              | "can-craft" => Some(CanCraft)
               | "catalog" => Some(Catalog)
               | _ => None
               }
@@ -672,11 +675,24 @@ module AdvancedFilter = {
           <div>
             <label className=Styles.option>
               <span className=Styles.optionLabel>
+                {React.string("Can Craft")}
+              </span>
+              <input
+                type_="checkbox"
+                value="can-craft"
+                checked={filters.exclude |> Js.Array.includes(CanCraft)}
+                onChange={onChangeCheckbox(CanCraft)}
+              />
+            </label>
+          </div>
+          <div>
+            <label className=Styles.option>
+              <span className=Styles.optionLabel>
                 {React.string("My Wishlist")}
               </span>
               <input
                 type_="checkbox"
-                value="catalog"
+                value="wishlist"
                 checked={filters.exclude |> Js.Array.includes(Wishlist)}
                 onChange={onChangeCheckbox(Wishlist)}
               />

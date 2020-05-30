@@ -148,7 +148,11 @@ let make = (~showLogin, ~url: ReasonReactRouter.url) => {
               if (switch (userItem.status) {
                   | Wishlist =>
                     filters.exclude |> Js.Array.includes(ItemFilters.Wishlist)
-                  | CanCraft
+                  | CanCraft =>
+                    filters.exclude
+                    |> Js.Array.includes(ItemFilters.Catalog)
+                    || filters.exclude
+                    |> Js.Array.includes(ItemFilters.CanCraft)
                   | CatalogOnly
                   | ForTrade =>
                     filters.exclude |> Js.Array.includes(ItemFilters.Catalog)

@@ -617,6 +617,5 @@ let make = () => {
         </div>
       </div>
     </div>
-    {!isShown ? <DiscordBotUpsell /> : React.null}
   </>;
 };

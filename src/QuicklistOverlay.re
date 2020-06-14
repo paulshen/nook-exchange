@@ -185,6 +185,7 @@ module Styles = {
       backgroundColor(Colors.white),
       display(flexBox),
       flexDirection(column),
+      flexShrink(0.),
       padding3(~top=px(8), ~h=px(16), ~bottom=px(16)),
     ]);
   let mobileRemoveMessage =

@@ -9,17 +9,35 @@ module Styles = {
       marginBottom(px(8)),
     ]);
   let selectSort = style([marginRight(px(16))]);
+  let textInputWrapper =
+    style([display(inlineBlock), position(relative), marginRight(px(8))]);
   let textInput =
     style([
       backgroundColor(Colors.white),
       border(px(1), solid, hex("00000020")),
       fontSize(px(16)),
-      marginRight(px(8)),
       marginBottom(px(8)),
       padding2(~v=zero, ~h=px(12)),
       borderRadius(px(4)),
       height(px(35)),
       width(px(180)),
+    ]);
+  [@bs.module "./assets/close.png"] external closePng: string = "default";
+  let textInputClear =
+    style([
+      position(absolute),
+      right(px(8)),
+      top(px(10)),
+      width(px(16)),
+      height(px(16)),
+      backgroundColor(transparent),
+      backgroundImage(url(closePng)),
+      backgroundSize(`size((px(16), px(16)))),
+      backgroundRepeat(noRepeat),
+      backgroundPosition(center),
+      borderStyle(none),
+      opacity(0.5),
+      padding(zero),
     ]);
   let inputWithValue =
     style([boxShadow(Shadow.box(~spread=px(2), hex("3aa56380")))]);
@@ -928,36 +946,44 @@ let make =
   });
 
   <div className={Cn.make([Styles.root, Cn.unpack(className)])}>
-    <input
-      type_="text"
-      ref={ReactDOMRe.Ref.domRef(inputTextRef)}
-      placeholder="Search.. Esc to clear"
-      defaultValue={filters.text}
-      onChange={e => {
-        let value = ReactEvent.Form.target(e)##value;
-        switch (React.Ref.current(updateTextTimeoutRef)) {
-        | Some(updateTextTimeout) =>
-          Js.Global.clearTimeout(updateTextTimeout)
-        | None => ()
-        };
-        React.Ref.setCurrent(
-          updateTextTimeoutRef,
-          Some(
-            Js.Global.setTimeout(
-              () => {
-                React.Ref.setCurrent(updateTextTimeoutRef, None);
-                onChange({...filters, text: value});
-              },
-              500,
+    <div className=Styles.textInputWrapper>
+      <input
+        type_="text"
+        ref={ReactDOMRe.Ref.domRef(inputTextRef)}
+        placeholder="Search.. Esc to clear"
+        defaultValue={filters.text}
+        onChange={e => {
+          let value = ReactEvent.Form.target(e)##value;
+          switch (React.Ref.current(updateTextTimeoutRef)) {
+          | Some(updateTextTimeout) =>
+            Js.Global.clearTimeout(updateTextTimeout)
+          | None => ()
+          };
+          React.Ref.setCurrent(
+            updateTextTimeoutRef,
+            Some(
+              Js.Global.setTimeout(
+                () => {
+                  React.Ref.setCurrent(updateTextTimeoutRef, None);
+                  onChange({...filters, text: value});
+                },
+                500,
+              ),
             ),
-          ),
-        );
-      }}
-      className={Cn.make([
-        Styles.textInput,
-        Cn.ifTrue(Styles.inputWithValue, filters.text != ""),
-      ])}
-    />
+          );
+        }}
+        className={Cn.make([
+          Styles.textInput,
+          Cn.ifTrue(Styles.inputWithValue, filters.text != ""),
+        ])}
+      />
+      {filters.text != ""
+         ? <button
+             onClick={e => {onChange({...filters, text: ""})}}
+             className=Styles.textInputClear
+           />
+         : React.null}
+    </div>
     {switch (userItemIds) {
      | Some(userItemIds) =>
        <UserCategorySelector userItemIds filters onChange />

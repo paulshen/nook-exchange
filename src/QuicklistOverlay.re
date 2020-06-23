@@ -515,7 +515,23 @@ let make = () => {
                         let item = Item.getItem(~itemId);
                         if (viewportWidth > viewportThreshold) {
                           <ReactAtmosphere.Tooltip
-                            text={React.string("Tap to remove")}
+                            text={React.string(
+                              Item.getName(item)
+                              ++ (
+                                Item.getNumVariations(~item) > 1
+                                  ? " ("
+                                    ++ Item.getVariantName(
+                                         ~item,
+                                         ~variant,
+                                         ~hidePattern=true,
+                                         (),
+                                       )
+                                       ->Belt.Option.getExn
+                                    ++ ")"
+                                  : ""
+                              )
+                              ++ "\nTap to remove",
+                            )}
                             options={
                               placement: Some("top"),
                               modifiers:

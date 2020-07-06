@@ -29,7 +29,7 @@ let make = () => {
           {React.string("Support us")}
         </a>
         {React.string(" | ")}
-        <a href="https://discord.com/invite/Yf8HP25" target="_blank">
+        <a href="https://discord.gg/9sh66CX" target="_blank">
           {React.string("Discord")}
         </a>
         {React.string(" | ")}

@@ -7,7 +7,7 @@ let gitCommitRef =
   |> Js.String.slice(~from=0, ~to_=8);
 
 let bapiUrl =
-  nodeEnv === Some("production")
+  nodeEnv === Some("production") || true
     ? "https://a.nook.exchange" : "http://localhost:3000";
 let cdnUrl =
   nodeEnv === Some("production")

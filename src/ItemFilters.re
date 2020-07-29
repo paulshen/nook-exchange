@@ -288,8 +288,8 @@ let compareArrays = (a, b) => {
 
 let compareItemsABC = (a: Item.t, b: Item.t) => {
   // hack to sort "wooden-" before "wooden "
-  let aName = Item.getName(a) |> Js.String.replaceByRe([%bs.re "/ /g"], "?");
-  let bName = Item.getName(b) |> Js.String.replaceByRe([%bs.re "/ /g"], "?");
+  let aName = Item.getName(a) |> Js.String.replaceByRe([%bs.re "/-/g"], " ");
+  let bName = Item.getName(b) |> Js.String.replaceByRe([%bs.re "/-/g"], " ");
   int_of_float(Js.String.localeCompare(bName, aName));
 };
 let compareItemsSellPriceDesc = (a: Item.t, b: Item.t) =>

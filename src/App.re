@@ -144,7 +144,6 @@ let make = () => {
           SettingsStore.languageToJs(language),
           json => {
             setIsLanguageLoaded(_ => true);
-            [%debugger];
             Item.setTranslations(json);
             forceUpdate(x => x + 1);
           },

@@ -193,7 +193,14 @@ let make = (~showLogin, ~url: ReasonReactRouter.url) => {
     React.useMemo2(
       () =>
         Item.all->Belt.Array.keep(item =>
-          !Js.Array.includes(item.id, excludeUserItemIds)
+          !(
+            Js.Array.includes(item.id, excludeUserItemIds)
+            || Item.isRecipe(~item)
+            && Js.Array.includes(
+                 Item.getItemIdForRecipe(~recipe=item),
+                 excludeUserItemIds,
+               )
+          )
           && ItemFilters.doesItemMatchFilters(~item, ~filters)
         )
         |> Js.Array.sortInPlaceWith(ItemFilters.getSort(~sort=filters.sort)),

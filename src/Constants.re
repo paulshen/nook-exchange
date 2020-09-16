@@ -7,11 +7,11 @@ let gitCommitRef =
   |> Js.String.slice(~from=0, ~to_=8);
 
 let apiUrl =
-  nodeEnv === Some("development")
-    ? "https://a.nook.exchange" : "http://localhost:3000";
+  nodeEnv === Some("paul-development")
+    ? "http://localhost:3000" : "https://a.nook.exchange";
 let cdnUrl =
-  nodeEnv === Some("development")
-    ? "https://b.nook.exchange/file/nook-exchange" : "";
+  nodeEnv === Some("paul-development")
+    ? "" : "https://b.nook.exchange/file/nook-exchange";
 
 let gtagId = "UA-55966633-6";
 let amplitudeApiKey = "d91231e0b8a96baf38ba67eb36d25a48";

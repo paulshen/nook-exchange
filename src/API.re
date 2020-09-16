@@ -25,7 +25,7 @@ let setItemStatus = (~userId, ~sessionId, ~itemId, ~variant, ~status) => {
   let%Repromise.Js responseResult =
     makeAuthenticatedPostRequest(
       ~url=
-        Constants.bapiUrl
+        Constants.apiUrl
         ++ "/@me/items/"
         ++ string_of_int(itemId)
         ++ "/"
@@ -41,7 +41,7 @@ let setItemStatus = (~userId, ~sessionId, ~itemId, ~variant, ~status) => {
 };
 
 let setItemStatusBatch = (~sessionId, ~items: array((int, int)), ~status) => {
-  let url = Constants.bapiUrl ++ "/@me/items/batch/status";
+  let url = Constants.apiUrl ++ "/@me/items/batch/status";
   let%Repromise.Js responseResult =
     Fetch.fetchWithInit(
       url,
@@ -76,7 +76,7 @@ let setItemNote = (~userId, ~sessionId, ~itemId, ~variant, ~note) => {
   let%Repromise.Js responseResult =
     makeAuthenticatedPostRequest(
       ~url=
-        Constants.bapiUrl
+        Constants.apiUrl
         ++ "/@me/items/"
         ++ string_of_int(itemId)
         ++ "/"
@@ -95,7 +95,7 @@ let setItemPriority = (~sessionId, ~itemId, ~variant, ~isPriority) => {
   let%Repromise.Js responseResult =
     makeAuthenticatedPostRequest(
       ~url=
-        Constants.bapiUrl
+        Constants.apiUrl
         ++ "/@me/items/"
         ++ string_of_int(itemId)
         ++ "/"
@@ -111,7 +111,7 @@ let importItems =
     (~sessionId, ~updates: array(((int, int), User.itemStatus))) => {
   let%Repromise.Js responseResult =
     makeAuthenticatedPostRequest(
-      ~url=Constants.bapiUrl ++ "/@me/items/import",
+      ~url=Constants.apiUrl ++ "/@me/items/import",
       ~bodyJson=[
         (
           "updates",
@@ -135,7 +135,7 @@ let importItems =
 
 let removeItem = (~userId, ~sessionId, ~itemId, ~variant) => {
   let url =
-    Constants.bapiUrl
+    Constants.apiUrl
     ++ "/@me/items/"
     ++ string_of_int(itemId)
     ++ "/"
@@ -167,7 +167,7 @@ let removeItem = (~userId, ~sessionId, ~itemId, ~variant) => {
 };
 
 let removeItems = (~sessionId, ~items: array((int, int))) => {
-  let url = Constants.bapiUrl ++ "/@me/items/batch";
+  let url = Constants.apiUrl ++ "/@me/items/batch";
   let%Repromise.Js responseResult =
     Fetch.fetchWithInit(
       url,
@@ -198,7 +198,7 @@ let removeItems = (~sessionId, ~items: array((int, int))) => {
 let updateProfileText = (~userId, ~sessionId, ~profileText) => {
   let%Repromise.Js responseResult =
     makeAuthenticatedPostRequest(
-      ~url=Constants.bapiUrl ++ "/@me/profileText",
+      ~url=Constants.apiUrl ++ "/@me/profileText",
       ~bodyJson=[
         ("text", Json.Encode.string(profileText)),
         ("userId", Json.Encode.string(userId)),
@@ -209,7 +209,7 @@ let updateProfileText = (~userId, ~sessionId, ~profileText) => {
 };
 
 let updateSetting = (~userId, ~sessionId, ~settingKey, ~settingValue) => {
-  let url = Constants.bapiUrl ++ "/@me/settings";
+  let url = Constants.apiUrl ++ "/@me/settings";
   let%Repromise.Js responseResult =
     Fetch.fetchWithInit(
       url,
@@ -243,7 +243,7 @@ let updateSetting = (~userId, ~sessionId, ~settingKey, ~settingValue) => {
 let patchMe =
     (~userId, ~sessionId, ~username, ~newPassword, ~email, ~oldPassword) => {
   open Belt;
-  let url = Constants.bapiUrl ++ "/@me";
+  let url = Constants.apiUrl ++ "/@me";
   let%Repromise.JsExn response =
     Fetch.fetchWithInit(
       url,
@@ -292,7 +292,7 @@ let patchMe =
 };
 
 let getUserLists = (~sessionId) => {
-  let url = Constants.bapiUrl ++ "/@me/item-lists";
+  let url = Constants.apiUrl ++ "/@me/item-lists";
   let%Repromise.Js responseResult =
     Fetch.fetchWithInit(
       url,
@@ -312,7 +312,7 @@ let getUserLists = (~sessionId) => {
 };
 
 let createItemList = (~sessionId, ~items: array((int, int))) => {
-  let url = Constants.bapiUrl ++ "/item-lists";
+  let url = Constants.apiUrl ++ "/item-lists";
   let%Repromise.Js responseResult =
     Fetch.fetchWithInit(
       url,
@@ -342,7 +342,7 @@ let createItemList = (~sessionId, ~items: array((int, int))) => {
 };
 
 let cloneItemList = (~sessionId, ~listId) => {
-  let url = Constants.bapiUrl ++ "/item-lists/" ++ listId ++ "/clone";
+  let url = Constants.apiUrl ++ "/item-lists/" ++ listId ++ "/clone";
   let%Repromise.Js responseResult =
     Fetch.fetchWithInit(
       url,
@@ -369,7 +369,7 @@ let updateItemList =
       ~items: option(array((int, int)))=?,
       (),
     ) => {
-  let url = Constants.bapiUrl ++ "/item-lists/" ++ listId;
+  let url = Constants.apiUrl ++ "/item-lists/" ++ listId;
   let%Repromise.Js responseResult =
     Fetch.fetchWithInit(
       url,
@@ -411,7 +411,7 @@ let updateItemList =
 };
 
 let deleteItemList = (~sessionId, ~listId) => {
-  let url = Constants.bapiUrl ++ "/item-lists/" ++ listId;
+  let url = Constants.apiUrl ++ "/item-lists/" ++ listId;
   let%Repromise.Js responseResult =
     Fetch.fetchWithInit(
       url,
@@ -431,7 +431,7 @@ let deleteItemList = (~sessionId, ~listId) => {
 };
 
 let getItemList = (~listId: string) => {
-  let url = Constants.bapiUrl ++ "/item-lists/" ++ listId;
+  let url = Constants.apiUrl ++ "/item-lists/" ++ listId;
   let%Repromise.Js responseResult =
     Fetch.fetchWithInit(
       url,
@@ -452,7 +452,7 @@ let getItemList = (~listId: string) => {
 let followUser = (~userId, ~sessionId) => {
   let%Repromise.JsExn response =
     Fetch.fetchWithInit(
-      Constants.bapiUrl ++ "/@me/follow/" ++ userId,
+      Constants.apiUrl ++ "/@me/follow/" ++ userId,
       Fetch.RequestInit.make(
         ~method_=Post,
         ~headers=
@@ -477,7 +477,7 @@ let followUser = (~userId, ~sessionId) => {
 let unfollowUser = (~userId, ~sessionId) => {
   let%Repromise.JsExn response =
     Fetch.fetchWithInit(
-      Constants.bapiUrl ++ "/@me/unfollow/" ++ userId,
+      Constants.apiUrl ++ "/@me/unfollow/" ++ userId,
       Fetch.RequestInit.make(
         ~method_=Post,
         ~headers=
@@ -502,7 +502,7 @@ let unfollowUser = (~userId, ~sessionId) => {
 let getFolloweesItem = (~sessionId, ~itemId) => {
   let%Repromise.JsExn response =
     Fetch.fetchWithInit(
-      Constants.bapiUrl ++ "/@me/followees/items/" ++ string_of_int(itemId),
+      Constants.apiUrl ++ "/@me/followees/items/" ++ string_of_int(itemId),
       Fetch.RequestInit.make(
         ~method_=Get,
         ~headers=
@@ -521,7 +521,7 @@ let getFolloweesItem = (~sessionId, ~itemId) => {
 let connectDiscordAccount = (~sessionId, ~code) => {
   let%Repromise.JsExn response =
     Fetch.fetchWithInit(
-      Constants.bapiUrl ++ "/@me/discord",
+      Constants.apiUrl ++ "/@me/discord",
       Fetch.RequestInit.make(
         ~method_=Post,
         ~body=
@@ -547,7 +547,7 @@ let connectDiscordAccount = (~sessionId, ~code) => {
 let removeAllItems = (~sessionId) => {
   let%Repromise.Js responseResult =
     Fetch.fetchWithInit(
-      Constants.bapiUrl ++ "/@me/items/all",
+      Constants.apiUrl ++ "/@me/items/all",
       Fetch.RequestInit.make(
         ~method_=Delete,
         ~headers=
@@ -567,7 +567,7 @@ let removeAllItems = (~sessionId) => {
 let deleteAccount = (~sessionId, ~userId) => {
   let%Repromise.Js responseResult =
     Fetch.fetchWithInit(
-      Constants.bapiUrl ++ "/@me/" ++ userId,
+      Constants.apiUrl ++ "/@me/" ++ userId,
       Fetch.RequestInit.make(
         ~method_=Delete,
         ~headers=

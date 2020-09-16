@@ -39,7 +39,7 @@ let make = (~url: ReasonReactRouter.url) => {
       {
         let%Repromise.JsExn response =
           Fetch.fetchWithInit(
-            Constants.bapiUrl ++ "/password-reset/consume",
+            Constants.apiUrl ++ "/password-reset/consume",
             Fetch.RequestInit.make(
               ~method_=Post,
               ~body=

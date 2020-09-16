@@ -162,7 +162,7 @@ module PasswordReset = {
       {
         let%Repromise.JsExn response =
           Fetch.fetchWithInit(
-            Constants.bapiUrl ++ "/password-reset",
+            Constants.apiUrl ++ "/password-reset",
             Fetch.RequestInit.make(
               ~method_=Post,
               ~body=

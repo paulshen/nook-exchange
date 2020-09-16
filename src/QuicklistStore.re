@@ -103,7 +103,7 @@ let saveList = () => {
   switch (list.id) {
   | Some(listId) =>
     let%Repromise responseResult =
-      BAPI.updateItemList(
+      API.updateItemList(
         ~sessionId=Belt.Option.getExn(UserStore.sessionId^),
         ~listId,
         ~items=itemIds,
@@ -123,7 +123,7 @@ let saveList = () => {
     Promise.resolved(listId);
   | None =>
     let%Repromise responseResult =
-      BAPI.createItemList(~sessionId=UserStore.sessionId^, ~items=itemIds);
+      API.createItemList(~sessionId=UserStore.sessionId^, ~items=itemIds);
     UserStore.handleServerResponse("/item-lists", responseResult);
     let response = Belt.Result.getExn(responseResult);
     let%Repromise.JsExn json = Fetch.Response.json(response);
@@ -182,7 +182,7 @@ let removeItem = (~itemId, ~variant) => {
 let updateListTitle = (~listId, ~title: option(string)) => {
   api.dispatch(UpdateTitle(listId, title));
   let%Repromise responseResult =
-    BAPI.updateItemList(
+    API.updateItemList(
       ~sessionId=Option.getExn(UserStore.sessionId^),
       ~listId,
       ~title=title->Option.getWithDefault(""),

@@ -80,7 +80,7 @@ module WithViewer = {
     React.useEffect0(() => {
       {
         let%Repromise response =
-          BAPI.getUserLists(
+          API.getUserLists(
             ~sessionId=Belt.Option.getExn(UserStore.sessionId^),
           );
         let%Repromise.JsExn json =

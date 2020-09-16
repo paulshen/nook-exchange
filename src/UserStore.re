@@ -206,7 +206,7 @@ let setItemStatus = (~itemId: int, ~variation: int, ~status: User.itemStatus) =>
   api.dispatch(UpdateUser(updatedUser));
   {
     let%Repromise responseResult =
-      BAPI.setItemStatus(
+      API.setItemStatus(
         ~userId=user.id,
         ~sessionId=sessionId^,
         ~itemId,
@@ -262,7 +262,7 @@ let setItemStatusBatch = (~items: array((int, int)), ~status) => {
   api.dispatch(UpdateUser(updatedUser));
   {
     let%Repromise responseResult =
-      BAPI.setItemStatusBatch(
+      API.setItemStatusBatch(
         ~sessionId=Belt.Option.getExn(sessionId^),
         ~items,
         ~status,
@@ -306,7 +306,7 @@ let setItemNote = (~itemId: int, ~variation: int, ~note: string) => {
   let item = Item.getItem(~itemId);
   {
     let%Repromise responseResult =
-      BAPI.setItemNote(
+      API.setItemNote(
         ~userId=user.id,
         ~sessionId=sessionId^,
         ~itemId,
@@ -351,7 +351,7 @@ let setItemPriority = (~itemId: int, ~variant: int, ~isPriority: bool) => {
   let item = Item.getItem(~itemId);
   {
     let%Repromise responseResult =
-      BAPI.setItemPriority(
+      API.setItemPriority(
         ~sessionId=sessionId^,
         ~itemId,
         ~variant,
@@ -398,7 +398,7 @@ let removeItem = (~itemId, ~variation) => {
     };
     {
       let%Repromise responseResult =
-        BAPI.removeItem(
+        API.removeItem(
           ~userId=user.id,
           ~sessionId=sessionId^,
           ~itemId,
@@ -431,7 +431,7 @@ let removeItems = (~items: array((int, int))) => {
   api.dispatch(UpdateUser(updatedUser));
   {
     let%Repromise responseResult =
-      BAPI.removeItems(~sessionId=Belt.Option.getExn(sessionId^), ~items);
+      API.removeItems(~sessionId=Belt.Option.getExn(sessionId^), ~items);
     handleServerResponse("/@me/items/batch/remove", responseResult);
     Analytics.Amplitude.logEventWithProperties(
       ~eventName="Item Batch Removed",
@@ -451,7 +451,7 @@ let updateProfileText = (~profileText) => {
   api.dispatch(UpdateUser(updatedUser));
   {
     let%Repromise responseResult =
-      BAPI.updateProfileText(
+      API.updateProfileText(
         ~userId=user.id,
         ~sessionId=sessionId^,
         ~profileText,
@@ -469,7 +469,7 @@ let updateProfileText = (~profileText) => {
 let patchMe = (~username=?, ~newPassword=?, ~email=?, ~oldPassword=?, ()) => {
   let user = getUser();
   let%Repromise response =
-    BAPI.patchMe(
+    API.patchMe(
       ~userId=user.id,
       ~sessionId=sessionId^,
       ~username,
@@ -514,7 +514,7 @@ let toggleCatalogCheckboxSetting = (~enabled) => {
   api.dispatch(UpdateUser(updatedUser));
   {
     let%Repromise responseResult =
-      BAPI.updateSetting(
+      API.updateSetting(
         ~userId=user.id,
         ~sessionId=sessionId^,
         ~settingKey="enableCatalog",
@@ -534,7 +534,7 @@ let errorQuotationMarksRegex = [%bs.re {|/^"(.*)"$/|}];
 let register = (~username, ~email, ~password) => {
   let%Repromise.JsExn response =
     Fetch.fetchWithInit(
-      Constants.bapiUrl ++ "/register2",
+      Constants.apiUrl ++ "/register2",
       Fetch.RequestInit.make(
         ~method_=Post,
         ~body=
@@ -584,7 +584,7 @@ let register = (~username, ~email, ~password) => {
 let loginWithDiscord = (~code, ~isRegister) => {
   let%Repromise.JsExn response =
     Fetch.fetchWithInit(
-      Constants.bapiUrl ++ "/login-discord",
+      Constants.apiUrl ++ "/login-discord",
       Fetch.RequestInit.make(
         ~method_=Post,
         ~body=
@@ -648,7 +648,7 @@ let loginWithDiscord = (~code, ~isRegister) => {
 
 let followUser = (~userId) => {
   let%Repromise response =
-    BAPI.followUser(~userId, ~sessionId=Belt.Option.getExn(sessionId^));
+    API.followUser(~userId, ~sessionId=Belt.Option.getExn(sessionId^));
   switch (response) {
   | Ok () => api.dispatch(FollowUser(userId))
   | Error(_) => ()
@@ -658,7 +658,7 @@ let followUser = (~userId) => {
 
 let unfollowUser = (~userId) => {
   let%Repromise response =
-    BAPI.unfollowUser(~userId, ~sessionId=Belt.Option.getExn(sessionId^));
+    API.unfollowUser(~userId, ~sessionId=Belt.Option.getExn(sessionId^));
   switch (response) {
   | Ok () => api.dispatch(UnfollowUser(userId))
   | Error(_) => ()
@@ -669,7 +669,7 @@ let unfollowUser = (~userId) => {
 let login = (~username, ~password) => {
   let%Repromise.JsExn response =
     Fetch.fetchWithInit(
-      Constants.bapiUrl ++ "/login",
+      Constants.apiUrl ++ "/login",
       Fetch.RequestInit.make(
         ~method_=Post,
         ~body=
@@ -716,7 +716,7 @@ let logout = () => {
   updateSessionId(None);
   let%Repromise.JsExn response =
     Fetch.fetchWithInit(
-      Constants.bapiUrl ++ "/logout",
+      Constants.apiUrl ++ "/logout",
       Fetch.RequestInit.make(
         ~method_=Post,
         ~headers=?
@@ -736,7 +736,7 @@ let logout = () => {
 
 let removeAllItems = () => {
   let sessionId = Belt.Option.getExn(sessionId^);
-  let%Repromise responseResult = BAPI.removeAllItems(~sessionId);
+  let%Repromise responseResult = API.removeAllItems(~sessionId);
   handleServerResponse("/@me/items/all/delete", responseResult);
   switch (responseResult) {
   | Ok(response) =>
@@ -752,7 +752,7 @@ let removeAllItems = () => {
 let deleteAccount = () => {
   let sessionId = Belt.Option.getExn(sessionId^);
   let%Repromise responseResult =
-    BAPI.deleteAccount(~sessionId, ~userId=getUser().id);
+    API.deleteAccount(~sessionId, ~userId=getUser().id);
   handleServerResponse("/@me/delete", responseResult);
   switch (responseResult) {
   | Ok(response) =>
@@ -772,7 +772,7 @@ let connectDiscordAccount = (~code) => {
   let processLoggedIn = user => {
     {
       let%Repromise response =
-        BAPI.connectDiscordAccount(
+        API.connectDiscordAccount(
           ~sessionId=Belt.Option.getExn(sessionId^),
           ~code,
         );
@@ -817,7 +817,7 @@ let init = () => {
     {
       let%Repromise.JsExn response =
         Fetch.fetchWithInit(
-          Constants.bapiUrl ++ "/@me",
+          Constants.apiUrl ++ "/@me",
           Fetch.RequestInit.make(
             ~method_=Get,
             ~headers=

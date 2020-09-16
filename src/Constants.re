@@ -6,7 +6,7 @@ let gitCommitRef =
   Belt.Option.getWithDefault(gitCommitRef, "")
   |> Js.String.slice(~from=0, ~to_=8);
 
-let bapiUrl =
+let apiUrl =
   nodeEnv === Some("production") || true
     ? "https://a.nook.exchange" : "http://localhost:3000";
 let cdnUrl =

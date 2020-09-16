@@ -608,7 +608,7 @@ module FriendsSection = {
     React.useEffect0(() => {
       {
         let%Repromise response =
-          BAPI.getFolloweesItem(
+          API.getFolloweesItem(
             ~sessionId=Belt.Option.getExn(UserStore.sessionId^),
             ~itemId=item.id,
           );

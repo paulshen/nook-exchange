@@ -279,7 +279,7 @@ let make = (~listId, ~url: ReasonReactRouter.url) => {
   let (editTitle, setEditTitle) = React.useState(() => "");
   React.useEffect0(() => {
     {
-      let%Repromise response = BAPI.getItemList(~listId);
+      let%Repromise response = API.getItemList(~listId);
       let%Repromise.JsExn json =
         Fetch.Response.json(Belt.Result.getExn(response));
       open Json.Decode;
@@ -658,7 +658,7 @@ let make = (~listId, ~url: ReasonReactRouter.url) => {
                       ReactEvent.Mouse.preventDefault(e);
                       {
                         let%Repromise response =
-                          BAPI.cloneItemList(
+                          API.cloneItemList(
                             ~sessionId=
                               Belt.Option.getExn(UserStore.sessionId^),
                             ~listId,
@@ -705,7 +705,7 @@ let make = (~listId, ~url: ReasonReactRouter.url) => {
                              () => {
                                {
                                  let%Repromise response =
-                                   BAPI.deleteItemList(
+                                   API.deleteItemList(
                                      ~sessionId=
                                        Belt.Option.getExn(
                                          UserStore.sessionId^,

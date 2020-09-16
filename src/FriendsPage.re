@@ -18,7 +18,7 @@ let compareOptionTimestamps = (aTime, bTime) =>
 let fetchFeed = () => {
   let%Repromise.JsExn response =
     Fetch.fetchWithInit(
-      Constants.bapiUrl ++ "/@me/follow-feed",
+      Constants.apiUrl ++ "/@me/follow-feed",
       Fetch.RequestInit.make(
         ~method_=Get,
         ~headers=

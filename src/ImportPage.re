@@ -698,7 +698,7 @@ module Results = {
                         });
                     {
                       let%Repromise responseResult =
-                        BAPI.importItems(
+                        API.importItems(
                           ~sessionId=UserStore.sessionId^,
                           ~updates,
                         );

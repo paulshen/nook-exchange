@@ -168,7 +168,7 @@ let make = (~username, ~urlRest, ~url: ReasonReactRouter.url, ~showLogin) => {
       {
         let%Repromise.JsExn response =
           Fetch.fetchWithInit(
-            Constants.bapiUrl ++ "/users/" ++ username,
+            Constants.apiUrl ++ "/users/" ++ username,
             Fetch.RequestInit.make(
               ~headers=
                 Fetch.HeadersInit.make({

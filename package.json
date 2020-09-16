@@ -1,5 +1,5 @@
 {
-  "name": "animal-crossing",
+  "name": "nook-exchange",
   "version": "0.1.0",
   "scripts": {
     "build": "bsb -make-world",

@@ -1,21 +1,23 @@
 # Nook Exchange
 
+The frontend source for https://nook.exchange, an Animal Crossing catalog site.
+
 ## Run
 
 ```bash
 # Install dependencies
 yarn
-# Build BuckleScript
+# Build ReScript
 yarn start
-# Build Parcel
+# Webpack dev server
 yarn client
 ```
 
 ## Build
 
 ```bash
-# Build Bucklescript
+# Build ReScript
 yarn build
-# Build Parcel
-yarn parcel-build
+# Build Webpack
+yarn webpack-build
 ```

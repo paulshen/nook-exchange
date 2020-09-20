@@ -79,6 +79,7 @@ module Styles = {
       backgroundPosition(center),
       borderWidth(zero),
       padding(zero),
+      outlineOffset(px(-5)),
       cursor(pointer),
       height(px(48)),
       width(px(48)),

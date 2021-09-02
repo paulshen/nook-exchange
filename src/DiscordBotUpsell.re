@@ -64,7 +64,7 @@ module Component = {
             Webapi.Dom.(
               window
               |> Window.open_(
-                   ~url="https://discord.gg/9sh66CX",
+                   ~url="https://discord.gg/Crkv4rqAJ5",
                    ~name="",
                    ~features=?None,
                  )
@@ -95,7 +95,7 @@ module Component = {
             open Webapi.Dom;
             window
             |> Window.open_(
-                 ~url="https://discord.gg/9sh66CX",
+                 ~url="https://discord.gg/Crkv4rqAJ5",
                  ~name="",
                  ~features=?None,
                )

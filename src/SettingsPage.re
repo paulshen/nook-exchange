@@ -135,7 +135,7 @@ module WithUser = {
            | Some(_) =>
              <div>
                {React.string("Your Discord account is connected. Visit the ")}
-               <a href="https://discord.gg/9sh66CX" target="_blank">
+               <a href="https://discord.gg/Crkv4rqAJ5" target="_blank">
                  {React.string("Discord server")}
                </a>
                {React.string(" to trade and share feedback!")}

@@ -41,6 +41,7 @@ let categories = [|
   "ceiling decor",
   "interior structures",
   "food",
+  "gyroids",
   "tops",
   "bottoms",
   "dresses",

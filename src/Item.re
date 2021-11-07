@@ -38,6 +38,9 @@ let categories = [|
   "wallpapers",
   "floors",
   "rugs",
+  "ceiling decor",
+  "interior structures",
+  "food",
   "tops",
   "bottoms",
   "dresses",
@@ -59,7 +62,14 @@ let categories = [|
 let validCategoryStrings =
   [|"furniture", "clothing", "recipes"|]->Belt.Array.concat(categories);
 
-let furnitureCategories = [|"housewares", "miscellaneous", "wall-mounted"|];
+let furnitureCategories = [|
+  "housewares",
+  "miscellaneous",
+  "wall-mounted",
+  "ceiling decor",
+  "interior structures",
+  "food",
+|];
 
 let clothingCategories = [|
   "tops",

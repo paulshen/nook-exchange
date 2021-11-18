@@ -44,7 +44,7 @@ let make = () => {
         </a>
         {React.string(" | ")}
         <a
-          href="https://tinyurl.com/acnh-translations"
+          href="https://docs.google.com/spreadsheets/d/1MMbsvDfu59OY9YBEAfHhFJ6O8vRTllNFgMrX7RBZuyI/view"
           target="_blank">
           {React.string("Translations")}
         </a>

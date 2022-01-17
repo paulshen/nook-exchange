@@ -553,7 +553,7 @@ module CategoryButtons = {
           "rugs",
           "ceiling decor",
           "interior structures",
-          "food",
+          // "food",
           "gyroids",
           "other",
         |],

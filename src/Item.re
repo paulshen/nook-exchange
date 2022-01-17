@@ -40,7 +40,7 @@ let categories = [|
   "rugs",
   "ceiling decor",
   "interior structures",
-  "food",
+  // "food",
   "gyroids",
   "tops",
   "bottoms",
@@ -69,7 +69,7 @@ let furnitureCategories = [|
   "wall-mounted",
   "ceiling decor",
   "interior structures",
-  "food",
+  // "food",
 |];
 
 let clothingCategories = [|
